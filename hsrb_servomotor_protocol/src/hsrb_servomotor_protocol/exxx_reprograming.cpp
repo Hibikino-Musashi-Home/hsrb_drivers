@@ -725,7 +725,7 @@ ExxxReprograming::ErrorCode ExxxReprograming::SendFlushBlockData(const std::stri
   boost::system::error_code error;
   uint32_t data_size = kXmodemDataSize;
   uint8_t check_sum = 0;
-  boost::array<uint8_t, kXmodemSendSize> send_buffer;
+  std::array<uint8_t, kXmodemSendSize> send_buffer;
 
   send_buffer[kXmodemHeaderPos]          = kXmodemSOH;
   send_buffer[kXmodemBlockNumberPos]     = block_number;

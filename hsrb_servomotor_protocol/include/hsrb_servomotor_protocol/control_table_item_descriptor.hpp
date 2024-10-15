@@ -30,22 +30,24 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
+/// @file control_table_item_descriptor.hpp
+/// @brief Control table items
 #ifndef HSRB_SERVOMOTOR_PROTOCOL_CONTROL_TABLE_ITEM_DESCRIPTOR_HPP_
 #define HSRB_SERVOMOTOR_PROTOCOL_CONTROL_TABLE_ITEM_DESCRIPTOR_HPP_
 
 #include <stdint.h>
+#include <memory>
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 
 namespace hsrb_servomotor_protocol {
 
 class ControlTableItemDescriptor {
  public:
-  typedef boost::shared_ptr<ControlTableItemDescriptor> Ptr;
-  typedef boost::shared_ptr<const ControlTableItemDescriptor> ConstPtr;
+  using Ptr = std::shared_ptr<ControlTableItemDescriptor>;
+  using ConstPtr = std::shared_ptr<const ControlTableItemDescriptor>;
 
-  /// 型のタイプ
+  /// Type type
   enum ValueType {
     kUInt8 = 1,
     kInt8,
@@ -59,45 +61,27 @@ class ControlTableItemDescriptor {
     kDouble,
   };
 
-  /// コンストラクタ
-  /// @param[in] type このエントリの型
-  /// @param[in] initial_address このエントリの先頭アドレス
-  /// @param[in] attribute このエントリの属性
-  /// @param[in] coefficient_mks MKS単位系への変換係数
+  /// constructor
+  /// @param[in] type This entry type
+  /// @param[in] initial_address First address of this entry
+  /// @param[in] attribute Attribute of this entry
+  /// @param[in] coefficient_mks Conversion coefficient to Mks unit system
   ControlTableItemDescriptor(ValueType type, uint16_t initial_address, const std::string& attribute,
                              double coefficient_mks);
 
-  /// byte列をMKS単位のdoubleに変換
-  /// @param[in] bytes 変換する値
-  /// @param[out] success 成功，失敗 引数に与えたbytesが短いとエラーを返す
-  /// @return 成否 bytesのサイズがtype()のバイト数と等しく無いと失敗
   bool ConvertToMKS(const std::vector<uint8_t>& bytes, double& mks_value_out) const;
-
-  /// byte列をMKS単位のdoubleに変換
-  /// @param[in] bytes_begin 変換する値へのポインタ
-  /// @param[out] success 成功，失敗 引数に与えたbytesが短いとエラーを返す
-  /// @return 成否 bytesのサイズがtype()のバイト数と等しく無いと失敗
   bool ConvertToMKS(const uint8_t* bytes_begin, double& mks_value_out) const;
 
-  /// MKS単位をバイト列に変換
-  /// @param[in] bytes 変換する値の先頭アドレス
-  /// @param[out] MKS単位での返り値
-  /// @return 成否 mks_valueがオーバーフローすると失敗
   bool ConvertToBytes(double mks_value, std::vector<uint8_t>& bytes_out) const;
 
-  /// 型
   ValueType type() const { return type_; }
 
-  /// 先頭アドレス
   uint16_t initial_address() const { return initial_address_; }
 
-  /// このエントリの最終アドレス+1 (初期アドレス+バイト数)
   uint16_t final_address() const { return final_address_; }
 
-  /// 属性
   std::string attribute() const { return attribute_; }
 
-  /// バイト数
   uint8_t num_bytes() const { return num_bytes_; }
 
  private:

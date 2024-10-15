@@ -30,109 +30,109 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
+/// @file exxx_protocol.hpp
+/// EXXX amplifier communication protocol
 #include <algorithm>
 #include <vector>
 #include <hsrb_servomotor_protocol/exxx_protocol.hpp>
-
-#include <boost/array.hpp>
 
 namespace hsrb_servomotor_protocol {
 
 ExxxProtocol::ErrorCode ExxxProtocol::Ping(uint8_t id) {
   ExxxProtocol::ErrorCode error = network_->Send(id, kInstructionPing, NULL, 0);
-  // system errorは直ちに返す
+  // System error returns immediately
   if (error.category() == boost::system::system_category() && error) {
     return error;
   }
   error = network_->Receive(id, receive_buffer_);
-  // system errorは直ちに返す
+  // System error returns immediately
   if (error.category() == boost::system::system_category() && error) {
     return error;
   } else {
-    // system error以外はスルー
+    // Through except for System Error
     return ErrorCode(boost::system::errc::success, boost::system::system_category());
   }
 }
 
 ExxxProtocol::ErrorCode ExxxProtocol::Reset(uint8_t id) {
-  boost::array<uint8_t, 9> send_data = {{0x52, 0x45, 0x53, 0x45, 0x54, 0x00, 0xFF, 0xAA, 0x55}};
+  std::array<uint8_t, 9> send_data = {0x52, 0x45, 0x53, 0x45, 0x54, 0x00, 0xFF, 0xAA, 0x55};
   ExxxProtocol::ErrorCode error = network_->Send(id, kInstructionReset, &send_data[0], 9);
-  // system errorは直ちに返す
+  // System error returns immediately
   if (error.category() == boost::system::system_category() && error) {
     return error;
   }
   error = network_->Receive(id, receive_buffer_);
-  // 成功時無応答なのでタイムアウトは正常終了とする
+  // The timeout will end normally because it is a successless answer.
   if (error.value() == boost::system::errc::timed_out) {
     return ExxxProtocol::ErrorCode(boost::system::errc::success, boost::system::system_category());
   }
-  // system errorは直ちに返す
+  // System error returns immediately
   if (error.category() == boost::system::system_category() && error) {
     return error;
   } else {
-    // 受信成功時は、異常を返す
+    // Return abnormalities when successful
     return ExxxProtocol::ErrorCode(boost::system::errc::bad_message, boost::system::system_category());
   }
 }
 
 ExxxProtocol::ErrorCode ExxxProtocol::SyncParam(uint8_t id) {
   ExxxProtocol::ErrorCode error = network_->Send(id, kInstructionSyncParam, NULL, 0);
-  // system errorは直ちに返す
+  // System error returns immediately
   if (error.category() == boost::system::system_category() && error) {
     return error;
   }
   error = network_->Receive(id, receive_buffer_);
-  // system errorは直ちに返す
+  // System error returns immediately
   if (error.category() == boost::system::system_category() && error) {
     return error;
   } else {
-    // system error以外はスルー
+    // Through except for System Error
     return ExxxProtocol::ErrorCode(boost::system::errc::success, boost::system::system_category());
   }
 }
 
 ExxxProtocol::ErrorCode ExxxProtocol::AvagoAvePos(uint8_t id) {
   ExxxProtocol::ErrorCode error = network_->Send(id, kInstructionAvagoAvePos, NULL, 0);
-  // system errorは直ちに返す
+  // System error returns immediately
   if (error.category() == boost::system::system_category() && error) {
     return error;
   }
   error = network_->Receive(id, receive_buffer_);
-  // system errorは直ちに返す
+  // System error returns immediately
   if (error.category() == boost::system::system_category() && error) {
     return error;
   } else {
-    // system error以外はスルー
+    // Through except for System Error
     return ExxxProtocol::ErrorCode(boost::system::errc::success, boost::system::system_category());
   }
 }
 
 ExxxProtocol::ErrorCode ExxxProtocol::WriteEeprom(uint8_t id) {
   ExxxProtocol::ErrorCode error = network_->Send(id, kInstructionWriteEeprom, NULL, 0);
-  // 返事はない
+  // There is no reply
   return error;
 }
 
-/// ファームのgitのhash値を取得
-/// @param[in] id ノードid
-/// @param[out] control_table_hash_out control_table.csvのmd5sum
-/// @param[out] firmware_hash_out control firmwareのgitのhashタグ
-/// @retval success 成功
-/// @retval message_size 取得したメッセージサイズが不正
-/// @retval other システムかExxxCategoryのエラー
+/// Get the Hash value of the firm Git
+/// @param[in] id Node ID
+/// @param[out] control_table_hash_out md5sum of control_table.csv
+/// @param[out] firmware_hash_out Control Firmware Git Hash tag
+/// @retval Success success
+/// @retval Message_size's acquired message size is fraudulent
+/// @retval Other system or EXXXCATEGORY error
 ExxxProtocol::ErrorCode ExxxProtocol::ReadHash(uint8_t id, std::vector<uint8_t>& control_table_hash_out,
                                                std::vector<uint8_t>& firmware_hash_out) {
   ExxxProtocol::ErrorCode error = network_->Send(id, kInstructionReadHash, NULL, 0);
-  // system errorは直ちに返す
+  // System error returns immediately
   if (error.category() == boost::system::system_category() && error) {
     return error;
   }
   error = network_->Receive(id, receive_buffer_);
-  // system errorは直ちに返す
+  // System error returns immediately
   if (error.category() == boost::system::system_category() && error) {
     return error;
   } else if (receive_buffer_.size() != kControlTableHashByte + kFirmwareHashByte) {
-    // 不正なサイズの受信でエラー
+    // Error with unauthorized size
     return ExxxProtocol::ErrorCode(boost::system::errc::message_size, boost::system::system_category());
   }
   control_table_hash_out.resize(kControlTableHashByte);
@@ -141,7 +141,7 @@ ExxxProtocol::ErrorCode ExxxProtocol::ReadHash(uint8_t id, std::vector<uint8_t>&
   firmware_hash_out.resize(kFirmwareHashByte);
   std::copy(&receive_buffer_[kControlTableHashByte], &receive_buffer_[kControlTableHashByte + kFirmwareHashByte],
             firmware_hash_out.begin());
-  // system error以外はスルー
+  // Through except for System Error
   return ExxxProtocol::ErrorCode(boost::system::errc::success, boost::system::system_category());
 }
 }  // namespace hsrb_servomotor_protocol

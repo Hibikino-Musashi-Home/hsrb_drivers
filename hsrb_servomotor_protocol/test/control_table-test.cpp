@@ -1,22 +1,17 @@
 /*
-Copyright (c) 2014 TOYOTA MOTOR CORPORATION
+Copyright (c) 2024 TOYOTA MOTOR CORPORATION
 All rights reserved.
-
 Redistribution and use in source and binary forms, with or without
 modification, are permitted (subject to the limitations in the disclaimer
 below) provided that the following conditions are met:
-
 * Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
-
 * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
-
 * Neither the name of the copyright holder nor the names of its contributors may be used
   to endorse or promote products derived from this software without specific
   prior written permission.
-
 NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
 LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
@@ -33,7 +28,6 @@ DAMAGE.
 #include <limits>
 #include <string>
 #include <vector>
-#include <boost/foreach.hpp>
 #include <gtest/gtest.h>
 #include <hsrb_servomotor_protocol/control_table.hpp>
 #include <hsrb_servomotor_protocol/control_table_item_descriptor.hpp>
@@ -41,37 +35,37 @@ DAMAGE.
 using hsrb_servomotor_protocol::ControlTable;
 using hsrb_servomotor_protocol::ControlTableItemDescriptor;
 
-// ファイルが開けない
+// I can't open the file
 TEST(LoadFailTest, NoExistFile) {
   ControlTable table;
   EXPECT_EQ(ControlTable::kFileOpenError, table.Load("file/non/exist"));
 }
 
-// 異常なファイル
+// Unusual file
 TEST(LoadFailTest, InCorrectFile) {
   ControlTable table;
   EXPECT_EQ(ControlTable::kColumnSizeError, table.Load("test/test_csv_table/incorrect_table.csv"));
 }
 
-// 同じエントリが含まれるファイル
+// A file containing the same entry
 TEST(LoadFailTest, SameEntryFile) {
   ControlTable table;
   EXPECT_EQ(ControlTable::kAlreadyRecorded, table.Load("test/test_csv_table/same_entry.csv"));
 }
 
-// 型の名前がおかしい
+// The name of the type is strange
 TEST(LoadFailTest, BadTypeFile) {
   ControlTable table;
   EXPECT_EQ(ControlTable::kBadType, table.Load("test/test_csv_table/bad_type.csv"));
 }
 
-// 読み込み可能
+// Readable
 TEST(LoadFailTest, CorrectFile) {
   ControlTable table;
   EXPECT_EQ(ControlTable::kSuccess, table.Load("test/test_csv_table/correct_table.csv"));
 }
 
-// 読み込んでからのテスト
+// Test after reading
 class ControlTableTest : public ::testing::Test {
  public:
   ControlTableTest() { control_table_.Load("test/test_csv_table/correct_table.csv"); }
@@ -81,7 +75,7 @@ class ControlTableTest : public ::testing::Test {
   ControlTable control_table_;
 };
 
-// md5が正しく取得できるかチェック
+// Check if MD5 can be obtained correctly
 TEST_F(ControlTableTest, CheckMd5) {
   const uint8_t expect_md5[16] = { 0x2c, 0xae, 0xa0, 0xeb, 0xf5, 0xd9, 0x4c, 0xa8,
                                    0xf7, 0x54, 0xc6, 0x5b, 0xf4, 0x30, 0x91, 0x0e };
@@ -92,7 +86,7 @@ TEST_F(ControlTableTest, CheckMd5) {
   }
 }
 
-// 指定したdescriptorがちゃんと取れるか確認
+// Check if the specified descriptor can be taken properly
 TEST_F(ControlTableTest, ReferItemDescriptor) {
   ControlTableItemDescriptor::Ptr value1 = control_table_.ReferItemDescriptor("value1");
   ASSERT_TRUE(value1);
@@ -171,14 +165,14 @@ TEST_F(ControlTableTest, ReferItemDescriptor) {
   EXPECT_EQ(1e+6, mks_coeff);
 }
 
-// 存在しないdescriptorが空か？
+// Is the non -existing descriptor empty?
 TEST_F(ControlTableTest, NonExistItemDescriptor) {
   ControlTableItemDescriptor::Ptr value1 = control_table_.ReferItemDescriptor("non_exist");
   EXPECT_FALSE(value1);
 }
 
 
-// ControlTableItemDescriptorのテスト
+// CONTROLTABLEITEMDEScriptor test
 TEST(ControlTableItemDescriptorTest, Getter) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kUInt32, 10, "static_param", 0.0);
   EXPECT_EQ(ControlTableItemDescriptor::kUInt32, descriptor.type());
@@ -188,7 +182,7 @@ TEST(ControlTableItemDescriptorTest, Getter) {
   EXPECT_EQ(14, descriptor.final_address());
 }
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, UnevenNumbytes) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kUInt8, 10, "static_param", 1.0e+3);
   std::vector<uint8_t> table_bytes(2);
@@ -197,14 +191,14 @@ TEST(ControlTableItemDescriptorTest, UnevenNumbytes) {
   EXPECT_FALSE(descriptor.ConvertToMKS(table_bytes, mks_value));
 }
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, Overflow) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kUInt8, 10, "static_param", 1.0);
   std::vector<uint8_t> table_bytes_ret;
   EXPECT_FALSE(descriptor.ConvertToBytes(258.0, table_bytes_ret));
 }
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, NaN) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kUInt8, 10, "static_param", 1.0);
   std::vector<uint8_t> table_bytes_ret;
@@ -212,7 +206,7 @@ TEST(ControlTableItemDescriptorTest, NaN) {
   EXPECT_TRUE(descriptor.ConvertToBytes(42.0, table_bytes_ret));
 }
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, ConvertUint8) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kUInt8, 10, "static_param", 1.0e+3);
   std::vector<uint8_t> table_bytes(descriptor.num_bytes());
@@ -229,7 +223,7 @@ TEST(ControlTableItemDescriptorTest, ConvertUint8) {
   EXPECT_EQ(0x00, table_bytes_ret[0]);
 }
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, ConvertInt8) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kInt8, 10, "static_param", 1.0e+3);
   std::vector<uint8_t> table_bytes(descriptor.num_bytes());
@@ -247,7 +241,7 @@ TEST(ControlTableItemDescriptorTest, ConvertInt8) {
 }
 
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, ConvertUint16) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kUInt16, 10, "static_param", 1.0e-3);
   std::vector<uint8_t> table_bytes(descriptor.num_bytes());
@@ -267,7 +261,7 @@ TEST(ControlTableItemDescriptorTest, ConvertUint16) {
   EXPECT_EQ(0x00, table_bytes_ret[0]);
 }
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, ConvertInt16) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kInt16, 10, "static_param", 1.0e-1);
   std::vector<uint8_t> table_bytes(descriptor.num_bytes());
@@ -287,7 +281,7 @@ TEST(ControlTableItemDescriptorTest, ConvertInt16) {
   EXPECT_EQ(0x00, table_bytes_ret[0]);
 }
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, ConvertUInt32) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kUInt32, 10, "static_param", 1.0e-3);
   std::vector<uint8_t> table_bytes(descriptor.num_bytes());
@@ -313,7 +307,7 @@ TEST(ControlTableItemDescriptorTest, ConvertUInt32) {
   EXPECT_EQ(0x00, table_bytes_ret[0]);
 }
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, ConvertInt32) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kInt32, 10, "static_param", 1.0e+6);
   std::vector<uint8_t> table_bytes(descriptor.num_bytes());
@@ -339,7 +333,7 @@ TEST(ControlTableItemDescriptorTest, ConvertInt32) {
   EXPECT_EQ(0x00, table_bytes_ret[0]);
 }
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, ConvertFloat) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kFloat, 10, "static_param", 1.0e-3);
   std::vector<uint8_t> table_bytes(descriptor.num_bytes());
@@ -367,7 +361,7 @@ TEST(ControlTableItemDescriptorTest, ConvertFloat) {
   EXPECT_FALSE(descriptor.ConvertToBytes(std::numeric_limits<double>::max(), table_bytes_ret));
 }
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, ConvertUint64) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kUInt64, 10, "static_param", 1.0e+12);
   std::vector<uint8_t> table_bytes(descriptor.num_bytes());
@@ -392,7 +386,7 @@ TEST(ControlTableItemDescriptorTest, ConvertUint64) {
   EXPECT_EQ(0x56, table_bytes_ret[4]);
   EXPECT_EQ(0x9a, table_bytes_ret[3]);
   EXPECT_EQ(0x9b, table_bytes_ret[2]);
-  // doubleの精度限界
+  // Double accuracy limit
   // EXPECT_EQ(0xe9, table_bytes_ret[1]);
   // EXPECT_EQ(0xbe, table_bytes_ret[0]);
 
@@ -407,7 +401,7 @@ TEST(ControlTableItemDescriptorTest, ConvertUint64) {
   EXPECT_EQ(0x00, table_bytes_ret[0]);
 }
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, ConvertInt64) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kInt64, 10, "static_param", 1.0e+3);
   std::vector<uint8_t> table_bytes(descriptor.num_bytes());
@@ -432,7 +426,7 @@ TEST(ControlTableItemDescriptorTest, ConvertInt64) {
   EXPECT_EQ(0x56, table_bytes_ret[4]);
   EXPECT_EQ(0x9a, table_bytes_ret[3]);
   EXPECT_EQ(0x9b, table_bytes_ret[2]);
-  // doubleの精度限界
+  // Double accuracy limit
   // EXPECT_EQ(0xe9, table_bytes_ret[1]);
   // EXPECT_EQ(0xbe, table_bytes_ret[0]);
 
@@ -448,7 +442,7 @@ TEST(ControlTableItemDescriptorTest, ConvertInt64) {
 }
 
 
-// MKS変換のテスト
+// MKS conversion test
 TEST(ControlTableItemDescriptorTest, ConvertDouble) {
   ControlTableItemDescriptor descriptor(ControlTableItemDescriptor::kDouble, 10, "static_param", 1.0e-3);
   std::vector<uint8_t> table_bytes(descriptor.num_bytes());
@@ -489,7 +483,7 @@ TEST(ControlTableItemDescriptorTest, ConvertDouble) {
 
 
 int main(int argc, char* argv[]) {
-  // getes用の初期化
+  // Initialization for getes
   testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();

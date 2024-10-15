@@ -30,6 +30,9 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
+/// @file exxx_network.hpp
+/// EXXX amplifier network management
+
 #ifndef HSRB_SERVOMOTOR_PROTOCOL_EXXX_NETWORK_HPP_
 #define HSRB_SERVOMOTOR_PROTOCOL_EXXX_NETWORK_HPP_
 
@@ -44,7 +47,6 @@ DAMAGE.
 #include <termios.h>
 #include <unistd.h>
 
-#include <boost/array.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/system/error_code.hpp>
 
@@ -87,10 +89,10 @@ class ExxxNetwork : private boost::noncopyable, public INetwork {
   int32_t timeout_;
   int32_t sleep_tick_;
 
-  /// 送受信バッファ（１パケット分）
-  boost::array<uint8_t, 260> buffer_;
+  /// Sending and receiving buffer (1 packet)
+  std::array<uint8_t, 260> buffer_;
 
-  /// コンストラクトからのみ呼ばれる下請け
+  /// Subcontracting only from the construct
   void Init(std::string device_name, boost::system::error_code& error_out, bool is_usb_rs485);
 
   rclcpp::Logger logger_;

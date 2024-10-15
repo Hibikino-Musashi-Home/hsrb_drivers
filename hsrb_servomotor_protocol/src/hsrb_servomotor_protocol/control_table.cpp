@@ -30,6 +30,9 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
+/// @file control_table.cpp
+/// @brief Implementation of classes that acquire control tables from CSV and use for communication
+#define OPENSSL_API_COMPAT 10101
 
 #include <fstream>
 #include <iostream>
@@ -72,7 +75,7 @@ class ControlTable::ControlTableImpl {
     oss << ifs.rdbuf();
     message = oss.str();
 
-    // md5を計算
+    // Calculate MD5
     MD5(reinterpret_cast<const unsigned char*>(message.c_str()), message.length(), &md5sum_[0]);
     ifs.close();
     return kSuccess;
@@ -96,13 +99,13 @@ class ControlTable::ControlTableImpl {
     oss << ifs.rdbuf();
     message = oss.str();
 
-    // md5を計算
+    // Calculate MD5
     MD5(reinterpret_cast<const unsigned char*>(message.c_str()), message.length(), &md5sum_[0]);
 
     std::string line;
-    // 最初から
+    // From the beginning
     ifs.seekg(0, std::ios_base::beg);
-    // 一行目はコメントとして読み飛ばす
+    // The first line is skipped as a comment
     std::getline(ifs, line);
     uint16_t last_address = 0;
     uint32_t num_line = 0;
@@ -147,27 +150,27 @@ class ControlTable::ControlTableImpl {
 
   std::map<std::string, ControlTableItemDescriptor::Ptr> descriptors_;
 
-  /// 一行処理し最終アドレスを返す
+  /// One line process and return the final address
   ControlTable::ErrorCode ProcessLine(const std::string& line, uint16_t& last_address) {
     Tokenizer tokens(line);
     if (std::distance(tokens.begin(), tokens.end()) != 12) {
       return kColumnSizeError;
     }
     Tokenizer::iterator it = tokens.begin();
-    // typeを読む
+    // Read Type
     ++it;
     std::string type_str = *it;
-    // nameを読む
+    // Read Name
     ++it;
     std::string name = *it;
-    // MKS単位を読む
+    // Read MKS units
     std::advance(it, 3);
     std::string mks_str = *it;
-    // 種類を読む
+    // Read the type
     ++it;
     std::string attribute_str = *it;
 
-    // 同じ名前があったら即失敗
+    // If you have the same name, fail immediately
     if (descriptors_.find(name) != descriptors_.end()) {
       return kAlreadyRecorded;
     }
@@ -234,7 +237,7 @@ ControlTable::ErrorCode ControlTable::Load(const std::string& definition_file) {
 
 std::vector<uint8_t> ControlTable::GetMd5Sum() { return pimpl_->GetMd5Sum(); }
 
-boost::shared_ptr<ControlTableItemDescriptor> ControlTable::ReferItemDescriptor(const std::string& entry) const {
+std::shared_ptr<ControlTableItemDescriptor> ControlTable::ReferItemDescriptor(const std::string& entry) const {
   return pimpl_->ReferItemDescriptor(entry);
 }
 

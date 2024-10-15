@@ -33,16 +33,16 @@ DAMAGE.
 #ifndef HSRB_SERVOMOTOR_PROTOCOL_NETWORK_HPP_
 #define HSRB_SERVOMOTOR_PROTOCOL_NETWORK_HPP_
 
+#include <memory>
 #include <vector>
 #include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/system/error_code.hpp>
 
 namespace hsrb_servomotor_protocol {
 
 class INetwork {
  public:
-  typedef boost::shared_ptr<INetwork> Ptr;
+  using Ptr = std::shared_ptr<INetwork>;
   virtual ~INetwork() {}
 
   /// Send a packet to nodes.

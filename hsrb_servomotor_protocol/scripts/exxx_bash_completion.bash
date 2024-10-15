@@ -3,7 +3,7 @@ exxx_table_path() {
     if [ -f $home_path ] ; then
         control_table_path=$home_path
     else
-        control_table_path=$(\ls -rv $(rospack find exxx_control_table)/control_tables/v{?,??}.{?,??}.{?,??}/control_table.csv 2>/dev/null | xargs | cut -d' ' -f1)
+        control_table_path=$(\ls -rv $(ros2 pkg prefix exxx_control_table)/share/exxx_control_table/control_tables/v{?,??}.{?,??}.{?,??}/control_table.csv 2>/dev/null | xargs | cut -d' ' -f1)
     fi
     echo $control_table_path
 }

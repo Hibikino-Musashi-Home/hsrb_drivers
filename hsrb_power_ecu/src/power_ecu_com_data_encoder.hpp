@@ -42,9 +42,9 @@ DAMAGE.
 
 namespace hsrb_power_ecu {
 /**
- * @brief 色指定用のコンテナ
+ * @brief Container for color specification
  *
- * @tparam T 色情報の型
+ * @tparam T Type of color information
  */
 template <typename T>
 struct Color {
@@ -54,15 +54,15 @@ struct Color {
 };
 
 // TODO(kitsunai): 送信コマンドで未実装の物がある
-// 電源シャットダウンコマンド       pdown, 電源ECUのシャットダウンを行う
-// 基本情報読出しコマンド           info1, 電源ECUの基本情報を１回読み出す
-// オプション情報読出しコマンド     info2, 電源ECUのオプション情報を１回読み出す
-// リプログラム開始コマンド         rpros, リプログラムを開始する
-// リプログラムデータコマンド       rprod, リプログラムするデータを送信する
-// リプログラム終了コマンド         rproe, リプログラムを終了する
+// Power shutdown command pdown, executes shutdown of power ECU
+// Basic information read command info1, reads basic information of power ECU once
+// Option information read command info2, reads option information of power ECU once
+// Reprogram start command rpros, starts reprogramming
+// Reprogram data command rprod, sends data for reprogramming
+// Reprogram end command rproe, ends reprogramming
 
 /**
- * @brief 時計合わせコマンド
+ * @brief Clock adjustment command
  */
 class PowerEcuComTimeDataEncoder : public IPowerEcuComDataEncoder {
  private:
@@ -71,26 +71,26 @@ class PowerEcuComTimeDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
-    std::string start_time;  //!< 現在時刻
+    std::string start_time;  //!< Current time
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComTimeDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComTimeDataEncoder() {}
 
  private:
-  PacketData packet_data_;  //!< パケットデータ
+  PacketData packet_data_;  //!< Packet data
 };
 
-// 基本情報定期送信スタートコマンド start, 電源ECUの連続送信を開始する
+// Start command for periodic basic information transmission start, initiates continuous transmission of power ECU
 class PowerEcuComStartDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComStartDataEncoder(PowerEcuComStartDataEncoder const&);             // = delete;
@@ -98,27 +98,27 @@ class PowerEcuComStartDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
-    bool is_enable_ecu1;  //!< ECU1を定期送信するかどうか
-    bool is_enable_ecu2;  //!< ECU2を定期送信するかどうか
+    bool is_enable_ecu1;  //!< Whether to periodically transmit ECU1
+    bool is_enable_ecu2;  //!< Whether to periodically transmit ECU2
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComStartDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComStartDataEncoder() {}
 
  private:
-  PacketData packet_data_;  //!< パケットデータ
+  PacketData packet_data_;  //!< Packet data
 };
 
-// 基本情報定期送信ストップコマンド stop_, 電源ECUの連続送信を停止する
+// Stop command for periodic basic information transmission stop_, stops continuous transmission of power ECU
 class PowerEcuComStopDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComStopDataEncoder(PowerEcuComStopDataEncoder const&);             // = delete;
@@ -126,17 +126,17 @@ class PowerEcuComStopDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComStopDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComStopDataEncoder() {}
 };
 
-// ハートビート                     heart, メインCPUが電源ECUの生存確認を行う
+// Heartbeat heart, main CPU performs survival check of power ECU
 class PowerEcuComHeartDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComHeartDataEncoder(PowerEcuComHeartDataEncoder const&);             // = delete;
@@ -144,27 +144,27 @@ class PowerEcuComHeartDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
-    uint16_t error_state;  //!< エラー状態                16進数4桁 uint16
-    uint32_t counts;       //!< カウント値（送信ごとに+1) 16進数8桁 uint32
+    uint16_t error_state;  //!< Error state 4-digit hexadecimal uint16
+    uint32_t counts;       //!< Count value (increments +1 per transmission) 8-digit hexadecimal uint32
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComHeartDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComHeartDataEncoder() {}
 
  private:
-  PacketData packet_data_;  //!< パケットデータ
+  PacketData packet_data_;  //!< Packet data
 };
 
-// ポンプスイッチ                   pump_, ポンプのスイッチを制御する
+// Pump switch pump_, controls the pump switch
 class PowerEcuComPumpDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComPumpDataEncoder(PowerEcuComPumpDataEncoder const&);             // = delete;
@@ -172,26 +172,26 @@ class PowerEcuComPumpDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
-    uint8_t is_pump_enable;  //!< ポンプスイッチ(0:OFF 1:ON) 10進数1桁 uint8
+    uint8_t is_pump_enable;  //!< Pump switch (0:OFF 1:ON) 1-digit decimal uint8
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComPumpDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComPumpDataEncoder() {}
 
  private:
-  PacketData packet_data_;  //!< パケットデータ
+  PacketData packet_data_;  //!< Packet data
 };
 
-// 駆動系スイッチ                   pbmsw, 駆動系の電源を制御する
+// Drive system switch pbmsw, controls the power of drive system
 class PowerEcuComPbmswDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComPbmswDataEncoder(PowerEcuComPbmswDataEncoder const&);             // = delete;
@@ -199,26 +199,26 @@ class PowerEcuComPbmswDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
-    uint8_t is_motor_enable;  //!< 駆動系スイッチ(0 : OFF 1 : ON) 10進数1桁 uint8
+    uint8_t is_motor_enable;  //!< Drive system switch (0:OFF 1:ON) 1-digit decimal uint8
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComPbmswDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComPbmswDataEncoder() {}
 
  private:
-  PacketData packet_data_;  //!< パケットデータ
+  PacketData packet_data_;  //!< Packet data
 };
 
-// 多用途LEDの色指定                ledc_, 多用途LEDの点灯／点滅や色を指定する
+// Multi-purpose LED color specification ledc_, specifies lighting/blinking and color of multi-purpose LED
 class PowerEcuComLedcDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComLedcDataEncoder(PowerEcuComLedcDataEncoder const&);             // = delete;
@@ -226,26 +226,26 @@ class PowerEcuComLedcDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
-    Color<uint8_t> led_color;  //!< 色強度(0～255) 10進数3桁 uint8
+    Color<uint8_t> led_color;  //!< Color intensity (0-255) 3-digit decimal uint8
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComLedcDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComLedcDataEncoder() {}
 
  private:
-  PacketData packet_data_;  //!< パケットデータ
+  PacketData packet_data_;  //!< Packet data
 };
 
-// 姿勢角演算リセット(g_res)
+// Attitude calculation reset (g_res)
 class PowerEcuComGResDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComGResDataEncoder(PowerEcuComGResDataEncoder const&);             // = delete;
@@ -253,19 +253,19 @@ class PowerEcuComGResDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
     bool is_quaternion_reset;
     bool is_gyro_reset;
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComGResDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComGResDataEncoder() {}
 
@@ -273,7 +273,7 @@ class PowerEcuComGResDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// ソレノイドスイッチ(solsw)
+// Solenoid switch (solsw)
 class PowerEcuComSolswDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComSolswDataEncoder(PowerEcuComSolswDataEncoder const&);             // = delete;
@@ -281,18 +281,18 @@ class PowerEcuComSolswDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
-    uint8_t is_solenoid_enable;  //!< ソレノイドスイッチ(0:OFF 1:ON) 10進数1桁 uint8
+    uint8_t is_solenoid_enable;  //!< Solenoid switch (0:OFF 1:ON) 1-digit decimal uint8
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComSolswDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComSolswDataEncoder() {}
 
@@ -300,7 +300,7 @@ class PowerEcuComSolswDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// 電源シャットダウン(個別）コマンド(pdcmd)
+// Power shutdown (individual) command (pdcmd)
 class PowerEcuComPdcmdDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComPdcmdDataEncoder(PowerEcuComPdcmdDataEncoder const&);             // = delete;
@@ -308,7 +308,7 @@ class PowerEcuComPdcmdDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
     bool is_cpu_shutdown;
@@ -316,12 +316,12 @@ class PowerEcuComPdcmdDataEncoder : public IPowerEcuComDataEncoder {
     bool is_ex1_shutdown;
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComPdcmdDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComPdcmdDataEncoder() {}
 
@@ -329,7 +329,7 @@ class PowerEcuComPdcmdDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// オーディオアンプMUTE(mute_)
+// Audio amplifier MUTE (mute_)
 class PowerEcuComMuteDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComMuteDataEncoder(PowerEcuComMuteDataEncoder const&);             // = delete;
@@ -337,18 +337,18 @@ class PowerEcuComMuteDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
     bool is_amp_mute;
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComMuteDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComMuteDataEncoder() {}
 
@@ -356,27 +356,27 @@ class PowerEcuComMuteDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// バージョン情報の取得コマンド(getv_)
+// Version information retrieval command (getv_)
 class PowerEcuComGetvDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComGetvDataEncoder(PowerEcuComGetvDataEncoder const&);             // = delete;
   PowerEcuComGetvDataEncoder& operator=(PowerEcuComGetvDataEncoder const&);  // = delete;
 
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
-    uint8_t reserved;  //!< バージョン種別(常に0) 16進数1桁 uint8
+    uint8_t reserved;  //!< Version type (always 0) 1-digit hexadecimal uint8
   };
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComGetvDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComGetvDataEncoder() {}
 
@@ -384,7 +384,7 @@ class PowerEcuComGetvDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// アンドック指令コマンド(undck)
+// Undock command (undck)
 class PowerEcuComUndckDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComUndckDataEncoder(PowerEcuComUndckDataEncoder const&);             // = delete;
@@ -392,18 +392,18 @@ class PowerEcuComUndckDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
     bool is_undck;
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComUndckDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComUndckDataEncoder() {}
 
@@ -411,7 +411,7 @@ class PowerEcuComUndckDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// 12Vu_イネーブルコマンド(12vu_)
+// 12Vu enable command (12vu_)
 class PowerEcuCom12VuDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuCom12VuDataEncoder(PowerEcuCom12VuDataEncoder const&);             // = delete;
@@ -419,18 +419,18 @@ class PowerEcuCom12VuDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
     bool is_12vu_enable;
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuCom12VuDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuCom12VuDataEncoder() {}
 
@@ -438,7 +438,7 @@ class PowerEcuCom12VuDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// 5Vd3_イネーブルコマンド(5vd3_)
+// 5Vd3 enable command (5vd3_)
 class PowerEcuCom5Vd3DataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuCom5Vd3DataEncoder(PowerEcuCom5Vd3DataEncoder const&);             // = delete;
@@ -446,18 +446,18 @@ class PowerEcuCom5Vd3DataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
     bool is_5vd3_enable;
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuCom5Vd3DataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuCom5Vd3DataEncoder() {}
 
@@ -465,7 +465,7 @@ class PowerEcuCom5Vd3DataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// 5Vd4_イネーブルコマンド(5vd4_)
+// 5Vd4 enable command (5vd4_)
 class PowerEcuCom5Vd4DataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuCom5Vd4DataEncoder(PowerEcuCom5Vd4DataEncoder const&);             // = delete;
@@ -473,18 +473,18 @@ class PowerEcuCom5Vd4DataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
     bool is_5vd4_enable;
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuCom5Vd4DataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuCom5Vd4DataEncoder() {}
 
@@ -492,7 +492,7 @@ class PowerEcuCom5Vd4DataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// 5Vd5_イネーブルコマンド(5vd5_)
+// 5Vd5 enable command (5vd5_)
 class PowerEcuCom5Vd5DataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuCom5Vd5DataEncoder(PowerEcuCom5Vd5DataEncoder const&);             // = delete;
@@ -500,18 +500,18 @@ class PowerEcuCom5Vd5DataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal structure of the packet
    */
   struct PacketData {
     bool is_5vd5_enable;
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuCom5Vd5DataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuCom5Vd5DataEncoder() {}
 

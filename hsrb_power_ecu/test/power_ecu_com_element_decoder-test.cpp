@@ -39,8 +39,8 @@ DAMAGE.
 #include "../src/power_ecu_com_element_decoder.hpp"
 #include "common_methods.hpp"
 namespace {
-const size_t kTestValueLengs = 3;
-const size_t kBufferSize = 1000;
+const size_t kTestValueLengs = 3;  //!< Number of test value parameters
+const size_t kBufferSize = 1000;   //!< Size of the PacketBuffer
 
 template <typename T>
 void ElementUintDecoderTestHelper(const size_t digits, const boost::array<std::string, kTestValueLengs>& test_values,
@@ -60,7 +60,7 @@ void ElementUintDecoderTestHelper(const size_t digits, const boost::array<std::s
   {
     SCOPED_TRACE("failue digits");
     std::string bad_string = "";
-    // One digit
+    // One digit more
     for (size_t i = 0; i < digits + 1; ++i) {
       bad_string += "0";
     }
@@ -79,7 +79,7 @@ void ElementUintDecoderTestHelper(const size_t digits, const boost::array<std::s
   {
     SCOPED_TRACE("failue digits");
     std::string bad_string = "";
-    // 1 digit little
+    // One digit less
     for (size_t i = 0; i < digits - 1; ++i) {
       bad_string += "0";
     }
@@ -115,7 +115,7 @@ void ElementHexUintDecoderTestHelper(const size_t digits, const boost::array<std
   {
     SCOPED_TRACE("failue digits");
     std::string bad_string = "h";
-    // One digit
+    // One digit more
     for (size_t i = 0; i < digits + 1; ++i) {
       bad_string += "0";
     }
@@ -134,7 +134,7 @@ void ElementHexUintDecoderTestHelper(const size_t digits, const boost::array<std
   {
     SCOPED_TRACE("failue digits");
     std::string bad_string = "h";
-    // 1 digit little
+    // One digit less
     for (size_t i = 0; i < digits - 1; ++i) {
       bad_string += "0";
     }
@@ -170,7 +170,7 @@ void ElementIntDecoderTestHelper(const size_t digits, const boost::array<std::st
   {
     SCOPED_TRACE("failue digits");
     std::string bad_string = " ";
-    // One digit
+    // One digit more
     for (size_t i = 0; i < digits + 1; ++i) {
       bad_string += "0";
     }
@@ -189,7 +189,7 @@ void ElementIntDecoderTestHelper(const size_t digits, const boost::array<std::st
   {
     SCOPED_TRACE("failue digits");
     std::string bad_string = " ";
-    // 1 digit little
+    // One digit less
     for (size_t i = 0; i < digits - 1; ++i) {
       bad_string += "0";
     }
@@ -224,7 +224,7 @@ void ElementStringDecoderTestHelper(const size_t digits, const boost::array<std:
   {
     SCOPED_TRACE("failue digits");
     std::string bad_string = "";
-    // One digit
+    // One digit more
     for (size_t i = 0; i < digits + 1; ++i) {
       bad_string += "0";
     }
@@ -243,7 +243,7 @@ void ElementStringDecoderTestHelper(const size_t digits, const boost::array<std:
   {
     SCOPED_TRACE("failue digits");
     std::string bad_string = "";
-    // 1 digit little
+    // One digit less
     for (size_t i = 0; i < digits - 1; ++i) {
       bad_string += "0";
     }

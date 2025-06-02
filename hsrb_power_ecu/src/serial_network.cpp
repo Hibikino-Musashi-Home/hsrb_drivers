@@ -49,10 +49,10 @@ DAMAGE.
 #include "system.hpp"
 
 namespace {
-const char kPortName[] = "/dev/ttyUSB0";
-const size_t kBufferSize = 4 * 1000;
-const uint32_t kTimeoutNanoSec = 300000;
-const int32_t kSleepTickNanoSec = 10000;
+const char kPortName[] = "/dev/ttyUSB0";  //!< Device name
+const size_t kBufferSize = 4 * 1000;      //!< Buffer size
+const uint32_t kTimeoutNanoSec = 300000;  //!< Command timeout duration
+const int32_t kSleepTickNanoSec = 10000;  //!< Waiting loop time during Send
 
 }  // anonymous namespace
 
@@ -78,6 +78,7 @@ SerialNetwork::~SerialNetwork() {}
 
 /**
  * @brief Open
+ * @return On success boost::system::errc::success
  */
 boost::system::error_code SerialNetwork::Open() {
   int32_t port = system_->Open(port_name_.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
@@ -88,6 +89,7 @@ boost::system::error_code SerialNetwork::Open() {
 
   termios term;
   if (system_->Tcgetattr(fd_, &term)) {
+    // TODO(kitsunai): テスト未実施
     return boost::system::error_code(errno, boost::system::system_category());
   }
 
@@ -104,25 +106,29 @@ boost::system::error_code SerialNetwork::Open() {
   term.c_cc[VTIME] = 0;
   term.c_cc[VMIN] = 1;
   if (system_->Tcsetattr(fd_, TCSANOW, &term)) {
+    // TODO(kitsunai): テスト未実施
     return boost::system::error_code(errno, boost::system::system_category());
   }
 
-  // Set Low Latency (no settings required for Kernel5.4)
+  // set low latency (Not needed for Kernel 5.4)
   struct utsname utsname;
-  // Confirm whether the first three characters in the Kernel version are 4.4
+  // Check if the first three characters of the kernel version are 4.4
   if ((uname(&utsname) == 0) && (std::string(utsname.release).compare(0, 3, "4.4") == 0)) {
     serial_struct serial;
     if (system_->Ioctl(fd_, TIOCGSERIAL, &serial)) {
+      // TODO(kitsunai): テスト未実施
       return boost::system::error_code(errno, boost::system::system_category());
     }
     serial.flags |= ASYNC_LOW_LATENCY;
     if (system_->Ioctl(fd_, TIOCSSERIAL, &serial)) {
+      // TODO(kitsunai): テスト未実施
       return boost::system::error_code(errno, boost::system::system_category());
     }
   }
 
   // Flushing port
   if (system_->Tcflush(fd_, TCIOFLUSH)) {
+    // TODO(kitsunai): テスト未実施
     return boost::system::error_code(errno, boost::system::system_category());
   }
   return boost::system::errc::make_error_code(boost::system::errc::success);
@@ -130,6 +136,7 @@ boost::system::error_code SerialNetwork::Open() {
 
 /**
  * @brief Close
+ * @return On success boost::system::errc::success
  */
 boost::system::error_code SerialNetwork::Close() {
   if (fd_ != 0) {
@@ -140,28 +147,38 @@ boost::system::error_code SerialNetwork::Close() {
 }
 
 /**
- * @brief network setting change
+ * @brief Change network settings
+ * @param[in] param Setting name
+ * @param[in] value Change value
+ * @return On successful transmission boost::system::errc::success
  */
 boost::system::error_code SerialNetwork::Configure(const std::string &param, const int32_t value) {
   return Configure(param, boost::lexical_cast<std::string>(value));
 }
 
 /**
- * @brief network setting change
+ * @brief Change network settings
+ * @param[in] param Setting name
+ * @param[in] value Change value
+ * @return On successful transmission boost::system::errc::success
  */
 boost::system::error_code SerialNetwork::Configure(const std::string &param, const double value) {
   return Configure(param, boost::lexical_cast<std::string>(value));
 }
 
 /**
- * @brief network setting change
+ * @brief Change network settings
+ * For maintenance, consolidate the processing into the ones with string value types.
+ * @param[in] param Setting name
+ * @param[in] value Change value
+ * @return On successful transmission boost::system::errc::success
  */
 boost::system::error_code SerialNetwork::Configure(const std::string &param, const std::string &value) {
   if (fd_ != 0) {
     return boost::system::errc::make_error_code(boost::system::errc::operation_in_progress);
   }
   if (param == "receive_timeout_ms") {
-    // timeout
+    // Timeout
     double const timeout = boost::lexical_cast<double>(value);
     if (timeout < 0) {
       return boost::system::errc::make_error_code(boost::system::errc::invalid_argument);
@@ -177,7 +194,10 @@ boost::system::error_code SerialNetwork::Configure(const std::string &param, con
 }
 
 /**
- * @brief transmission
+ * @brief Transmit
+ * Transmit all contents of the buffer received as an argument within the timeout duration
+ * @param[in] data Transmission data buffer
+ * @return On successful transmission boost::system::errc::success
  */
 boost::system::error_code SerialNetwork::Send(const PacketBuffer &data) {
   size_t const length = data.size();
@@ -185,18 +205,18 @@ boost::system::error_code SerialNetwork::Send(const PacketBuffer &data) {
     return boost::system::error_code(boost::system::errc::invalid_argument, boost::system::system_category());
   }
 
-  // Copy data to the transmission buffer
+  // Copy data to transmission buffer
   std::copy(data.begin(), data.end(), send_buffer_.begin());
 
   size_t send_size = 0;
   int64_t const start = system_->Now();
   int64_t elapsed = start;
   while ((elapsed - start) < timeout_ns_) {
-    // Try all data remaining in the transmission buffer
+    // Try to transmit any remaining data in the transmission buffer
     ssize_t result = system_->Write(fd_, &send_buffer_.front() + send_size, length - send_size);
     if (result < 0) {
       if (errno == EAGAIN) {
-        // In the event of a failure, if the device is in a vision state, retry the transmission within the timeout tolerance time.
+        // On transmission failure, retry within timeout duration if the device is busy
         // wait for sleep_tick_ nanoseconds
         timespec duration = {0, sleep_tick_};
         while (system_->Clock_nanosleep(CLOCK_MONOTONIC, 0, &duration, &duration)) {
@@ -208,11 +228,11 @@ boost::system::error_code SerialNetwork::Send(const PacketBuffer &data) {
           }
         }
       } else {
-        // Failure if other errors
+        // Failure on other errors
         return boost::system::error_code(errno, boost::system::system_category());
       }
     } else {
-      // If the data is left in the transmission buffer, re -try to send until the buffer becomes empty
+      // Retry transmission until the buffer is empty if data remains in the transmission buffer
       send_size += result;
       if (send_size == length) {
         return boost::system::error_code(boost::system::errc::success, boost::system::system_category());
@@ -226,7 +246,11 @@ boost::system::error_code SerialNetwork::Send(const PacketBuffer &data) {
 }
 
 /**
- * @brief reception
+ * @brief Receive
+ * Store the transmission data at the end of the buffer.
+ * If no received data exists, wait for reception within the timeout duration.
+ * @param[out] data Reception buffer
+ * @return
  */
 boost::system::error_code SerialNetwork::Receive(PacketBuffer &data) {
   int64_t const start = system_->Now();
@@ -238,7 +262,7 @@ boost::system::error_code SerialNetwork::Receive(PacketBuffer &data) {
   poll_fd[0].events = POLLIN | POLLPRI;
 
   while ((elapsed - start) < timeout_ns_) {
-    // Wait until the received data comes
+    // Wait until data can be received
     int64_t remain_timeout = timeout_ns_ - (elapsed - start);
     poll_timeout.tv_sec = remain_timeout / 1000000000LL;
     poll_timeout.tv_nsec = remain_timeout % 1000000000LL;
@@ -249,7 +273,7 @@ boost::system::error_code SerialNetwork::Receive(PacketBuffer &data) {
     } else if (ready < 0) {
       return boost::system::error_code(errno, boost::system::system_category());
     }
-    // Reading
+    // Read
     uint32_t const limit_size = receive_buffer_.size() < data.reserve() ? receive_buffer_.size() : data.reserve();
     ssize_t const result = system_->Read(fd_, &receive_buffer_[0], limit_size);
     if (result < 0) {
@@ -257,7 +281,7 @@ boost::system::error_code SerialNetwork::Receive(PacketBuffer &data) {
     } else {
       for (ssize_t i = 0; i < result; i++) {
         if (data.full()) {
-          // There are leftovers, but it is normal because it can be read normally until the buffer is full.
+          // Considered normal if there is unread data, but reading is successful until the buffer is full
           return boost::system::error_code(boost::system::errc::success, boost::system::system_category());
         }
         data.push_back(receive_buffer_[i]);

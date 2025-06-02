@@ -34,9 +34,12 @@ DAMAGE.
 #include "led_command_subscriber.hpp"
 #include "power_ecu_protocol.hpp"
 
+/**
+ * @brief Sample code for the operation of led_command_subscriber that subscribes to and writes LED information
+ */
 int32_t main(int32_t argc, char** argv) {
-  // Command line analysis
-  std::string port_name;
+  // Command line parsing
+  std::string port_name;  //!< Port name
 
   {
     bool can_run = true;
@@ -45,14 +48,14 @@ int32_t main(int32_t argc, char** argv) {
     if (argc == 2) {
       // When there is one option
       if (std::string(argv[1]) == "--help") {
-        // -Help does not return abnormalities when specified
+        // No error returned when --help is specified
         can_run = false;
         is_display_help = true;
       } else {
         port_name = argv[1];
       }
     } else {
-      // There is no command line argument or two or more errors
+      // Error when no command line arguments or more than two
       can_run = false;
     }
 

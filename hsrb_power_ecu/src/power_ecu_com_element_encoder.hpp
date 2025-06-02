@@ -41,9 +41,9 @@ DAMAGE.
 namespace hsrb_power_ecu {
 
 /**
- * @brief 16進数のパケット用エンコーダ
- * 内部でuint32_tを使った変換を行っているため、
- * 桁数の上限は8桁
+ * @brief Encoder for hexadecimal packets
+ * Internally, conversion using uint32_t is performed, therefore,
+ * The upper limit of the number of digits is 8
  */
 template <class Input>
 class ElementHexUintEncoder : public IElementEncoder {
@@ -53,28 +53,28 @@ class ElementHexUintEncoder : public IElementEncoder {
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param value 変換元の値
-   * @param length 変換後の文字列の桁数
+   * @brief Constructor
+   * @param value The original value for conversion
+   * @param length The number of digits in the converted string
    */
   ElementHexUintEncoder(const Input& value, const size_t length) : value_(value), length_(length) {
-    convert_buffer_.reserve(length + 2);  // 桁数+\0+'h'
+    convert_buffer_.reserve(length + 2);  // Number of digits + \0 + 'h'
   }
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~ElementHexUintEncoder() {}
 
   /**
-   * @brief エンコード
-   * @param[out] buffer 出力先のバッファ
-   * @return エンコード成功時 true
+   * @brief Encode
+   * @param[out] buffer Buffer for output
+   * @return true upon successful encoding
    */
   inline virtual bool Encode(PacketBuffer& buffer) {
     uint32_t current_value = static_cast<uint32_t>(value_);
     convert_buffer_.clear();
 
-    // 16進文字を下の桁から作る
+    // Create hexadecimal characters from the lower digit
     for (size_t i = 0; i < length_; ++i) {
       uint32_t v = current_value % 0x10;
       char h;
@@ -93,21 +93,21 @@ class ElementHexUintEncoder : public IElementEncoder {
       return false;
     }
 
-    // 逆さまに代入
+    // Assign in reverse
     std::copy(convert_buffer_.rbegin(), convert_buffer_.rend(), std::back_inserter(buffer));
     return true;
   }
 
  private:
-  const Input& value_;          //!< エンコードする値
-  const size_t length_;         //!< 桁数
-  std::string convert_buffer_;  //!< 変換用バッファ
+  const Input& value_;          //!< Value to encode
+  const size_t length_;         //!< Number of digits
+  std::string convert_buffer_;  //!< Buffer for conversion
 };
 
 /**
- * @brief 16進メッセージをビット指定で作成するクラス
- * 内部でuint32_tを使った変換を行っているため、
- * 桁数の上限は8桁
+ * @brief A class to create hexadecimal messages with specified bits
+ * Internally, conversion using uint32_t is performed, therefore,
+ * The upper limit of the number of digits is 8
  */
 class ElementHexUintBitsEncoder : public ElementHexUintEncoder<uint32_t> {
  private:
@@ -118,20 +118,20 @@ class ElementHexUintBitsEncoder : public ElementHexUintEncoder<uint32_t> {
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param length 変換後の文字列の桁数
+   * @brief Constructor
+   * @param length The number of digits in the converted string
    */
   explicit ElementHexUintBitsEncoder(const size_t length)
       : ElementHexUintEncoder<uint32_t>(value_, length), length_(length) {}
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~ElementHexUintBitsEncoder() {}
 
   /**
-   * @brief エンコード
-   * @param[out] buffer 出力先のバッファ
-   * @return エンコード成功時 true
+   * @brief Encode
+   * @param[out] buffer Buffer for output
+   * @return true upon successful encoding
    */
   inline virtual bool Encode(PacketBuffer& buffer) {
     value_ = 0;
@@ -144,10 +144,10 @@ class ElementHexUintBitsEncoder : public ElementHexUintEncoder<uint32_t> {
   }
 
   /**
-   * @brief ビット番地と評価対象となるbool値を登録
+   * @brief Register the bit address and boolean value to be evaluated
    *
-   * @param bit 送信時の最下位ビット(通信仕様書では最上位bit)を0としたときの番地
-   * @param flag 評価対象のbool値
+   * @param bit Address when the least significant bit during transmission (considered the most significant bit in the communication specification) is 0
+   * @param flag Boolean value to be evaluated
    *
    * @return
    */
@@ -164,14 +164,14 @@ class ElementHexUintBitsEncoder : public ElementHexUintEncoder<uint32_t> {
 
  private:
   size_t length_;
-  BitmapType bit_map_;  //!< ビット番地とフラグ値のマップ
-  uint32_t value_;      //!< バッファ
+  BitmapType bit_map_;  //!< Map of bit addresses and flag values
+  uint32_t value_;      //!< Buffer
 };
 
 /**
- * @brief 10進数のパケット用エンコーダ
- * 内部でuint32_tを使った変換を行っているため、
- * 桁数の上限は9桁
+ * @brief Encoder for decimal packets
+ * Internally, conversion using uint32_t is performed, therefore,
+ * The upper limit of the number of digits is 9
  */
 template <class Input>
 class ElementUintEncoder : public IElementEncoder {
@@ -181,28 +181,28 @@ class ElementUintEncoder : public IElementEncoder {
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param value 変換元の値
-   * @param length 変換後の文字列の桁数
+   * @brief Constructor
+   * @param value The original value for conversion
+   * @param length The number of digits in the converted string
    */
   ElementUintEncoder(const Input& value, const size_t length) : value_(value), length_(length) {
-    convert_buffer_.reserve(length + 1);  // 桁数+\0
+    convert_buffer_.reserve(length + 1);  // Number of digits + \0
   }
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~ElementUintEncoder() {}
 
   /**
-   * @brief エンコード
-   * @param[out] buffer 出力先のバッファ
-   * @return エンコード成功時 true
+   * @brief Encode
+   * @param[out] buffer Buffer for output
+   * @return true upon successful encoding
    */
   inline virtual bool Encode(PacketBuffer& buffer) {
     uint32_t current_value = static_cast<uint32_t>(value_);
     convert_buffer_.clear();
 
-    // 下の桁から作成
+    // Create from the lower digit
     for (size_t i = 0; i < length_; ++i) {
       uint32_t v = current_value % 10;
       char d;
@@ -218,15 +218,15 @@ class ElementUintEncoder : public IElementEncoder {
       return false;
     }
 
-    // 逆さまに代入
+    // Assign in reverse
     std::copy(convert_buffer_.rbegin(), convert_buffer_.rend(), std::back_inserter(buffer));
     return true;
   }
 
  private:
-  const Input& value_;          //!< エンコードする値
-  const size_t length_;         //!< 桁数
-  std::string convert_buffer_;  //!< 変換用バッファ
+  const Input& value_;          //!< Value to encode
+  const size_t length_;         //!< Number of digits
+  std::string convert_buffer_;  //!< Buffer for conversion
 };
 
 class ElementStringEncoder : public IElementEncoder {
@@ -236,20 +236,20 @@ class ElementStringEncoder : public IElementEncoder {
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param value 変換元の値
-   * @param length 変換後の文字列の桁数
+   * @brief Constructor
+   * @param value The original value for conversion
+   * @param length The number of digits in the converted string
    */
   ElementStringEncoder(const std::string& value, const size_t length) : value_(value), length_(length) {}
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~ElementStringEncoder() {}
 
   /**
-   * @brief エンコード
-   * @param[out] buffer 出力先のバッファ
-   * @return エンコード成功時 true
+   * @brief Encode
+   * @param[out] buffer Buffer for output
+   * @return true upon successful encoding
    */
   inline virtual bool Encode(PacketBuffer& buffer) {
     if (value_.size() != length_) return false;
@@ -258,8 +258,8 @@ class ElementStringEncoder : public IElementEncoder {
   }
 
  private:
-  const std::string& value_;  //!< エンコードする値
-  const size_t length_;       //!< 桁数
+  const std::string& value_;  //!< Value to encode
+  const size_t length_;       //!< Number of digits
 };
 }  // namespace hsrb_power_ecu
 #endif  // HSRB_POWER_ECU_POWER_ECU_COM_ELEMENT_ENCODER_HPP_

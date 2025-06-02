@@ -50,8 +50,8 @@ class System : public ISystemInterface {
       RCLCPP_FATAL(rclcpp::get_logger("system"), "failed clock_gettime.");
       exit(EXIT_FAILURE);
     }
-    // Overflow occurs 2^63 (int64) / 10^-9 / 3600 /24 = 292
-    // I ignore this this time because TV_sec is 292 years after the reference value
+    // Overflow will occur as it is 292 after 2^63(int64) / 10^-9 / 3600 / 24
+    // Since tv_sec is after 292 years from the reference value, it will be ignored this time
     return static_cast<int64_t>(t.tv_sec) * 1000000000LL + static_cast<int64_t>(t.tv_nsec);
   }
 

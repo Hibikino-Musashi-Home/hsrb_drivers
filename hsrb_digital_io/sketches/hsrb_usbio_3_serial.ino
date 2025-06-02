@@ -124,7 +124,7 @@ void loop() {
     WriteCommand(kSuction, prev_suction);
 
     Serial.print(!digitalRead(kMagneticSensor1));
-    Serial.print(!digitalRead(kMagneticSensor1));
+    Serial.print(!digitalRead(kMagneticSensor2));
     Serial.print(digitalRead(kEmergencySwitch));
 
     int pressure_analog = analogRead(kPressureSensor);

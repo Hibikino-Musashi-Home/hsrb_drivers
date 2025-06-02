@@ -33,6 +33,7 @@ DAMAGE.
 
 #include <hsrb_power_ecu/i_network.hpp>
 #include <hsrb_power_ecu/serial_network.hpp>
+#include "battery_diagnostic_task.hpp"
 #include "battery_state_publisher.hpp"
 #include "bool_state_publisher.hpp"
 #include "get_parameter.hpp"
@@ -46,7 +47,7 @@ const char* const kDefaultPortName = "/dev/ttyCTI3";
 const double kPortReceiveTimeoutMs = 0.5;
 const char* const kDefaultImuFrame = "base_imu_frame";
 
-// ECU parameter name and topic name issued
+// ECU parameter names and the names of topics to be issued
 const std::vector<std::pair<std::string, std::string>> kParamAndTopicNames {
   {"is_bumper_bumper1", "base_f_bumper_sensor"}, {"is_bumper_bumper2", "base_b_bumper_sensor"},
   {"is_powerecu_sw_kinoko", "emergency_stop_button"}, {"is_powerecu_sw_w_stop", "wireless_stop_button"},
@@ -72,15 +73,15 @@ int32_t main(int32_t argc, char** argv) {
 
   if (!protocol->Open()) {
     RCLCPP_FATAL(node->get_logger(), "Protocol Open failed.");
-    exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE);  // Currently, it is impossible to recover in case of network open failure
   }
   if (!protocol->Init()) {
     RCLCPP_FATAL(node->get_logger(), "Protocol Init Failed");
-    exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE);  // Currently, it is impossible to recover in case of network open failure
   }
   if (protocol->Start() != boost::system::errc::success) {
     RCLCPP_FATAL(node->get_logger(), "start failed");
-    exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE);  // Currently, it is impossible to recover in case of network open failure
   }
 
   auto led_command_subscriber = std::make_shared<hsrb_power_ecu::LedCommandSubscriber>(node, protocol);
@@ -94,6 +95,11 @@ int32_t main(int32_t argc, char** argv) {
     publishers.push_back(std::make_shared<hsrb_power_ecu::BoolStatePublisher>(
                          node, protocol, name.first, name.second));
   }
+
+  diagnostic_updater::Updater diagnostic_updater(node);
+  diagnostic_updater.setHardwareID("hsrb_power_battery");
+  hsrb_power_ecu::BatteryDiagnosticTask battery_diagnostic_task(node, protocol);
+  diagnostic_updater.add(battery_diagnostic_task);
 
   rclcpp::WallRate loop_rate(100.0);  // Hz
 

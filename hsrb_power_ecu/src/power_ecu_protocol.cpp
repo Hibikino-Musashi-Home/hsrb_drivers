@@ -40,18 +40,18 @@ DAMAGE.
 
 
 namespace {
-const size_t kBufferSize = 4 * 1000;             //!< バッファサイズ
-const size_t kCommandQueueSize = 1000;           //!< コマンドキューの最大数
-const uint32_t kErrorCounterSize = 1000;         //!< エラーレートのバッファサイズ
-const uint32_t kRetryCount = 10;                 //!< 許容リトライカウント
-const double kRetryRate = 0.9;                   //!< 許容エラーレート
-const uint32_t kProcessCommandQueueTimeOut = 5;  //!< コマンドキュー解決のタイムアウト時間(sec)
-const double kCycleHz = 100.0;                   //!< ポーリング周期(Hz)
-const double kCommandTimeout = 10;               //!< タイムアウト時間
-// ハートビート送信周期 (タイムアウト時間10秒の半分)
+const size_t kBufferSize = 4 * 1000;             //!< Buffer size
+const size_t kCommandQueueSize = 1000;           //!< Maximum number of command queue
+const uint32_t kErrorCounterSize = 1000;         //!< Buffer size for error rate
+const uint32_t kRetryCount = 10;                 //!< Allowable retry count
+const double kRetryRate = 0.9;                   //!< Allowable error rate
+const uint32_t kProcessCommandQueueTimeOut = 5;  //!< Timeout time for resolving command queue (sec)
+const double kCycleHz = 100.0;                   //!< Polling cycle (Hz)
+const double kCommandTimeout = 10;               //!< Timeout time
+// Heartbeat transmission cycle (half of the timeout time of 10 seconds)
 const rclcpp::Duration kHeartbeatDuration = rclcpp::Duration::from_seconds(kCommandTimeout * 0.5);
 
-const char kEcuComVersion1String[] = "B7335B767D0FA2E6925BC8E965E443291A16A26A";  //!< プロトコルバージョン1
+const char kEcuComVersion1String[] = "B7335B767D0FA2E6925BC8E965E443291A16A26A";  //!< Protocol version 1
 
 const char kIsReceiveAckName[] = "is_receive_ack";
 const char kAckValue[] = "ack_value";
@@ -77,19 +77,19 @@ PowerEcuProtocol::PowerEcuProtocol(boost::shared_ptr<hsrb_power_ecu::INetwork> n
       write_error_counter_(kErrorCounterSize),
       clock_(node->get_clock()),
       last_heartbeat_time_(clock_->now()) {
-  // データデコーダ登録
-  // デコーダの登録に失敗することを設計上ありえない
+  // Data decoder registration
+  // It is theoretically impossible to fail to register the decoder
   RegisterDataDecoder<hsrb_power_ecu::PowerEcuComRxackDataDecoder>();
   RegisterDataDecoder<hsrb_power_ecu::PowerEcuComVerDataDecoder>();
 
-  // フレームエンコーダ登録
-  // エンコーダの登録に失敗することを設計上ありえない
+  // Frame encoder registration
+  // It is theoretically impossible to fail to register the encoder
   //// heart
   heart_command_name_ = RegisterDataEncoder<hsrb_power_ecu::PowerEcuComHeartDataEncoder>();
   getv_command_name_ = RegisterDataEncoder<hsrb_power_ecu::PowerEcuComGetvDataEncoder>();
 
-  // コマンド生成
-  //// ハートビートコマンド
+  // Command generation
+  //// Heartbeat command
   counts = GetParamPtr<uint32_t>(kCounts);
   assert(counts != NULL);
   is_receive_ack_ = GetParamPtr<bool>(kIsReceiveAckName);
@@ -105,7 +105,7 @@ PowerEcuProtocol::PowerEcuProtocol(boost::shared_ptr<hsrb_power_ecu::INetwork> n
 }
 
 bool PowerEcuProtocol::Open() {
-  // シリアルポート初期化
+  // Serial port initialization
   if (network_->Open() != boost::system::errc::success) {
     RCLCPP_FATAL(rclcpp::get_logger("power_ecu_protocol"), "network open Failed");
     return false;
@@ -114,21 +114,21 @@ bool PowerEcuProtocol::Open() {
 }
 
 void PowerEcuProtocol::Close() {
-  // シリアルポートクローズ
+  // Serial port close
   network_->Close();
 }
 
 bool PowerEcuProtocol::Init() {
-  // バージョン取得
+  // Get version
   PowerEcuVersions version;
   if (!GetPowerEcuVersions(version)) {
     return false;
   }
 
-  // バージョンに対応するコマンドを登録
-  // バージョン切り替え機能追加時はこの処理をクラスとして取り出す
+  // Register command corresponding to version
+  // When adding version switching functionality, extract this process as a class
   if (version.power_ecu_com_version == kEcuComVersion1String) {
-    // 登録処理
+    // Registration process
     std::string dummy;
     RegisterDataDecoder<hsrb_power_ecu::PowerEcuComEcu1DataDecoder>();
     RegisterDataDecoder<hsrb_power_ecu::PowerEcuComEcu2DataDecoder>();
@@ -268,25 +268,25 @@ bool PowerEcuProtocol::Init() {
 }
 
 boost::system::error_code PowerEcuProtocol::Start() {
-  // バージョン切り替え機能追加時はこの処理をクラスとして取り出す
+  // When adding version switching functionality, extract this process as a class
   {
-    // RTC合わせ
-    //// 現在時刻セット
+    // RTC synchronization
+    //// Set current time
     auto in_time_t = static_cast<time_t>((int32_t)(clock_->now().seconds()));
     std::stringstream string_stream;
     string_stream << std::put_time(std::localtime(&in_time_t), "%Y%m%d%H%M%S");
     std::string time_string = string_stream.str();
 
-    // 20170210095651のようなフォーマットを想定
+    // Assumes format like 20170210095651
     hsrb_power_ecu::Assert((time_string.size() == 14), "time_string format error");
     *(this->GetParamPtr<std::string>("start_time")) = time_string;
     AddCommandQueue(time_command_name_);
 
-    // mute 解除
+    // unmute
     *(this->GetParamPtr<bool>("is_amp_mute")) = false;
     AddCommandQueue(mute_command_name_);
 
-    // 定期通信開始
+    // Start periodic communication
     *(this->GetParamPtr<bool>("is_enable_ecu1")) = true;
     *(this->GetParamPtr<bool>("is_enable_ecu2")) = true;
     AddCommandQueue(start_command_name_);
@@ -296,7 +296,7 @@ boost::system::error_code PowerEcuProtocol::Start() {
 }
 
 boost::system::error_code PowerEcuProtocol::Stop() {
-  // バージョン切り替え機能追加時はこの処理をクラスとして取り出す
+  // When adding version switching functionality, extract this process as a class
   { AddCommandQueue(stop_command_name_); }
   return ProcessCommandQueue(true, kCycleHz, kRetryRate);
 }
@@ -305,7 +305,7 @@ bool PowerEcuProtocol::GetPowerEcuVersions(PowerEcuVersions& result) {
   rclcpp::WallRate loop_rate(100.0);
   const auto start_time = clock_->now();
 
-  // コマンド送信
+  // Send command
   *is_receive_version_ = false;
   size_t retry = 0;
   while (true) {
@@ -320,7 +320,7 @@ bool PowerEcuProtocol::GetPowerEcuVersions(PowerEcuVersions& result) {
     }
   }
 
-  // コマンド受信
+  // Receive command
   while (true) {
     if (ReceiveAll() != boost::system::errc::success) {
       if (GetReceiveErrorRate() > kRetryRate) {
@@ -331,10 +331,10 @@ bool PowerEcuProtocol::GetPowerEcuVersions(PowerEcuVersions& result) {
     if (*is_receive_version_) {
       result.power_ecu_version.assign(*ver_power_ecu_version_);
       result.power_ecu_com_version.assign(*ver_power_ecu_com_version_);
-      // バージョンチェック
+      // Version check
       break;
     }
-    // タイムアウトチェック
+    // Timeout check
     if ((clock_->now() - start_time).seconds() > kCommandTimeout) {
       RCLCPP_FATAL(rclcpp::get_logger("power_ecu_protocol"), "receive timeout.");
       return false;
@@ -348,12 +348,12 @@ bool PowerEcuProtocol::GetPowerEcuVersions(PowerEcuVersions& result) {
 boost::system::error_code PowerEcuProtocol::ProcessCommandQueue(bool check_ros,
                                                                 double cycle_hz,
                                                                 double error_rate) {
-  // コマンド処理
+  // Command processing
   const auto start_time = clock_->now();
 
-  // ポーリング周期チェック - コマンドキュー解決時間以上の場合は引数異常とする
+  // Polling cycle check - consider argument abnormal if it is equal to or more than the command queue resolving time
   if (cycle_hz < (1.0 / kProcessCommandQueueTimeOut)) {
-    // ポーリング周期0以下は引数異常
+    // Argument is abnormal if polling cycle is 0 or less
     return boost::system::errc::make_error_code(boost::system::errc::invalid_argument);
   }
   rclcpp::WallRate loop_rate(cycle_hz);
@@ -362,7 +362,7 @@ boost::system::error_code PowerEcuProtocol::ProcessCommandQueue(bool check_ros,
     if (SendAll() != boost::system::errc::success) {
       RCLCPP_WARN(rclcpp::get_logger("power_ecu_protocol"), "Send failed");
       if (GetSendErrorRate() > error_rate) {
-        // 許容エラーレートを超えた時、失敗を返す
+        // Returns failure when exceeding allowable error rate
         return boost::system::errc::make_error_code(boost::system::errc::operation_canceled);
       }
     }
@@ -371,11 +371,11 @@ boost::system::error_code PowerEcuProtocol::ProcessCommandQueue(bool check_ros,
     if (ReceiveAll() != boost::system::errc::success) {
       RCLCPP_WARN(rclcpp::get_logger("power_ecu_protocol"), "Receive failed");
       if (GetReceiveErrorRate() > error_rate) {
-        // 許容エラーレートを超えた時、失敗を返す
+        // Returns failure when exceeding allowable error rate
         return boost::system::errc::make_error_code(boost::system::errc::operation_canceled);
       }
     }
-    // 時間のチェックは直前に行う
+    // Perform time check immediately before
     if ((clock_->now() - start_time).seconds() > kProcessCommandQueueTimeOut) {
       RCLCPP_WARN(rclcpp::get_logger("power_ecu_protocol"), "ProcessCommandQueue Timeout");
       return boost::system::errc::make_error_code(boost::system::errc::timed_out);
@@ -387,19 +387,19 @@ boost::system::error_code PowerEcuProtocol::ProcessCommandQueue(bool check_ros,
 
 boost::system::error_code PowerEcuProtocol::ReceiveAll() {
   const auto time = clock_->now();
-  // リードバッファの解析を行う
-  // 受信処理
+  // Analyze read buffer
+  // Receive process
   boost::system::error_code ret = network_->Receive(receive_buffer_);
 
   if (ret != boost::system::errc::success) {
-    // 受信失敗
-    // serial_networkを通信デバイスとしていた場合、下記が失敗の原因である
-    //   - 受信タイムアウト
-    //     シリアルポートの受信バッファが空でも起こる為、正常な動作の可能性もある
-    //   - その他シリアルポートのエラー
+    // Receive failure
+    // If serial_network was used as a communication device, the following are the causes of failure
+    //   - Receive timeout
+    //     May occur even if the serial port receive buffer is empty, so there is a possibility of normal operation
+    //   - Other serial port errors
     //
-    // networkは成功時successとだけ挙動が定義されているため、
-    // success以外をnetwork_downとして上位へ通知する
+    // Because network behavior is only defined as success upon success,
+    // notify the upper layer as network_down for anything other than success
     read_error_counter_.Register(false);
     return boost::system::errc::make_error_code(boost::system::errc::network_down);
   }
@@ -411,44 +411,44 @@ boost::system::error_code PowerEcuProtocol::ReceiveAll() {
   while (receive_buffer_.size() > 0 && ret != boost::system::errc::result_out_of_range) {
     ret = frame_decoder_.Decode(current_it, receive_buffer_.end(), encoded_it);
     if (ret != boost::system::errc::success && ret != boost::system::errc::result_out_of_range) {
-      // 受信パケットが化けているとき protocol_error
+      // protocol_error when received packet is corrupted
       result = boost::system::errc::make_error_code(boost::system::errc::protocol_error);
     }
     current_it = encoded_it;
   }
 
-  // デコード済みの領域をクリア
+  // Clear decoded region
   hsrb_power_ecu::PacketBuffer::const_iterator start_it = receive_buffer_.begin();
   size_t size = std::distance(start_it, encoded_it);
   receive_buffer_.erase_begin(size);
 
 
-  // Ack受信確認
-  // 1. 返信が来ない
-  //    タウムアウト時間返信を待つ
-  //    タイムアウト発生時は、RCLCPP_ERRORを吐く
-  // 2. 失敗が返ってきた
-  //    RCLCPP_ERRORを吐く
+  // Ack receive confirmation
+  // 1. No reply comes
+  //    Wait for reply for timeout time
+  //    If a timeout occurs, output RCLCPP_ERROR
+  // 2. Failure is returned
+  //    Output RCLCPP_ERROR
   //
-  // is_waiting_ack_フラグを立てるのはWriteメソッドを使ってコマンド送信をした時。
-  // 直接SendCommandメソッドを使ってコマンド送信をした場合、この処理は行われない。
-  // getv_コマンドや、infoコマンド等Rxackを返さないコマンドは直接SendCommandメソッドを
-  // 使ってコマンド送信を行う
-  if (is_waiting_ack_) {     // Ack受信待ちの時
-    if (*is_receive_ack_) {  // 返信が返ってきている時
+  // Set is_waiting_ack_ flag when a command is sent using the Write method.
+  // If a command is sent directly using the SendCommand method, this process is not performed.
+  // Commands like getv_ or info that do not return Rxack should be sent using SendCommand method directly
+  // Send command
+  if (is_waiting_ack_) {     // When waiting for Ack reception
+    if (*is_receive_ack_) {  // When a reply has been received
       is_waiting_ack_ = false;
       CommandBuffer::iterator current_command = command_queue_.begin();
-      if (*ack_value_ != 0) {  // 失敗が返ってきたら
-        // コマンド処理終了
+      if (*ack_value_ != 0) {  // If failure is returned
+        // End of command processing
         result = boost::system::errc::make_error_code(boost::system::errc::operation_canceled);
         RCLCPP_ERROR(rclcpp::get_logger("power_ecu_protocol"),
                      "Failed send command. %s",
                      (*current_command)->GetCommandName().c_str());
       }
-      // 返信が返ってきている場合は、キューから削除する
+      // Delete from queue if a reply has been received
       command_queue_.pop_front();
     } else if ((time - last_send_command_time_).seconds() > kCommandTimeout) {
-      // Ackタイムアウト時は、キューから削除する
+      // Delete from queue at Ack timeout
       is_waiting_ack_ = false;
       RCLCPP_ERROR(rclcpp::get_logger("power_ecu_protocol"),
                    "command timeout: %s",
@@ -467,7 +467,7 @@ boost::system::error_code PowerEcuProtocol::SendAll() {
   rclcpp::Time time = clock_->now();
   boost::system::error_code ret;
   if (command_queue_.size() != 0 && !is_waiting_ack_) {
-    // 新しいコマンドの作成、送信
+    // Create and send new command
     CommandBuffer::iterator current_command = command_queue_.begin();
     ret = SendCommand(*current_command);
     if (ret != boost::system::errc::success) {
@@ -492,31 +492,31 @@ boost::system::error_code PowerEcuProtocol::SendAll() {
 }
 
 void PowerEcuProtocol::AddCommandQueue(hsrb_power_ecu::CommandState::Ptr command) {
-  command->SetProcessingStatus(true);  // 処理中フラグOn
-  command->ClearRetryCount();          // リトライカウント0
+  command->SetProcessingStatus(true);  // Processing flag On
+  command->ClearRetryCount();          // Retry count 0
 
-  // コマンドキュー追加
+  // Add to command queue
   command_queue_.push_back(command);
 }
 
 boost::system::error_code PowerEcuProtocol::SendCommand(hsrb_power_ecu::CommandState::Ptr command) {
-  // 変数初期化
+  // Initialize variable
   send_buffer_.clear();
 
-  // 送信コマンド作成
+  // Create send command
   if (!frame_encoder_.Encode(send_buffer_, command->GetCommandName()) == boost::system::errc::success) {
-    // コマンド追加はこのクラス内で完結しているため、エンコーダが存在しない子をは設計上ありえない
+    // Since the command addition is completed within this class, the absence of an encoder child is theoretically impossible
     RCLCPP_FATAL(rclcpp::get_logger("power_ecu_protocol"), "Packet encode failed.");
     exit(EXIT_FAILURE);
   }
 
-  // コマンド送信
+  // Send command
   if (network_->Send(send_buffer_) != boost::system::errc::success) {
-    // コマンド送信失敗時はネットワークがダウンしたと判断する
+    // Consider network as down when command sending fails
     return boost::system::errc::make_error_code(boost::system::errc::network_down);
   }
 
-  // ack受信フラグを落とす
+  // Lower ack receive flag
   *is_receive_ack_ = false;
   return boost::system::errc::make_error_code(boost::system::errc::success);
 }

@@ -1,13 +1,12 @@
 <package format="3">
   <name>hsrb_digital_io</name>
-  <version>2.1.0</version>
+  <version>2.2.0</version>
   <description>HSR-B digital I/O sketch for Arduino</description>
 
   <maintainer email="xr-hsr-support@mail.toyota.co.jp">HSR Support</maintainer>
-
   <license>BSD 3-clause Clear License</license>
 
-  <author>Keisuke Takeshita</author>
+  <author>Koji Terada</author>
 
   <exec_depend>python3-serial</exec_depend>
   <exec_depend>rclpy</exec_depend>

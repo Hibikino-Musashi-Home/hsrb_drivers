@@ -36,6 +36,7 @@ DAMAGE.
 #include <hsrb_power_ecu/i_network.hpp>
 #include <hsrb_power_ecu/serial_network.hpp>
 
+#include "../src/battery_diagnostic_task.hpp"
 #include "../src/battery_state_publisher.hpp"
 #include "../src/bool_state_publisher.hpp"
 #include "../src/get_parameter.hpp"
@@ -47,7 +48,7 @@ DAMAGE.
 
 
 namespace {
-// ECU parameter name and topic name issued
+// Parameter names of the ECU and the names of the topics to be published
 const std::vector<std::pair<std::string, std::string>> kParamAndTopicNames {
   {"is_bumper_bumper1", "base_f_bumper_sensor"}, {"is_bumper_bumper2", "base_b_bumper_sensor"},
   {"is_powerecu_sw_kinoko", "emergency_stop_button"}, {"is_powerecu_sw_w_stop", "wireless_stop_button"},
@@ -66,7 +67,7 @@ class IPublishChecker {
   bool is_update_;
 };
 
-class BatteryStatePublishChecker : public IPublishChecker{
+class BatteryStatePublishChecker : public IPublishChecker {
  public:
   BatteryStatePublishChecker(const rclcpp::Node::SharedPtr& node,
                              const std::string& topic_name) {
@@ -86,7 +87,7 @@ class BatteryStatePublishChecker : public IPublishChecker{
   }
 };
 
-class BoolPublishChecker : public IPublishChecker{
+class BoolPublishChecker : public IPublishChecker {
  public:
   BoolPublishChecker(const rclcpp::Node::SharedPtr& node,
                      const std::string& topic_name) {
@@ -105,6 +106,43 @@ class BoolPublishChecker : public IPublishChecker{
     is_update_ = true;
   }
 };
+
+class DiagnosticsChecker : public IPublishChecker {
+ public:
+  DiagnosticsChecker(const rclcpp::Node::SharedPtr& node, const std::string& diagnostics_name)
+      : diagnostics_name_(diagnostics_name) {
+    subscriber_ = node->create_subscription<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", rclcpp::QoS(1),
+        std::bind(&DiagnosticsChecker::Callback, this, std::placeholders::_1));
+  }
+
+  uint8_t GetLevel() const { return last_status_.level; }
+  std::string GetMessage() const { return last_status_.message; }
+  std::string GetHardwareId() const { return last_status_.hardware_id; }
+  std::string GetValue(const std::string& key) const {
+    for (const auto& value : last_status_.values) {
+      if (value.key == key) {
+        return value.value;
+      }
+    }
+    return "";
+  }
+
+ private:
+  std::string diagnostics_name_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr subscriber_;
+  diagnostic_msgs::msg::DiagnosticStatus last_status_;
+
+  void Callback(const diagnostic_msgs::msg::DiagnosticArray::SharedPtr message) {
+    for (const auto& status : message->status) {
+      if ((status.name.find(diagnostics_name_) != std::string::npos) && (status.message != "Node starting up")) {
+        last_status_ = status;
+        is_update_ = true;
+        return;
+      }
+    }
+  }
+};
+
 }  // anonymous namespace
 
 namespace hsrb_power_ecu {
@@ -135,15 +173,15 @@ class MainLoopTest : public ::testing::Test {
 
     if (!protocol_->Open()) {
       RCLCPP_FATAL(loop_node_->get_logger(), "protocol_ Open failed.");
-      FAIL();
+      FAIL();  // Currently unable to recover if network open fails
     }
     if (!protocol_->Init()) {
       RCLCPP_FATAL(loop_node_->get_logger(), "protocol_ Init Failed");
-      FAIL();
+      FAIL();  // Currently unable to recover if network open fails
     }
     if (protocol_->Start() != boost::system::errc::success) {
       RCLCPP_FATAL(loop_node_->get_logger(), "start failed");
-      FAIL();
+      FAIL();  // Currently unable to recover if network open fails
     }
 
     led_command_subscriber_ = std::make_shared<hsrb_power_ecu::LedCommandSubscriber>(loop_node_, protocol_);
@@ -157,6 +195,11 @@ class MainLoopTest : public ::testing::Test {
   }
 
   void RunMainLoop(std::function<bool()> done_func) {
+    diagnostic_updater::Updater diagnostic_updater(loop_node_, 0.1);
+    diagnostic_updater.setHardwareID("hsrb_power_battery");
+    hsrb_power_ecu::BatteryDiagnosticTask battery_diagnostic_task(loop_node_, protocol_);
+    diagnostic_updater.add(battery_diagnostic_task);
+
     auto clock = loop_node_->get_clock();
     const auto start_time = clock->now();
     rclcpp::WallRate loop_rate(10.0);  // Hz
@@ -176,14 +219,14 @@ class MainLoopTest : public ::testing::Test {
     }
   }
 
-  // What is used in main_loop
+  // Items used in the main_loop
   rclcpp::Node::SharedPtr loop_node_;
   boost::shared_ptr<hsrb_power_ecu::NetworkMock> network_;
   boost::shared_ptr<hsrb_power_ecu::PowerEcuProtocol> protocol_;
   std::shared_ptr<hsrb_power_ecu::LedCommandSubscriber> led_command_subscriber_;
   std::vector<std::shared_ptr<hsrb_power_ecu::IStatePublisher>> publishers_;
 
-  // What you are using in the test
+  // Items used in tests
   rclcpp::Node::SharedPtr test_node_;
 };
 
@@ -212,15 +255,15 @@ TEST_F(MainLoopTest, LedCommandSubscribeTest) {
   EXPECT_NO_THROW(RunMainLoop(is_buffer_sent));
   ASSERT_TRUE((network_->GetSendBuffer().find("H,ledc_,023,255,000,255,") != -1));
 
-  // The command is not sent even if you subscribe to the same message as the current state
+  // Commands are not sent even if the same message as the current state is subscribed to
   network_->ResetSendBuffer();
   command_status_led_publisher_->publish(message);
 
   EXPECT_THROW(RunMainLoop(is_buffer_sent), std::runtime_error);
   ASSERT_TRUE((network_->GetSendBuffer().find("H,ledc_,023,255,000,255,") == -1));
 
-  // The expected input value is 0 to 1, and 255 is applied to int to the command value.
-  // If the command value is outside the range of 0 to 255, the maximum value and the minimum value are clipped.
+  // Expected input values are 0~1, multiplied by 255 and converted to int as command values
+  // If the command value is outside the range 0~255, it is clipped to the maximum or minimum value within the range
   message.r = -10.0;
   message.g = 10.0;
   network_->ResetSendBuffer();
@@ -248,22 +291,24 @@ TEST_F(MainLoopTest, PublishedDataTest) {
   auto battery_charging_checker =
       std::make_shared<BoolPublishChecker>(test_node_, "battery_charging");
 
+  auto diagnostic_checker =
+      std::make_shared<DiagnosticsChecker>(test_node_, "Battery updater");
+
   std::vector<std::shared_ptr<IPublishChecker>> publish_checkers = {
     battery_state_checker, runstop_checker, base_f_bumper_checker, base_b_bumper_checker, emergency_stop_button_checker,
-    wireless_stop_button_checker, wireless_stop_enable_checker, battery_charging_checker
+    wireless_stop_button_checker, wireless_stop_enable_checker, battery_charging_checker, diagnostic_checker
   };
 
   std::string header = "E,ecu1_,326,";
   std::string body = ("0000000000,00000000000000,h00,h0000000000000000,"
                       "h00000000000000000000000000000000"
                       "00000000000000000000000000000000, 00000, 00000, 00000,"
-                      " 00000, 000,h0000,00000,h0000,000,h00,h0000000000000000, "
+                      " 00000, 000,h0000,00000,h0000,051,h00,h0000000000000000, "
                       "0000000000,-0000000000, 0000000000, 0000000000,-0000000000, "
                       "0000000000, 0000000000,-0000000000, 0000000000,-0000000000,"
                       "h00,");
   network_->UpdateBuffer(header + body);
   for (auto& publish_checker : publish_checkers) {publish_checker->Reset();}
-
   std::function<bool()> CheckUpdated = [&] {
     for (auto& publish_checker : publish_checkers) {
       if (!publish_checker->CheckUpdated()) return false;
@@ -279,6 +324,7 @@ TEST_F(MainLoopTest, PublishedDataTest) {
   ASSERT_TRUE(wireless_stop_button_checker->CheckExpected(true));
   ASSERT_TRUE(wireless_stop_enable_checker->CheckExpected(false));
   ASSERT_TRUE(battery_charging_checker->CheckExpected(false));
+
   auto value = battery_state_checker->GetValue();
   ASSERT_DOUBLE_EQ(value.capacity, 0.0);
   ASSERT_DOUBLE_EQ(value.charge, 0.0);
@@ -286,11 +332,28 @@ TEST_F(MainLoopTest, PublishedDataTest) {
   ASSERT_DOUBLE_EQ(value.voltage, 0.0);
   ASSERT_DOUBLE_EQ(value.temperature, 0.0);
 
-  // When changing the corresponding part, check if the issued is correctly changed.
+  ASSERT_EQ(diagnostic_checker->GetLevel(), diagnostic_msgs::msg::DiagnosticStatus::OK);
+  ASSERT_EQ(diagnostic_checker->GetMessage(), "Battery Level: 51.000000 %");
+  ASSERT_EQ(diagnostic_checker->GetHardwareId(), "hsrb_power_battery");
+  ASSERT_EQ(diagnostic_checker->GetValue("full_charge_capacity"), "0");
+  ASSERT_EQ(diagnostic_checker->GetValue("remaining_charge"), "0");
+  ASSERT_EQ(diagnostic_checker->GetValue("electric_current"), "0");
+  ASSERT_EQ(diagnostic_checker->GetValue("voltage"), "0");
+  ASSERT_EQ(diagnostic_checker->GetValue("temperature"), "0");
+  ASSERT_EQ(diagnostic_checker->GetValue("zero_percent_detected"), "False");
+  ASSERT_EQ(diagnostic_checker->GetValue("discharge_enabled"), "False");
+  ASSERT_EQ(diagnostic_checker->GetValue("over_discharge"), "False");
+  ASSERT_EQ(diagnostic_checker->GetValue("full_charge"), "False");
+  ASSERT_EQ(diagnostic_checker->GetValue("learning_enabled"), "False");
+  ASSERT_EQ(diagnostic_checker->GetValue("triple_parallel"), "False");
+  ASSERT_EQ(diagnostic_checker->GetValue("over_charge"), "False");
+  ASSERT_EQ(diagnostic_checker->GetValue("relative_capacity"), "51");
+
+  // When changing supported sections, check if the published items are also changing correctly
   body = ("0000000000,00000000000000,h00,h0000000000000063,"
           "h00000000000000000000000000000000"
-          "00000000000000000000000000000000, 01000, 01000, 01000,"
-          " 01000, 001,h0000,00000,h0000,000,h60,h0000000000000000, "
+          "00000000000000000000000000000000, 01000, 02000, 03000,"
+          " 04000, 005,h00FF,00000,h0000,021,h60,h0000000000000000, "
           "0000000000,-0000000000, 0000000000, 0000000000,-0000000000, "
           "0000000000, 0000000000,-0000000000, 0000000000,-0000000000,"
           "h00,");
@@ -305,12 +368,59 @@ TEST_F(MainLoopTest, PublishedDataTest) {
   ASSERT_TRUE(wireless_stop_button_checker->CheckExpected(false));
   ASSERT_TRUE(wireless_stop_enable_checker->CheckExpected(true));
   ASSERT_TRUE(battery_charging_checker->CheckExpected(true));
+
   value = battery_state_checker->GetValue();
   ASSERT_DOUBLE_EQ(value.capacity, 1.0);
-  ASSERT_DOUBLE_EQ(value.charge, 1.0);
-  ASSERT_DOUBLE_EQ(value.current, 1.0);
-  ASSERT_DOUBLE_EQ(value.voltage, 1.0);
-  ASSERT_DOUBLE_EQ(value.temperature, 1.0);
+  ASSERT_DOUBLE_EQ(value.charge, 2.0);
+  ASSERT_DOUBLE_EQ(value.current, 3.0);
+  ASSERT_DOUBLE_EQ(value.voltage, 4.0);
+  ASSERT_DOUBLE_EQ(value.temperature, 5.0);
+
+  ASSERT_EQ(diagnostic_checker->GetLevel(), diagnostic_msgs::msg::DiagnosticStatus::WARN);
+  ASSERT_EQ(diagnostic_checker->GetMessage(), "Battery Level: 21.000000 %");
+  ASSERT_EQ(diagnostic_checker->GetHardwareId(), "hsrb_power_battery");
+  ASSERT_EQ(diagnostic_checker->GetValue("full_charge_capacity"), "1");
+  ASSERT_EQ(diagnostic_checker->GetValue("remaining_charge"), "2");
+  ASSERT_EQ(diagnostic_checker->GetValue("electric_current"), "3");
+  ASSERT_EQ(diagnostic_checker->GetValue("voltage"), "4");
+  ASSERT_EQ(diagnostic_checker->GetValue("temperature"), "5");
+  ASSERT_EQ(diagnostic_checker->GetValue("zero_percent_detected"), "True");
+  ASSERT_EQ(diagnostic_checker->GetValue("discharge_enabled"), "True");
+  ASSERT_EQ(diagnostic_checker->GetValue("over_discharge"), "True");
+  ASSERT_EQ(diagnostic_checker->GetValue("full_charge"), "True");
+  ASSERT_EQ(diagnostic_checker->GetValue("learning_enabled"), "True");
+  ASSERT_EQ(diagnostic_checker->GetValue("triple_parallel"), "True");
+  ASSERT_EQ(diagnostic_checker->GetValue("over_charge"), "True");
+  ASSERT_EQ(diagnostic_checker->GetValue("relative_capacity"), "21");
+
+  // Check each condition as the battery diagnostic conditions are detailed
+  body = ("0000000000,00000000000000,h00,h0000000000000063,"
+          "h00000000000000000000000000000000"
+          "00000000000000000000000000000000, 01000, 02000, 03000,"
+          " 04000, 005,h00FF,00000,h0000,019,h60,h0000000000000000, "
+          "0000000000,-0000000000, 0000000000, 0000000000,-0000000000, "
+          "0000000000, 0000000000,-0000000000, 0000000000,-0000000000,"
+          "h00,");
+  network_->UpdateBuffer(header + body);
+  for (auto& publish_checker : publish_checkers) {publish_checker->Reset();}
+  EXPECT_NO_THROW(RunMainLoop(CheckUpdated));
+
+  ASSERT_EQ(diagnostic_checker->GetLevel(), diagnostic_msgs::msg::DiagnosticStatus::ERROR);
+  ASSERT_EQ(diagnostic_checker->GetValue("relative_capacity"), "19");
+
+  body = ("0000000000,00000000000000,h00,h0000000000000063,"
+          "h00000000000000000000000000000000"
+          "00000000000000000000000000000000, 01000, 02000,-01000,"
+          " 04000, 005,h00FF,00000,h0000,019,h60,h0000000000000000, "
+          "0000000000,-0000000000, 0000000000, 0000000000,-0000000000, "
+          "0000000000, 0000000000,-0000000000, 0000000000,-0000000000,"
+          "h00,");
+  network_->UpdateBuffer(header + body);
+  for (auto& publish_checker : publish_checkers) {publish_checker->Reset();}
+  EXPECT_NO_THROW(RunMainLoop(CheckUpdated));
+
+  ASSERT_EQ(diagnostic_checker->GetLevel(), diagnostic_msgs::msg::DiagnosticStatus::OK);
+  ASSERT_EQ(diagnostic_checker->GetValue("relative_capacity"), "19");
 }
 }  // namespace hsrb_power_ecu
 

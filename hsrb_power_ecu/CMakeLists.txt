@@ -3,6 +3,7 @@ project(hsrb_power_ecu)
 
 find_package(ament_cmake REQUIRED)
 find_package(Boost REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -21,9 +22,10 @@ add_library(${PROJECT_NAME} SHARED
   src/imu_state_publisher.cpp
   src/runstop_state_publisher.cpp
   src/led_command_subscriber.cpp
+  src/battery_diagnostic_task.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-ament_target_dependencies(${PROJECT_NAME} rclcpp std_msgs sensor_msgs Boost)
+ament_target_dependencies(${PROJECT_NAME} diagnostic_updater rclcpp std_msgs sensor_msgs Boost)
 
 add_executable(${PROJECT_NAME}_main src/main_loop.cpp)
 ament_target_dependencies(${PROJECT_NAME}_main std_msgs sensor_msgs rclcpp Boost)

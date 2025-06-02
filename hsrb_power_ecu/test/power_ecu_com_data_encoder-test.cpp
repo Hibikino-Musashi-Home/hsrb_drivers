@@ -39,7 +39,7 @@ DAMAGE.
 #include "common_methods.hpp"
 
 namespace {
-const size_t kBufferSize = 1000;
+const size_t kBufferSize = 1000;  //!< Buffer size
 }  // anonymous namespace
 
 // PowerEcuComTimeDataEncoder

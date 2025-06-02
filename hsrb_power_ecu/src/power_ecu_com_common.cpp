@@ -33,17 +33,18 @@ DAMAGE.
 #include <boost/crc.hpp>
 
 namespace {
-const uint32_t kCrc32PolynomialValue = 0x04C11DB7;
-const uint32_t kCrc32InitializeValue = 0xffffffff;
+const uint32_t kCrc32PolynomialValue = 0x04C11DB7;  //!< Checksum polynomial
+const uint32_t kCrc32InitializeValue = 0xffffffff;  //!< Checksum initialization value
 }  // anonymous namespace
 
 namespace hsrb_power_ecu {
 namespace com_common {
 
 /**
- * @brief CRC32 Checksam calculation
- * @param [in] start_it Checksam string leader
- * @param [in] end_it Checksam string endorator
+ * @brief crc32 checksum calculation
+ * @param[in] start_it Iterator to the beginning of the checksum string
+ * @param[in] end_it Iterator to the end of the checksum string
+ * @return Checksum result
  */
 uint32_t CalculateCrc32(std::string::const_iterator start_it, std::string::const_iterator end_it) {
   hsrb_power_ecu::PacketBuffer buf(std::distance(start_it, end_it));
@@ -52,15 +53,16 @@ uint32_t CalculateCrc32(std::string::const_iterator start_it, std::string::const
 }
 
 /**
- * @brief CRC32 Checksam calculation
- * @param [in] start_it Checksam string leader
- * @param [in] end_it Checksam string endorator
+ * @brief crc32 checksum calculation
+ * @param[in] start_it Iterator to the beginning of the checksum string
+ * @param[in] end_it Iterator to the end of the checksum string
+ * @return Checksum result
  */
 uint32_t CalculateCrc32(hsrb_power_ecu::PacketBuffer::const_iterator start_it,
                         hsrb_power_ecu::PacketBuffer::const_iterator end_it) {
   hsrb_power_ecu::PacketBuffer::const_iterator current_it = start_it;
   boost::crc_optimal<32, kCrc32PolynomialValue, kCrc32InitializeValue, 0, false, false> crc32;
-  // Endian conversion is required (current power supply ECU performs CRC operations as shown below)
+  // Endian conversion is required (currently the power ECU performs CRC operations as follows)
   while (current_it != end_it) {
     int32_t const distance = std::distance(current_it, end_it);
     if (distance >= 4) {

@@ -28,12 +28,12 @@ DAMAGE.
 #include "power_ecu_com_repro_data_encoder.hpp"
 
 namespace {
-const char kRprosPacketName[] = "rpros"; /** リプログラミング開始コマンド     */
+const char kRprosPacketName[] = "rpros"; /** Reprogramming start command     */
 const char kRprosPacketSize[] = "055";
 const size_t kRprosVersionSize = 41;
-const char kRprodPacketName[] = "rprod"; /** リプログラミングデータコマンド   */
+const char kRprodPacketName[] = "rprod"; /** Reprogramming data command   */
 const size_t kRprodDataSize = 1000;
-const char kRproePacketName[] = "rproe"; /** リプログラム終了コマンド    */
+const char kRproePacketName[] = "rproe"; /** Reprogramming end command    */
 const char kRproePacketSize[] = "011";
 }
 
@@ -41,7 +41,7 @@ namespace hsrb_power_ecu {
 PowerEcuComRprosDataEncoder::PowerEcuComRprosDataEncoder()
     : IPowerEcuComDataEncoder(kRprosPacketSize, kRprosPacketName), repro_version_(), reserve_(0) {
   repro_version_.reserve(kRprosVersionSize);
-  // 要素登録
+  // Element registration
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintEncoder<uint8_t> >(
       new hsrb_power_ecu::ElementUintEncoder<uint8_t>(reserve_, 1)));
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementStringEncoder>(
@@ -59,7 +59,7 @@ bool PowerEcuComRprosDataEncoder::RegisterParameter(hsrb_power_ecu::any_type_poi
 PowerEcuComRprodDataEncoder::PowerEcuComRprodDataEncoder()
     : IPowerEcuComDataEncoder("", kRprodPacketName), repro_data_() {
   repro_data_.reserve(kRprodDataSize);
-  // 要素登録
+  // Element registration
 
   parameter_map_.Register("repro_data", &repro_data_);
 }
@@ -72,7 +72,7 @@ bool PowerEcuComRprodDataEncoder::RegisterParameter(hsrb_power_ecu::any_type_poi
 
 PowerEcuComRproeDataEncoder::PowerEcuComRproeDataEncoder()
     : IPowerEcuComDataEncoder(kRproePacketSize, kRproePacketName) {
-  // 要素登録
+  // Element registration
 }
 
 bool PowerEcuComRproeDataEncoder::RegisterParameter(hsrb_power_ecu::any_type_pointer_map::Map& parameter_map) {

@@ -43,21 +43,21 @@ class ISystemInterface;
 
 /**
  * @brief Serial port
- * Of the communication specifications, the following specifications are determined and cannot be changed.
- * - Borate 3Mbps
- * - Data bit 8bit
- * - No Parity Bit
- * - Stop bit 1bit
+ * Among the communication specifications, the following specifications are fixed and cannot be changed
+ *     - Baud rate 3Mbps
+ *     - Data bit 8bit
+ *     - Parity bit None
+ *     - Stop bit 1bit
  *
- * The following specifications can be changed with the configure function
+ * The following specifications can be changed with the Configure function
  * - Communication timeout time (ms)
- *   - Type double
- *   - Key "receive_timeout_ms"
- *   - Default value 0.3
+ *     - Type double
+ *     - Key value "receive_timeout_ms"
+ *     - Default value 0.3
  * - Device name
- *   - Type std::string
- *   - Key "device_name"
- *   - Default value "/dev/ttyUSB0"
+ *     - Type std::string
+ *     - Key value "device_name"
+ *     - Default value "/dev/ttyUSB0"
  */
 class SerialNetwork : private boost::noncopyable, public INetwork {
  public:
@@ -65,57 +65,67 @@ class SerialNetwork : private boost::noncopyable, public INetwork {
   explicit SerialNetwork(boost::shared_ptr<ISystemInterface> system);
 
   /**
-   * @brief Destrist
+   * @brief Destructor
    */
   virtual ~SerialNetwork();
   /**
    * @brief Open
+   * @return boost::system::errc::success if successful
    */
   virtual boost::system::error_code Open();
   /**
    * @brief Close
+   * @return boost::system::errc::success if successful
    */
   virtual boost::system::error_code Close();
   /**
-   * @brief Network setting change
-   * @param [in] param Setting name
-   * @param [in] value Change value
+   * @brief Change network settings
+   * @param[in] param Setting name
+   * @param[in] value Change value
+   * @return boost::system::errc::success if transmission is successful
    */
   virtual boost::system::error_code Configure(const std::string &param, int32_t value);
   /**
-   * @brief Network setting change
-   * @param [in] param Setting name
-   * @param [in] value Change value
+   * @brief Change network settings
+   * @param[in] param Setting name
+   * @param[in] value Change value
+   * @return boost::system::errc::success if transmission is successful
    */
   virtual boost::system::error_code Configure(const std::string &param, double value);
   /**
-   * @brief Network setting change
-   * @param [in] param Setting name
-   * @param [in] value Change value
+   * @brief Change network settings
+   * @param[in] param Setting name
+   * @param[in] value Change value
+   * @return boost::system::errc::success if transmission is successful
    */
   virtual boost::system::error_code Configure(const std::string &param, const std::string &value);
   /**
-   * @brief Transmission
-   * Send all the contents of the transmission data received by the argument within the timeout time
-   * @param [in] data Transmission data buffer
+   * @brief Transmit
+   * Transmit all contents of the transmission data buffer received as arguments within the timeout period
+   * @param[in] data Transmission data buffer
+   * @return boost::system::errc::success if transmission is successful
    */
   virtual boost::system::error_code Send(const PacketBuffer &data);
   /**
-   * @brief Reception
-   * Store the transmission data behind the buffer.
-   * If the received data does not exist, wait for reception within the timeout time.
-   * @param [out] data Receiving buffer
+   * @brief Receive
+   * Store the transmitted data at the end of the buffer.
+   * If there is no received data, wait to receive within the timeout time.
+   * @param[out] data Receive buffer
+   * @return boost::system::errc::success if transmission is successful
    */
   virtual boost::system::error_code Receive(PacketBuffer &data);
 
+ protected:
+  // Constructor for testing
+
  private:
-  int fd_;
-  std::vector<uint8_t> receive_buffer_;
-  std::vector<uint8_t> send_buffer_;
-  uint32_t timeout_ns_;
-  int32_t sleep_tick_;
-  std::string port_name_;
-  boost::shared_ptr<ISystemInterface> system_;
+  int fd_;                                      //!< Serial device
+  std::vector<uint8_t> receive_buffer_;         //!< Receive buffer
+  std::vector<uint8_t> send_buffer_;            //!< Send buffer
+  uint32_t timeout_ns_;                         //!< Timeout time
+  int32_t sleep_tick_;                          //!< Polling interval [ns]
+  std::string port_name_;                       //!< Port name
+  boost::shared_ptr<ISystemInterface> system_;  //!< System call function group
 };
 }  // namespace hsrb_power_ecu
 

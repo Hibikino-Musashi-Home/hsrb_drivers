@@ -41,7 +41,7 @@ DAMAGE.
 namespace hsrb_power_ecu {
 
 /**
- * @brief Uint型のデコーダ
+ * @brief Decoder for Uint type
  */
 template <class Output>
 class ElementUintDecoder : public IElementDecoder {
@@ -51,28 +51,28 @@ class ElementUintDecoder : public IElementDecoder {
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param value デコードした値の代入先の参照
-   * @param length 桁数
+   * @brief Constructor
+   * @param value Reference where the decoded value is assigned
+   * @param length Number of digits
    */
   ElementUintDecoder(Output& value, const size_t length) : value_(value), length_(length) {}
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~ElementUintDecoder() {}
   /**
-   * @brief デコード
-   * @param start_iterator 読み出し先頭の文字のイテレータ
-   * @param end_iterator 読み出す最後の文字の次のイテレータ
-   * @return 成功時 true
+   * @brief Decode
+   * @param start_iterator Iterator of the first character to read
+   * @param end_iterator Iterator of the character after the last to read
+   * @return true on success
    */
   inline virtual bool Decode(const PacketBuffer::const_iterator start_iterator,
                              const PacketBuffer::const_iterator end_iterator) {
-    // 桁数チェック
+    // Digit check
     if (std::distance(start_iterator, end_iterator) != length_) {
       return false;
     }
-    // 代入処理
+    // Assignment process
     uint32_t tmp_value = 0;
     for (PacketBuffer::const_iterator it = start_iterator; it != end_iterator; ++it) {
       PacketBuffer::value_type v = *it;
@@ -87,12 +87,12 @@ class ElementUintDecoder : public IElementDecoder {
   }
 
  private:
-  Output& value_;        //!< デコードした値の代入先の参照
-  const size_t length_;  //!< 桁数
+  Output& value_;        //!< Reference where the decoded value is assigned
+  const size_t length_;  //!< Number of digits
 };
 
 /**
- * @brief Uint型のデコーダ
+ * @brief Decoder for Uint type
  */
 template <class Output>
 class ElementHexUintDecoder : public IElementDecoder {
@@ -102,32 +102,32 @@ class ElementHexUintDecoder : public IElementDecoder {
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param value デコードした値の代入先の参照
-   * @param length 桁数
+   * @brief Constructor
+   * @param value Reference where the decoded value is assigned
+   * @param length Number of digits
    */
   ElementHexUintDecoder(Output& value, const size_t length) : value_(value), length_(length) {}
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~ElementHexUintDecoder() {}
   /**
-   * @brief デコード
-   * @param start_iterator 読み出し先頭の文字のイテレータ
-   * @param end_iterator 読み出す最後の文字の次のイテレータ
-   * @return 成功時 true
+   * @brief Decode
+   * @param start_iterator Iterator of the first character to read
+   * @param end_iterator Iterator of the character after the last to read
+   * @return true on success
    */
   inline virtual bool Decode(const PacketBuffer::const_iterator start_iterator,
                              const PacketBuffer::const_iterator end_iterator) {
-    // 桁数チェック
+    // Digit check
     // @uend
-    // 計算順序が、演算子の優先順位を考慮されている場合でも、丸括弧で厳格に記載してください（他の箇所も確認してください）
+    // Even if the order of operations considers operator precedence, please enclose with parentheses strictly (check other places as well)
     if (((std::distance(start_iterator, end_iterator) - 1) != length_) || (*start_iterator != 'h')) {
       return false;
     }
-    // 代入処理
+    // Assignment process
     uint32_t tmp_value = 0;
-    for (PacketBuffer::const_iterator it = (start_iterator + 1);  // 'h'読み飛ばし
+    for (PacketBuffer::const_iterator it = (start_iterator + 1);  // Skip reading 'h'
          it != end_iterator; ++it) {
       PacketBuffer::value_type v = *it;
       if ((v >= '0') && (v <= '9')) {
@@ -144,12 +144,12 @@ class ElementHexUintDecoder : public IElementDecoder {
   }
 
  private:
-  Output& value_;        //!< デコードした値の代入先の参照
-  const size_t length_;  //!< 桁数
+  Output& value_;        //!< Reference where the decoded value is assigned
+  const size_t length_;  //!< Number of digits
 };
 
 /**
- * @brief int型のデコーダ
+ * @brief Decoder for int type
  */
 template <class Output>
 class ElementIntDecoder : public IElementDecoder {
@@ -159,28 +159,28 @@ class ElementIntDecoder : public IElementDecoder {
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param value デコードした値の代入先の参照
-   * @param length 桁数
+   * @brief Constructor
+   * @param value Reference where the decoded value is assigned
+   * @param length Number of digits
    */
   ElementIntDecoder(Output& value, const size_t length) : value_(value), length_(length) {}
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~ElementIntDecoder() {}
   /**
-   * @brief デコード
-   * @param start_iterator 読み出し先頭の文字のイテレータ
-   * @param end_iterator 読み出す最後の文字の次のイテレータ
-   * @return 成功時 true
+   * @brief Decode
+   * @param start_iterator Iterator of the first character to read
+   * @param end_iterator Iterator of the character after the last to read
+   * @return true on success
    */
   inline virtual bool Decode(const PacketBuffer::const_iterator start_iterator,
                              const PacketBuffer::const_iterator end_iterator) {
-    // 桁数確認
+    // Digit check
     if ((std::distance(start_iterator, end_iterator) - 1) != length_) {
       return false;
     }
-    // 符号計算
+    // Sign calculation
     bool is_positive_number;
     PacketBuffer::value_type v = *start_iterator;
     if (v == ' ') {
@@ -190,9 +190,9 @@ class ElementIntDecoder : public IElementDecoder {
     } else {
       return false;  // TODO(kitsunai): 未テスト
     }
-    // 値計算
+    // Value calculation
     int32_t tmp_value = 0;
-    for (PacketBuffer::const_iterator it = (start_iterator + 1);  // 符号読み飛ばし
+    for (PacketBuffer::const_iterator it = (start_iterator + 1);  // Skip reading sign
          it != end_iterator; ++it) {
       v = *it;
       if ((v < '0') || (v > '9')) {
@@ -215,12 +215,12 @@ class ElementIntDecoder : public IElementDecoder {
   }
 
  private:
-  Output& value_;        //!< デコードした値の代入先の参照
-  const size_t length_;  //!< 桁数
+  Output& value_;        //!< Reference where the decoded value is assigned
+  const size_t length_;  //!< Number of digits
 };
 
 /**
- * @brief Uint型のデコーダ
+ * @brief Decoder for Uint type
  */
 class ElementStringDecoder : public IElementDecoder {
  private:
@@ -229,39 +229,39 @@ class ElementStringDecoder : public IElementDecoder {
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param value デコードした値の代入先の参照
-   * @param length 桁数
+   * @brief Constructor
+   * @param value Reference where the decoded value is assigned
+   * @param length Number of digits
    */
   ElementStringDecoder(std::string& value, const size_t length) : value_(value), length_(length) {
     value_.reserve(length_ + 1);
   }
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~ElementStringDecoder() {}
   /**
-   * @brief デコード
-   * @param start_iterator 読み出し先頭の文字のイテレータ
-   * @param end_iterator 読み出す最後の文字の次のイテレータ
-   * @return 成功時 true
+   * @brief Decode
+   * @param start_iterator Iterator of the first character to read
+   * @param end_iterator Iterator of the character after the last to read
+   * @return true on success
    */
   inline virtual bool Decode(const PacketBuffer::const_iterator start_iterator,
                              const PacketBuffer::const_iterator end_iterator) {
-    // 桁数チェック
+    // Digit check
     if ((std::distance(start_iterator, end_iterator) != static_cast<int32_t>(length_)) ||
         (value_.capacity() < length_)) {
       return false;
     }
-    // 代入処理
+    // Assignment process
     value_.clear();
     std::copy((start_iterator), end_iterator, std::back_inserter(value_));
     return true;
   }
 
  private:
-  std::string& value_;   //!< デコードした値の代入先の参照
-  const size_t length_;  //!< 桁数
+  std::string& value_;   //!< Reference where the decoded value is assigned
+  const size_t length_;  //!< Number of digits
 };
 
 }  // namespace hsrb_power_ecu

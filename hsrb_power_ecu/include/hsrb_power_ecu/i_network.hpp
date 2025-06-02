@@ -35,54 +35,61 @@ DAMAGE.
 #include <boost/system/error_code.hpp>
 
 namespace hsrb_power_ecu {
-typedef boost::circular_buffer<char> PacketBuffer;
+typedef boost::circular_buffer<char> PacketBuffer;  //!< Type of packet buffer
 
 /**
- * @brief network interface
+ * @brief Network interface
  */
 class INetwork {
  public:
   /**
-   * @brief Destrist
+   * @brief Destructor
    */
   virtual ~INetwork() {}
   /**
    * @brief Open
+   * @return boost::system::errc::success on successful transmission
    */
   virtual boost::system::error_code Open() = 0;
   /**
    * @brief Close
+   * @return boost::system::errc::success on successful transmission
    */
   virtual boost::system::error_code Close() = 0;
   /**
-   * @brief Network setting change
-   * @param [in] param Setting name
-   * @param [in] value Change value
+   * @brief Change network settings
+   * @param[in] param Setting name
+   * @param[in] value Change value
+   * @return boost::system::errc::success on successful transmission
    */
   virtual boost::system::error_code Configure(const std::string &param, const int32_t value) = 0;
   /**
-   * @brief Network setting change
-   * @param [in] param Setting name
-   * @param [in] value Change value
+   * @brief Change network settings
+   * @param[in] param Setting name
+   * @param[in] value Change value
+   * @return boost::system::errc::success on successful transmission
    */
   virtual boost::system::error_code Configure(const std::string &param, const double value) = 0;
   /**
-   * @brief Network setting change
-   * @param [in] param Setting name
-   * @param [in] value Change value
+   * @brief Change network settings
+   * @param[in] param Setting name
+   * @param[in] value Change value
+   * @return boost::system::errc::success on successful transmission
    */
   virtual boost::system::error_code Configure(const std::string &param, const std::string &value) = 0;
   /**
-   * @brief Transmission
-   * Send all the contents of the transmission data received by the argument within the timeout time
-   * @param [in] data Transmission data buffer
+   * @brief Send
+   * Within the timeout period, send all the contents of the transmission data buffer received as arguments
+   * @param[in] data Transmission data buffer
+   * @return boost::system::errc::success on successful transmission
    */
   virtual boost::system::error_code Send(const PacketBuffer &data) = 0;
   /**
-   * @brief Reception
-   * Store the transmission data behind the buffer.
-   * If the received data does not exist, wait for reception within the timeout time.
-   * @param [out] data Receiving buffer
+   * @brief Receive
+   * Store the transmission data at the end of the buffer.
+   * If there is no received data, wait for reception within the timeout period.
+   * @param[out] data Receive buffer
+   * @return boost::system::errc::success on successful transmission
    */
   virtual boost::system::error_code Receive(PacketBuffer &data) = 0;
 };

@@ -35,52 +35,52 @@ DAMAGE.
 #include "ros2_msg_utils.hpp"
 
 namespace {
-const char kTimePacketSize[] = "026";     //!< 時刻合わせコマンドのパケットサイズ
-const char kTimePacketName[] = "time_";   //!< 時刻合わせコマンドのパケット種別
-const char kStartPacketSize[] = "015";    //!< 定期通信開始コマンドのパケットサイズ
-const char kStartPacketName[] = "start";  //!< 定期通信開始コマンドのパケット種別
-const char kStopPacketSize[] = "011";     //!< 定期通信終了コマンドのパケットサイズ
-const char kStopPacketName[] = "stop_";   //!< 定期通信終了コマンドのパケット種別
-const char kHeartpacketSize[] = "027";    //!< ハートビートコマンドのパケットサイズ
-const char kHeartPacketName[] = "heart";  //!< ハートビートコマンドのパケット種別
-const char kPumpPacketSize[] = "013";     //!< ポンプスイッチコマンドのパケットサイズ
-const char kPumpPacketName[] = "pump_";   //!< ポンプスイッチコマンドのパケット種別
-const char kPbmswPacketSize[] = "013";    //!< 駆動系スイッチコマンドのパケットサイズ
-const char kPbmswPacketName[] = "pbmsw";  //!< 駆動系スイッチコマンドのパケット種別
-const char kLedcPacketSize[] = "023";     //!< 多用途LEDの色指定コマンドのパケットサイズ
-const char kLedcPacketName[] = "ledc_";   //!< 多用途LEDの色指定コマンドのパケット種別
-const char kGResPacketSize[] = "015";     //!< 姿勢角演算リセットコマンドのパケットサイズ
-const char kGResPacketName[] = "g_res";   //!< 姿勢角演算リセットコマンドのパケット種別
-const char kSolswPacketSize[] = "015";    //!< ソレロイドスイッチコマンドのパケットサイズ
-const char kSolswPacketName[] = "solsw";  //!< ソレロイドスイッチコマンドのパケット種別
-const char kPdcmdPacketSize[] = "015";    //!< 電源シャットダウンコマンドのパケットサイズ
-const char kPdcmdPacketName[] = "pdcmd";  //!< 電源シャットダウンコマンドのパケット種別
-const char kMutePacketSize[] = "015";     //!< オーディオアンプMuteコマンドのパケットサイズ
-const char kMutePacketName[] = "mute_";   //!< オーディオアンプMuteコマンドのパケット種別
-const char kGetvPacketSize[] = "015";     //!< バージョン情報取得コマンドのパケットサイズ
-const char kGetvPacketName[] = "getv_";   //!< バージョン情報取得コマンドのパケット種別
-const uint8_t kGetvpacketData = 0;        //!< バージョン情報取得コマンドのパケット要素の予約値
-const char kUndckPacketSize[] = "011";    //!< アンドック指令コマンドのパケットサイズ
-const char kUndckPacketName[] = "undck";  //!< アンドック指令コマンドのパケット種別
-const char k12VuPacketSize[] = "013";     //!< 12V USBイネーブルコマンドのパケットサイズ
-const char k12VuPacketName[] = "12vu_";   //!< 12V USBイネーブルコマンドのパケット種別
-const char k5Vd3PacketSize[] = "013";     //!< 5Vd3 イネーブルコマンドのパケットサイズ
-const char k5Vd3PacketName[] = "5vd3_";   //!< 5Vd3 イネーブルコマンドのパケット種別
-const char k5Vd4PacketSize[] = "013";     //!< 5Vd4 イネーブルコマンドのパケットサイズ
-const char k5Vd4PacketName[] = "5vd4_";   //!< 5Vd4 イネーブルコマンドのパケット種別
-const char k5Vd5PacketSize[] = "013";     //!< 5Vd5 イネーブルコマンドのパケットサイズ
-const char k5Vd5PacketName[] = "5vd5_";   //!< 5Vd5 イネーブルコマンドのパケット種別
+const char kTimePacketSize[] = "026";     //!< Packet size for time adjustment command
+const char kTimePacketName[] = "time_";   //!< Packet type for time adjustment command
+const char kStartPacketSize[] = "015";    //!< Packet size for regular communication start command
+const char kStartPacketName[] = "start";  //!< Packet type for regular communication start command
+const char kStopPacketSize[] = "011";     //!< Packet size for regular communication stop command
+const char kStopPacketName[] = "stop_";   //!< Packet type for regular communication stop command
+const char kHeartpacketSize[] = "027";    //!< Packet size for heartbeat command
+const char kHeartPacketName[] = "heart";  //!< Packet type for heartbeat command
+const char kPumpPacketSize[] = "013";     //!< Packet size for pump switch command
+const char kPumpPacketName[] = "pump_";   //!< Packet type for pump switch command
+const char kPbmswPacketSize[] = "013";    //!< Packet size for drive system switch command
+const char kPbmswPacketName[] = "pbmsw";  //!< Packet type for drive system switch command
+const char kLedcPacketSize[] = "023";     //!< Packet size for multi-purpose LED color specification command
+const char kLedcPacketName[] = "ledc_";   //!< Packet type for multi-purpose LED color specification command
+const char kGResPacketSize[] = "015";     //!< Packet size for attitude angle computation reset command
+const char kGResPacketName[] = "g_res";   //!< Packet type for attitude angle computation reset command
+const char kSolswPacketSize[] = "015";    //!< Packet size for solenoid switch command
+const char kSolswPacketName[] = "solsw";  //!< Packet type for solenoid switch command
+const char kPdcmdPacketSize[] = "015";    //!< Packet size for power shutdown command
+const char kPdcmdPacketName[] = "pdcmd";  //!< Packet type for power shutdown command
+const char kMutePacketSize[] = "015";     //!< Packet size for audio amplifier mute command
+const char kMutePacketName[] = "mute_";   //!< Packet type for audio amplifier mute command
+const char kGetvPacketSize[] = "015";     //!< Packet size for version information retrieval command
+const char kGetvPacketName[] = "getv_";   //!< Packet type for version information retrieval command
+const uint8_t kGetvpacketData = 0;        //!< Reserved value for packet element of version information retrieval command
+const char kUndckPacketSize[] = "011";    //!< Packet size for undocking command
+const char kUndckPacketName[] = "undck";  //!< Packet type for undocking command
+const char k12VuPacketSize[] = "013";     //!< Packet size for 12V USB enable command
+const char k12VuPacketName[] = "12vu_";   //!< Packet type for 12V USB enable command
+const char k5Vd3PacketSize[] = "013";     //!< Packet size for 5Vd3 enable command
+const char k5Vd3PacketName[] = "5vd3_";   //!< Packet type for 5Vd3 enable command
+const char k5Vd4PacketSize[] = "013";     //!< Packet size for 5Vd4 enable command
+const char k5Vd4PacketName[] = "5vd4_";   //!< Packet type for 5Vd4 enable command
+const char k5Vd5PacketSize[] = "013";     //!< Packet size for 5Vd5 enable command
+const char k5Vd5PacketName[] = "5vd5_";   //!< Packet type for 5Vd5 enable command
 }  // anonymous namespace
 
 namespace hsrb_power_ecu {
 /**
- * @brief コンストラクタ
- * @param packet_data パケットデータ
+ * @brief Constructor
+ * @param packet_data Packet data
  */
 PowerEcuComTimeDataEncoder::PowerEcuComTimeDataEncoder()
     : IPowerEcuComDataEncoder(kTimePacketSize, kTimePacketName), packet_data_() {
-  // 要素登録
-  //!< 日付 文字列 14桁
+  // Element registration
+  //!< Date string 14 digits
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementStringEncoder>(
       new hsrb_power_ecu::ElementStringEncoder(packet_data_.start_time, 14)));
 
@@ -88,20 +88,20 @@ PowerEcuComTimeDataEncoder::PowerEcuComTimeDataEncoder()
 }
 
 /**
- * @brief コンストラクタ
- * @param packet_data パケットデータ
+ * @brief Constructor
+ * @param packet_data Packet data
  */
 PowerEcuComStartDataEncoder::PowerEcuComStartDataEncoder()
     : IPowerEcuComDataEncoder(kStartPacketSize, kStartPacketName), packet_data_() {
-  // 要素登録
+  // Element registration
   boost::shared_ptr<hsrb_power_ecu::ElementHexUintBitsEncoder> p =
       boost::shared_ptr<hsrb_power_ecu::ElementHexUintBitsEncoder>(
-          new hsrb_power_ecu::ElementHexUintBitsEncoder(2));  // 16進2桁
-  // 6bit目 ecu2
+          new hsrb_power_ecu::ElementHexUintBitsEncoder(2));  // 2-digit hexadecimal
+  // 6th bit ecu2
   bool ret;
   ret = p->RegisterBit(1, &packet_data_.is_enable_ecu2);
   hsrb_power_ecu::Assert(ret, "RegisterBit failed.");
-  // 7bit目 ecu1
+  // 7th bit ecu1
   ret = p->RegisterBit(0, &packet_data_.is_enable_ecu1);
   hsrb_power_ecu::Assert(ret, "RegisterBit failed.");
   element_encoder_list_.push_back(p);
@@ -111,20 +111,20 @@ PowerEcuComStartDataEncoder::PowerEcuComStartDataEncoder()
 }
 
 /**
- * @brief コンストラクタ
+ * @brief Constructor
  */
 PowerEcuComStopDataEncoder::PowerEcuComStopDataEncoder() : IPowerEcuComDataEncoder(kStopPacketSize, kStopPacketName) {}
 
 /**
- * @brief コンストラクタ
- * @param packet_data パケットデータ
+ * @brief Constructor
+ * @param packet_data Packet data
  */
 PowerEcuComHeartDataEncoder::PowerEcuComHeartDataEncoder()
     : IPowerEcuComDataEncoder(kHeartpacketSize, kHeartPacketName), packet_data_() {
-  //!< エラー状態                16進数4桁 uint16
+  //!< Error state                4-digit hexadecimal uint16
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementHexUintEncoder<uint16_t> >(
       new hsrb_power_ecu::ElementHexUintEncoder<uint16_t>(packet_data_.error_state, 4)));
-  //!< カウント値（送信ごとに+1) 16進数8桁 uint32
+  //!< Count value (increments by 1 for every transmission) 8-digit hexadecimal uint32
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementHexUintEncoder<uint32_t> >(
       new hsrb_power_ecu::ElementHexUintEncoder<uint32_t>(packet_data_.counts, 8)));
 
@@ -133,12 +133,12 @@ PowerEcuComHeartDataEncoder::PowerEcuComHeartDataEncoder()
 }
 
 /**
- * @brief コンストラクタ
- * @param packet_data パケットデータ
+ * @brief Constructor
+ * @param packet_data Packet data
  */
 PowerEcuComPumpDataEncoder::PowerEcuComPumpDataEncoder()
     : IPowerEcuComDataEncoder(kPumpPacketSize, kPumpPacketName), packet_data_() {
-  //!< ポンプスイッチ(0:OFF 1:ON) 10進数1桁 uint8
+  //!< Pump switch (0:OFF 1:ON) 1-digit decimal uint8
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintEncoder<uint8_t> >(
       new hsrb_power_ecu::ElementUintEncoder<uint8_t>(packet_data_.is_pump_enable, 1)));
 
@@ -146,12 +146,12 @@ PowerEcuComPumpDataEncoder::PowerEcuComPumpDataEncoder()
 }
 
 /**
- * @brief コンストラクタ
- * @param packet_data パケットデータ
+ * @brief Constructor
+ * @param packet_data Packet data
  */
 PowerEcuComPbmswDataEncoder::PowerEcuComPbmswDataEncoder()
     : IPowerEcuComDataEncoder(kPbmswPacketSize, kPbmswPacketName), packet_data_() {
-  //!< 駆動系スイッチ(0 : OFF 1 : ON) 10進数1桁 uint8
+  //!< Drive system switch (0:OFF 1:ON) 1-digit decimal uint8
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintEncoder<uint8_t> >(
       new hsrb_power_ecu::ElementUintEncoder<uint8_t>(packet_data_.is_motor_enable, 1)));
 
@@ -159,18 +159,18 @@ PowerEcuComPbmswDataEncoder::PowerEcuComPbmswDataEncoder()
 }
 
 /**
- * @brief コンストラクタ
- * @param packet_data パケットデータ
+ * @brief Constructor
+ * @param packet_data Packet data
  */
 PowerEcuComLedcDataEncoder::PowerEcuComLedcDataEncoder()
     : IPowerEcuComDataEncoder(kLedcPacketSize, kLedcPacketName), packet_data_() {
-  //!< R強度(0～255) 10進数3桁 uint8
+  //!< R intensity (0-255) 3-digit decimal uint8
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintEncoder<uint8_t> >(
       new hsrb_power_ecu::ElementUintEncoder<uint8_t>(packet_data_.led_color.r, 3)));
-  //!< G強度(0～255) 10進数3桁 uint8
+  //!< G intensity (0-255) 3-digit decimal uint8
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintEncoder<uint8_t> >(
       new hsrb_power_ecu::ElementUintEncoder<uint8_t>(packet_data_.led_color.g, 3)));
-  //!< B強度(0～255) 10進数3桁 uint8
+  //!< B intensity (0-255) 3-digit decimal uint8
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintEncoder<uint8_t> >(
       new hsrb_power_ecu::ElementUintEncoder<uint8_t>(packet_data_.led_color.b, 3)));
 
@@ -179,13 +179,13 @@ PowerEcuComLedcDataEncoder::PowerEcuComLedcDataEncoder()
 
 PowerEcuComGResDataEncoder::PowerEcuComGResDataEncoder()
     : IPowerEcuComDataEncoder(kGResPacketSize, kGResPacketName), packet_data_() {
-  // オフセット | バイト数 | 記述例 | 内容         | 表記      | 評価  | 単位
-  // 12         | 4        | h00,   | リセット種別 | 16進数2桁 | uint8 | -
+  // Offset | Byte count | Example text | Content         | Notation      | Evaluation  | Unit
+  // 12         | 4        | h00,   | Reset type | 2-digit hexadecimal | uint8 | -
 
-  // リセット種別
-  // Bit  | Label   | 内容
-  // 0    | res_q   | クオタニオンを0にする
-  // 1    | res_g   | ジャイロのオフセットを0にする
+  // Reset type
+  // Bit  | Label   | Content
+  // 0    | res_q   | Set quaternion to 0
+  // 1    | res_g   | Set gyro offset to 0
   boost::shared_ptr<hsrb_power_ecu::ElementHexUintBitsEncoder> p =
       boost::shared_ptr<hsrb_power_ecu::ElementHexUintBitsEncoder>(new hsrb_power_ecu::ElementHexUintBitsEncoder(2));
   bool ret;
@@ -201,8 +201,8 @@ PowerEcuComGResDataEncoder::PowerEcuComGResDataEncoder()
 
 PowerEcuComSolswDataEncoder::PowerEcuComSolswDataEncoder()
     : IPowerEcuComDataEncoder(kSolswPacketSize, kSolswPacketName), packet_data_() {
-  // オフセット | バイト数 | 記述例 | 内容                           | 表記      | 評価  | 単位
-  // 12         | 4        | h00,   | ソレノイドスイッチ(0:OFF 1:ON) | 16進数1桁 | uint8 | -
+  // Offset | Byte count | Example text | Content                           | Notation      | Evaluation  | Unit
+  // 12         | 4        | h00,   | Solenoid switch (0:OFF 1:ON) | 1-digit hexadecimal | uint8 | -
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementHexUintEncoder<uint8_t> >(
       new hsrb_power_ecu::ElementHexUintEncoder<uint8_t>(packet_data_.is_solenoid_enable, 2)));
 
@@ -211,14 +211,14 @@ PowerEcuComSolswDataEncoder::PowerEcuComSolswDataEncoder()
 
 PowerEcuComPdcmdDataEncoder::PowerEcuComPdcmdDataEncoder()
     : IPowerEcuComDataEncoder(kPdcmdPacketSize, kPdcmdPacketName), packet_data_() {
-  // オフセット | バイト数 | 記述例 | 内容               | 表記      | 評価  | 単位
-  // 12         | 4        | h00,   | シャットダウン種別 | 16進数2桁 | uint8 | -
+  // Offset | Byte count | Example text | Content               | Notation      | Evaluation  | Unit
+  // 12         | 4        | h00,   | Shutdown type | 2-digit hexadecimal | uint8 | -
 
-  // シャットダウン種別
-  // Bit  | Label   | 内容
-  // 0    | pdcpu   | 1で内部CPUをシャットダウン
-  // 1    | pdgpu   | 1でGPUをシャットダウン
-  // 2    | pdex1   | 1で外部CPUをシャットダウン
+  // Shutdown type
+  // Bit  | Label   | Content
+  // 0    | pdcpu   | Shutdown internal CPU with 1
+  // 1    | pdgpu   | Shutdown GPU with 1
+  // 2    | pdex1   | Shutdown external CPU with 1
   boost::shared_ptr<hsrb_power_ecu::ElementHexUintBitsEncoder> p =
       boost::shared_ptr<hsrb_power_ecu::ElementHexUintBitsEncoder>(new hsrb_power_ecu::ElementHexUintBitsEncoder(2));
   bool ret;
@@ -236,12 +236,12 @@ PowerEcuComPdcmdDataEncoder::PowerEcuComPdcmdDataEncoder()
 }
 PowerEcuComMuteDataEncoder::PowerEcuComMuteDataEncoder()
     : IPowerEcuComDataEncoder(kMutePacketSize, kMutePacketName), packet_data_() {
-  // オフセット | バイト数 | 記述例 | 内容     | 表記      | 評価  | 単位
-  // 12         | 4        | h00,   | MUTE種別 | 16進数2桁 | uint8 | -
+  // Offset | Byte count | Example text | Content     | Notation      | Evaluation  | Unit
+  // 12         | 4        | h00,   | MUTE type | 2-digit hexadecimal | uint8 | -
 
-  // MUTE種別
-  // Bit  | Label   | 内容
-  // 0    | mutex   | 0:音を出す 1:音を出さない
+  // MUTE type
+  // Bit  | Label   | Content
+  // 0    | mutex   | 0:Output sound 1:No sound
   boost::shared_ptr<hsrb_power_ecu::ElementHexUintBitsEncoder> p =
       boost::shared_ptr<hsrb_power_ecu::ElementHexUintBitsEncoder>(new hsrb_power_ecu::ElementHexUintBitsEncoder(2));
   bool ret = p->RegisterBit(0, &packet_data_.is_amp_mute);
@@ -253,15 +253,15 @@ PowerEcuComMuteDataEncoder::PowerEcuComMuteDataEncoder()
 
 PowerEcuComGetvDataEncoder::PowerEcuComGetvDataEncoder()
     : IPowerEcuComDataEncoder(kGetvPacketSize, kGetvPacketName), packet_data_() {
-  // オフセット | バイト数 | 記述例 | 内容                  | 表記      | 評価   | 単位
-  // 12         | 4        | h00,   | バージョン種別(常に0) | 16進数2桁 | uint8  | -
+  // Offset | Byte count | Example text | Content                  | Notation      | Evaluation   | Unit
+  // 12         | 4        | h00,   | Version type (always 0) | 2-digit hexadecimal | uint8  | -
   packet_data_.reserved = kGetvpacketData;
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementHexUintEncoder<uint8_t> >(
       new hsrb_power_ecu::ElementHexUintEncoder<uint8_t>(packet_data_.reserved, 2)));
 }
 
 /**
- * @brief コンストラクタ
+ * @brief Constructor
  */
 PowerEcuComUndckDataEncoder::PowerEcuComUndckDataEncoder()
     : IPowerEcuComDataEncoder(kUndckPacketSize, kUndckPacketName) {
@@ -269,11 +269,11 @@ PowerEcuComUndckDataEncoder::PowerEcuComUndckDataEncoder()
 }
 
 /**
- * @brief コンストラクタ
+ * @brief Constructor
  */
 PowerEcuCom12VuDataEncoder::PowerEcuCom12VuDataEncoder()
     : IPowerEcuComDataEncoder(k12VuPacketSize, k12VuPacketName), packet_data_() {
-  //!< 12V USB(0:OFF 1:ON) 10進数1桁 uint8
+  //!< 12V USB (0:OFF 1:ON) 1-digit decimal uint8
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintEncoder<bool> >(
       new hsrb_power_ecu::ElementUintEncoder<bool>(packet_data_.is_12vu_enable, 1)));
 
@@ -281,11 +281,11 @@ PowerEcuCom12VuDataEncoder::PowerEcuCom12VuDataEncoder()
 }
 
 /**
- * @brief コンストラクタ
+ * @brief Constructor
  */
 PowerEcuCom5Vd3DataEncoder::PowerEcuCom5Vd3DataEncoder()
     : IPowerEcuComDataEncoder(k5Vd3PacketSize, k5Vd3PacketName), packet_data_() {
-  //!< 5Vd3 (0:OFF 1:ON) 10進数1桁 uint8
+  //!< 5Vd3 (0:OFF 1:ON) 1-digit decimal uint8
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintEncoder<bool> >(
       new hsrb_power_ecu::ElementUintEncoder<bool>(packet_data_.is_5vd3_enable, 1)));
 
@@ -293,11 +293,11 @@ PowerEcuCom5Vd3DataEncoder::PowerEcuCom5Vd3DataEncoder()
 }
 
 /**
- * @brief コンストラクタ
+ * @brief Constructor
  */
 PowerEcuCom5Vd4DataEncoder::PowerEcuCom5Vd4DataEncoder()
     : IPowerEcuComDataEncoder(k5Vd4PacketSize, k5Vd4PacketName), packet_data_() {
-  //!< 5Vd4 (0:OFF 1:ON) 10進数1桁 uint8
+  //!< 5Vd4 (0:OFF 1:ON) 1-digit decimal uint8
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintEncoder<bool> >(
       new hsrb_power_ecu::ElementUintEncoder<bool>(packet_data_.is_5vd4_enable, 1)));
 
@@ -305,11 +305,11 @@ PowerEcuCom5Vd4DataEncoder::PowerEcuCom5Vd4DataEncoder()
 }
 
 /**
- * @brief コンストラクタ
+ * @brief Constructor
  */
 PowerEcuCom5Vd5DataEncoder::PowerEcuCom5Vd5DataEncoder()
     : IPowerEcuComDataEncoder(k5Vd5PacketSize, k5Vd5PacketName), packet_data_() {
-  //!< 5Vd5 (0:OFF 1:ON) 10進数1桁 uint8
+  //!< 5Vd5 (0:OFF 1:ON) 1-digit decimal uint8
   element_encoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintEncoder<bool> >(
       new hsrb_power_ecu::ElementUintEncoder<bool>(packet_data_.is_5vd5_enable, 1)));
 

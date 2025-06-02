@@ -49,14 +49,14 @@ DAMAGE.
 namespace hsrb_power_ecu {
 
 /**
- * @brief 制御コマンド情報管理クラス
+ * @brief Control Command Information Management Class
  *
- * CPU->電源ECUへの制御コマンド送信は各送信毎に電源ECUからのACKを確認する必要があること、
- * また通信失敗を考慮し、各制御コマンドのリトライ処理を行う必要があるため、
- * 1周期に対したかだか1個の送信しかおこなわない。
- * 一方topicからの指令は常時受け付けているため、
- * 各指令を逐次処理するために、指令をキューイングする必要がある。
- * CommandStateクラスは、キューイングされている制御コマンドの情報を保持するクラスである。
+ * CPU->control command transmission to Power ECU requires confirmation of ACK from Power ECU after each transmission,
+ * Furthermore, due to the possibility of communication failure, it is necessary to perform retry processing for each control command,
+ * Only at most one transmission is performed per cycle.
+ * On the other hand, commands from the topic are constantly accepted, so
+ * It is necessary to queue commands for sequential processing of each command.
+ * The CommandState class is a class that holds the information of control commands that are queued.
  */
 class CommandState {
  private:
@@ -67,87 +67,87 @@ class CommandState {
   typedef boost::shared_ptr<CommandState> Ptr;
 
   /**
-   * @brief コンストラクタ
-   * @param[in] command_name コマンド名
+   * @brief Constructor
+   * @param[in] command_name Command Name
    */
   explicit CommandState(const std::string& command_name)
       : command_name_(command_name), return_value_(0), is_processing_(0), retry_count_(0) {}
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   ~CommandState() {}
   /**
-   * @brief  コマンド名取得
-   * @return コマンド名
+   * @brief Get Command Name
+   * @return Command Name
    */
   inline const std::string& GetCommandName() const { return command_name_; }
   /**
-   * @brief コマンド戻り値取得
-   * コマンド戻り値の代入処理は実装済みだが、まだ利用していない。
-   * @return コマンド戻り値
+   * @brief Get Command Return Value
+   * The assignment process of the command return value is implemented but not yet used.
+   * @return Command Return Value
    */
   inline uint8_t GetReturnValue() const { return return_value_; }
   /**
-   * @brief コマンド戻り値代入
-   * @param[in] value コマンド戻り値
+   * @brief Assign Command Return Value
+   * @param[in] value Command Return Value
    */
   inline void SetReturnValue(const uint8_t value) { return_value_ = value; }
   /**
-   * @brief コマンド処理中フラグ代入
-   * コマンド送信から、ack受信までTrueを返す。
-   * フラグ値の代入処理は実装済みだが、まだ利用していない。
-   * @param[in] value フラグ値
+   * @brief Assign Command Processing Flag
+   * Returns True from command transmission to ACK reception.
+   * The assignment process of the flag value is implemented but not yet used.
+   * @param[in] value Flag Value
    */
   inline void SetProcessingStatus(const bool value) { is_processing_ = value; }
   /**
-   * @brief コマンド処理中フラグ取得
-   * @return コマンド処理中 True
+   * @brief Get Command Processing Flag
+   * @return Command Processing True
    */
   inline bool IsProcessing() const { return is_processing_; }
   /**
-   * @brief リトライ回数インクリメント
+   * @brief Increment Retry Count
    */
   inline void IncrementRetryCount() { ++retry_count_; }
   /**
-   * @brief リトライ回数クリア
+   * @brief Clear Retry Count
    */
   inline void ClearRetryCount() { retry_count_ = 0; }
   /**
-   * @brief リトライ回数取得
-   * @return リトライ回数
+   * @brief Get Retry Count
+   * @return Retry Count
    */
   inline uint32_t GetRetryCount() const { return retry_count_; }
 
  private:
-  const std::string command_name_;  //!< コマンド名
-  uint8_t return_value_;            //!< 戻り値の値
-  bool is_processing_;              //!< 処理中フラグ(処理中はTrue)
-  uint32_t retry_count_;            //!< リトライ回数
+  const std::string command_name_;  //!< Command name
+  uint8_t return_value_;            //!< Return value
+  bool is_processing_;              //!< Processing flag (True while processing)
+  uint32_t retry_count_;            //!< Retry count
 };
 
-// @n Protocolクラスにいれるとクラス名がVersionsだけにできる
+// @n When put into the Protocol class, the class name can be Versions only
 struct PowerEcuVersions {
   std::string power_ecu_version;
   std::string power_ecu_com_version;
 };
 
 /**
- * @brief 通信コマンドのプロトコルバージョンに依存しない処理を行うクラス <br>
+ * @brief Class that performs processing independent of the communication command protocol version <br>
  * <br>
- * 通信プロトコルバージョンによらない処理は下記の通り <br>
- *   - バージョン確認 <br>
- *   - 制御コマンド送信, ack受信 <br>
- *   - ハートビート送信 <br>
+ * The processing independent of the communication protocol version is as follows <br>
+ *   - Version confirmation <br>
+ *   - Control command transmission, ACK reception <br>
+ *   - Heartbeat transmission <br>
  * <br>
- * また、制御コマンドの拡張の為、
- * コマンドキューとデータデコーダ/エンコーダへの登録機能を公開している。<br>
- * topicから送られて来る処理は非同期であるが、
- * 電源ECUとの通信は逐次処理する必要がある為キューイングを行う設計とした。<br>
+ * Also, for the extension of control commands,
+ * It publicly offers registration functions to the command queue and data decoder/encoder. <br>
+ * Processing sent from the topic is asynchronous, but
+ * The communication with the Power ECU needs to be sequential, so a queuing design is adopted. <br>
  *
- * また、rosrunコマンドで呼び出すアプリケーションでもこのクラスを使用するため、
- * このクラスはroscore非依存の設計を取っている。
- * もし、このクラスのエラーをダイアグなどのトピックとして発信する場合、
- * このクラスを管理する上位のクラスがその機能を担う事。
+ * Additionally, since this class is used in applications called by the rosrun command
+ * This class has a design that is independent of roscore.
+ * If you wish to emit the errors of this class as topics like diagnostics,
+ * The upper-level class managing this class should take on that function.
  */
 class PowerEcuProtocol : boost::noncopyable {
  public:
@@ -158,40 +158,40 @@ class PowerEcuProtocol : boost::noncopyable {
   ~PowerEcuProtocol() { Close(); }
 
   /**
-   * @brief オープン
+   * @brief Open
    */
   bool Open();
 
   /**
-   * @brief クローズ
+   * @brief Close
    */
   void Close();
 
   /**
-   * @brief バージョン情報をECUから取得し、プロトコルの通信準備を行う
+   * @brief Obtain version information from ECU and prepare for protocol communication
    */
   bool Init();
 
   /**
-   * @brief 通信開始
+   * @brief Start Communication
    *
    * @return
    */
   boost::system::error_code Start();
 
   /**
-   * @brief 通信終了
+   * @brief End Communication
    *
    * @return
    */
   boost::system::error_code Stop();
 
   /**
-  * @brief 名前でコマンドに関するステータス管理情報を返す
+  * @brief Return the status management information regarding the command by name
   *
-  * 受付不可能なコマンドならfalseを返す
+  * Returns false if the command is unacceptable
   *
-  * @param[in] command 取得するコマンド名
+  * @param[in] command Command name to retrieve
   * @param[out] command_state
   */
   inline bool GetCommandState(const std::string& command, hsrb_power_ecu::CommandState::Ptr& command_state) const {
@@ -204,23 +204,23 @@ class PowerEcuProtocol : boost::noncopyable {
   }
 
   /**
-   * @brief コマンドが有効か確認
+   * @brief Check if the command is valid
    *
-   * @param[in] nameコマンド名
+   * @param[in] name Command name
    *
-   * @return 有効時 true
+   * @return True when valid
    */
   inline bool HasCommand(const std::string& name) const { return (command_map_.find(name) != command_map_.end()); }
 
   /**
-   * @brief データのポインタを取得
+   * @brief Obtain pointer to data
    *
-   * @tparam T データの型
-   * @param[in] name データの名前
+   * @tparam T Data type
+   * @param[in] name Data name
    *
-   * @return 成功時 : データのポインタ<br>
-   *         失敗時 : NULL<br>
-   *         未登録のデータ名、データの型が不一致の場合失敗となる
+   * @return On success: pointer to data<br>
+   *         On failure: NULL<br>
+   *         Failure occurs if the data name is unregistered or if the data type is mismatched.
    */
   template <typename T>
   T* GetParamPtr(const std::string& name) const {
@@ -233,34 +233,34 @@ class PowerEcuProtocol : boost::noncopyable {
   }
 
   /**
-   * @brief  Receiveのエラーレート取得
-   * @return エラーレート
+   * @brief Obtain Receive error rate
+   * @return Error rate
    */
   inline double GetReceiveErrorRate() const { return read_error_counter_.GetErrorRate(); }
 
   /**
-   * @brief Sendのエラーレート取得
-   * @return エラーレート
+   * @brief Obtain Send error rate
+   * @return Error rate
    */
   inline double GetSendErrorRate() const { return write_error_counter_.GetErrorRate(); }
 
   /**
-   * @brief バージョン情報を取得する
+   * @brief Obtain version information
    *
-   * @param[out] result  バージョン情報
+   * @param[out] result Version information
    *
-   * @return 成功時 true
+   * @return True on success
    */
   bool GetPowerEcuVersions(PowerEcuVersions& result);
 
   /**
-   * @brief コマンドキュー追加
+   * @brief Add to Command Queue
    *
    *
-   * @param[in] command_name 追加するコマンド
+   * @param[in] command_name Command to add
    *
-   * @return 成功時 : true<br>
-   *         受付不可能なコマンドのときfalseを返す
+   * @return On success: true<br>
+   * Returns false when the command is unacceptable
    */
   bool AddCommandQueue(const std::string& command_name) {
     CommandMapType::const_iterator it = command_map_.find(command_name);
@@ -272,63 +272,63 @@ class PowerEcuProtocol : boost::noncopyable {
   }
 
   /**
-   * @brief コマンドキューをすべて処理
+   * @brief Process all Command Queue
    *
-   * このメソッドは非リアルタイムプロセス中でコールされることを想定している
+   * This method is intended to be called during non-real-time processes.
    *
-   * @param[in] check_ros     ros::ok()チェック要否  true:チェック必要  false:チェック不要
-   * @param[in] cycle_hz      ポーリング周期[hz]
-   * @param[in] error_rate    許容エラーレート
+   * @param[in] check_ros Whether to check ros::ok() true: Check needed false: Check not needed
+   * @param[in] cycle_hz Polling cycle [hz]
+   * @param[in] error_rate Allowable error rate
    *
-   * @return 実行結果
-   * @retval 成功時           boost::system::errc::success
-   * @retval 引数異常         boost::system::errc::invalid_argument
-   * @retval 通信エラー       boost::system::errc::operation_canceled
-   * @retval 通信タイムアウト boost::system::errc::timed_out
-   * @retval roscore非起動    boost::system::errc::operation_not_permitted
+   * @return Execution Result
+   * @retval On success boost::system::errc::success
+   * @retval Argument error boost::system::errc::invalid_argument
+   * @retval Communication error boost::system::errc::operation_canceled
+   * @retval Communication timeout boost::system::errc::timed_out
+   * @retval roscore not running boost::system::errc::operation_not_permitted
    */
   boost::system::error_code ProcessCommandQueue(bool check_ros, double cycle_hz, double error_rate);
 
   /**
-   * @brief 受信処理
+   * @brief Receive Processing
    *
-   * 通信プロトコル上の復帰不可能なエラー(制御コマンドリトライ許容超過、ACKタイムアウト)
-   * はこの関数内でexitしている
+   * Irrecoverable errors on the communication protocol (control command retry limit exceedance, ACK timeout)
+   * Cause exit within this function
    *
-   * @return 実行結果
-   * @retval 正常時 boost::system::errc::success
-   * @retval networkのReceive失敗 boost::system::errc::network_down
-   * @retval 受信パケットが化けている boost::system::errc::protocol_error
-   * @retval 制御コマンド再送 boost::system::errc::resource_unavailable_try_again
+   * @return Execution Result
+   * @retval Normal boost::system::errc::success
+   * @retval network Receive failure boost::system::errc::network_down
+   * @retval Corrupted received packet boost::system::errc::protocol_error
+   * @retval Control command retransmission boost::system::errc::resource_unavailable_try_again
    */
   boost::system::error_code ReceiveAll();
 
   /**
-   * @brief 送信処理
+   * @brief Send Processing
    *
-   * @return 実行結果
-   * @retval 正常時 boost::system::errc::success
-   * @retval networkのSend失敗 boost::system::errc::network_down
+   * @return Execution Result
+   * @retval Normal boost::system::errc::success
+   * @retval network Send failure boost::system::errc::network_down
    */
   boost::system::error_code SendAll();
 
  private:
   typedef boost::unordered_map<std::string, hsrb_power_ecu::CommandState::Ptr>
-      CommandMapType;  //!< 制御コマンドのMapの型
+      CommandMapType;  //!< Map type for control commands
   typedef boost::circular_buffer<hsrb_power_ecu::CommandState::Ptr>
-      CommandBuffer;  //!< 制御コマンドのコマンドキューの型
+      CommandBuffer;  //!< Command queue type
 
   /**
-   * @brief コマンドキュー追加(内部用)
+   * @brief Add to Command Queue (internal)
    *
    * @param[in] command command_state
    */
   void AddCommandQueue(hsrb_power_ecu::CommandState::Ptr command);
 
   /**
-   * @brief データデコーダ登録
+   * @brief Register Data Decoder
    *
-   * @tparam T データデコーダの型
+   * @tparam T Data decoder type
    */
   template <typename T>
   void RegisterDataDecoder() {
@@ -338,10 +338,10 @@ class PowerEcuProtocol : boost::noncopyable {
   }
 
   /**
-   * @brief データエンコーダ登録
+   * @brief Register Data Encoder
    *
-   * @tparam T データエンコーダの型
-   * @param[out] name コマンド名
+   * @tparam T Data encoder type
+   * @param[out] name Command Name
    */
   template <typename T>
   std::string RegisterDataEncoder() {
@@ -355,68 +355,68 @@ class PowerEcuProtocol : boost::noncopyable {
   }
 
   /**
-   * @brief コマンド送信
-   * シリアルデバイスにコマンドを送信する。
+   * @brief Send Command
+   * Send a command to the serial device.
    *
-   * コマンドは、コマンドキューで管理しているため、
-   * 基本的にAddCommandQueueメソッドを使ってコマンド送信すること。
+   * Because commands are managed in the command queue,
+   * It is basic to use the AddCommandQueue method for command transmission.
    *
-   * コマンドキューで管理する制御コマンドは設計上、戻り値としてRxackコマンドが返ってくる必要がある。
-   * Rxackコマンドが返ってこない制御コマンド(getv_コマンド等)は専用にメソッドを作成し、
-   * SendCommandを使って直接コマンド送信を行う。
+   * Control commands managed by the command queue need to return the Rxack command as a return value.
+   * For control commands that do not return the Rxack command (like getv_command),
+   * A dedicated method is created, and the command is sent directly using SendCommand.
    *
-   * @param[in] command 送信するコマンド情報
-   * @return 実行結果
-   * @retval 正常時 boost::system::errc::success
-   * @retval networkのSend失敗 boost::system::errc::network_down
+   * @param[in] command Information of the command to send
+   * @return Execution Result
+   * @retval Normal boost::system::errc::success
+   * @retval network Send failure boost::system::errc::network_down
    */
   boost::system::error_code SendCommand(const hsrb_power_ecu::CommandState::Ptr command);
 
-  // 変数
-  // ネットワークインターフェース管理
-  boost::shared_ptr<hsrb_power_ecu::INetwork> network_;  //!< ネットワークインターフェース
-  PacketBuffer receive_buffer_;                          //!< 受信バッファ
-  PacketBuffer send_buffer_;                             //!< 送信バッファ
+  // Variables
+  // Network Interface Management
+  boost::shared_ptr<hsrb_power_ecu::INetwork> network_;  //!< Network interface
+  PacketBuffer receive_buffer_;                          //!< Receive buffer
+  PacketBuffer send_buffer_;                             //!< Send buffer
 
-  // トランスポート管理
-  //// デコーダ
-  hsrb_power_ecu::PowerEcuComFrameDecoder frame_decoder_;  //!< フレームデコーダ
-  //// エンコーダ
-  hsrb_power_ecu::PowerEcuComFrameEncoder frame_encoder_;  //!< フレームエンコーダ
+  // Transport Management
+  //// Decoder
+  hsrb_power_ecu::PowerEcuComFrameDecoder frame_decoder_;  //!< Frame decoder
+  //// Encoder
+  hsrb_power_ecu::PowerEcuComFrameEncoder frame_encoder_;  //!< Frame encoder
 
-  CommandBuffer command_queue_;       //!< コマンドキュー
+  CommandBuffer command_queue_;       //!< Command queue
 
   rclcpp::Clock::SharedPtr clock_;
-  rclcpp::Time last_send_command_time_;  //!< コマンド送信時刻
-  rclcpp::Time last_heartbeat_time_;  //!< 最後にハートビートを送信した時刻
+  rclcpp::Time last_send_command_time_;  //!< Command send time
+  rclcpp::Time last_heartbeat_time_;  //!< Last heartbeat send time
 
-  bool is_waiting_ack_;            //!< ACK待ちかどうかのフラグ
+  bool is_waiting_ack_;            //!< Flag indicating whether waiting for ACK
 
-  ErrorCounter read_error_counter_;   //!< Readメソッドのエラーレート
-  ErrorCounter write_error_counter_;  //!< Writeメソッドのエラーレート
+  ErrorCounter read_error_counter_;   //!< Read method error rate
+  ErrorCounter write_error_counter_;  //!< Write method error rate
 
-  // コマンドマップ
-  CommandMapType command_map_;               //!< 制御コマンドのMap
+  // Command map
+  CommandMapType command_map_;               //!< Map of control commands
 
-  // 受信コマンドデータ
+  // Received command data
   //// rxack
-  bool* is_receive_ack_;  //!< Ackが返ってきたかどうか
-  uint8_t* ack_value_;    //!< 返信コマンドの戻り値
+  bool* is_receive_ack_;  //!< Whether ACK was received
+  uint8_t* ack_value_;    //!< Return value of the reply command
   //// ver
-  std::string* ver_power_ecu_version_;      //!< 電源ECUファームVer[git hash 20byte] 16進数40桁
-  std::string* ver_power_ecu_com_version_;  //!< 電源ECU通信構造HASH[hash 20byte] 16進数40桁
-  bool* is_receive_version_;                //!< Verコマンドを受信したかどうか
-  // 送信コマンドデータ
+  std::string* ver_power_ecu_version_;      //!< Power ECU firmware version [git hash 20 bytes] 40-digit hexadecimal
+  std::string* ver_power_ecu_com_version_;  //!< Power ECU communication structure HASH [hash 20 bytes] 40-digit hexadecimal
+  bool* is_receive_version_;                //!< Whether the Ver command was received
+  // Send command data
   //// heart
-  uint32_t* counts;  //!< ハートビートのカウント値（送信ごとに+1) 16進数8桁 uint32
+  uint32_t* counts;  //!< Heartbeat count value (incremented by +1 each transmission) 8-digit hexadecimal uint32
 
-  // コマンド名
-  std::string heart_command_name_;  //!< heartコマンド
-  std::string getv_command_name_;   //!< getv_コマンド
-  std::string time_command_name_;   //!< timeコマンド
-  std::string start_command_name_;  //!< startコマンド
-  std::string stop_command_name_;   //!< stopコマンド
-  std::string mute_command_name_;   //!< muteコマンド
+  // Command name
+  std::string heart_command_name_;  //!< Heart command
+  std::string getv_command_name_;   //!< getv_command
+  std::string time_command_name_;   //!< Time command
+  std::string start_command_name_;  //!< Start command
+  std::string stop_command_name_;   //!< Stop command
+  std::string mute_command_name_;   //!< Mute command
 };
 
 }  // namespace hsrb_power_ecu

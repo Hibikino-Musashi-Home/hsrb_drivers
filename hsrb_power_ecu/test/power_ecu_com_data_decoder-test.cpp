@@ -39,7 +39,7 @@ DAMAGE.
 #include "common_methods.hpp"
 
 namespace {
-const size_t kBufferSize = 1000;
+const size_t kBufferSize = 1000;  //!< Buffer size
 void CompareEcu1PacketData(hsrb_power_ecu::PowerEcuComEcu1DataDecoder &decoder,
                            hsrb_power_ecu::PowerEcuComEcu1DataDecoder::PacketData dist) {
   EXPECT_EQ(*decoder.GetParamPtr<uint32_t>("time_stamp"), dist.time_stamp);

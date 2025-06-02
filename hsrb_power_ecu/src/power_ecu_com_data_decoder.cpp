@@ -38,28 +38,28 @@ DAMAGE.
 #include <rclcpp/rclcpp.hpp>
 
 namespace {
-const size_t kEcu1DataDecoderPacketSize = 326;        //!< 基本情報パケットのパケットサイズ
-const char kEcu1DataDecoderPacketName[] = "ecu1_";    //!< 基本情報パケットのパケット種別
-const size_t kEcu1DateLengh = 14 + 1;                 //!< 日時の文字数 + \0
-const size_t kEcu1DiagStatusLength = 65 + 1;          //!< ダイアグ情報の文字数 + \0
-const size_t kEcu1PowerEcuStatusFlagLength = 3 + 1;   //!< 電源ECUステータスの文字数 + \0
-const size_t kEcu1EcuStatusLength = 17 + 1;           //!< 電源ECUステータスの文字数 + \0
-const size_t kEcu1GyroStatusLength = 17 + 1;          //!< ジャイロ姿勢角演算ステータスの文字数 + /0
-const size_t kEcu1TempStringLength = 9 + 1;           //!< テンポラリ文字列の最大文字数
-const size_t kEcu2DataDecoderPacketSize = 291;        //!< オプション情報パケットパケットサイズ
-const char kEcu2DataDecoderPacketName[] = "ecu2_";    //!< オプション情報パケットパケット種別
-const size_t kEcu2PowerEcuVersionLength = 41 + 1;     //!< 電源ECUファームVerの文字数 + \0
-const size_t kEcu2PowerEcuComVersionLength = 41 + 1;  //!< 電源ECU通信構造HASHの文字数 + \0
-const size_t kRxackDataDecoderPacketSize = 15;        //!< 返信パケットパケットサイズ
-const char kRxackDataDecoderPacketName[] = "rxack";   //!< 返信パケットパケット種別
-const size_t kVerDataDecoderPacketSize = 95;          //!< バージョン情報パケットのパケットサイズ
-const char kVerDataDecoderPacketName[] = "ver__";     //!< バージョン情報パケットのパケットサイズ
+const size_t kEcu1DataDecoderPacketSize = 326;        //!< Packet size of basic information packet
+const char kEcu1DataDecoderPacketName[] = "ecu1_";    //!< Packet type of basic information packet
+const size_t kEcu1DateLengh = 14 + 1;                 //!< Number of characters in the date + \0
+const size_t kEcu1DiagStatusLength = 65 + 1;          //!< Number of characters in the diagnostic information + \0
+const size_t kEcu1PowerEcuStatusFlagLength = 3 + 1;   //!< Number of characters in the power ECU status + \0
+const size_t kEcu1EcuStatusLength = 17 + 1;           //!< Number of characters in the power ECU status + \0
+const size_t kEcu1GyroStatusLength = 17 + 1;          //!< Number of characters in the gyro posture angle calculation status + /0
+const size_t kEcu1TempStringLength = 9 + 1;           //!< Maximum number of characters in the temporary string
+const size_t kEcu2DataDecoderPacketSize = 291;        //!< Packet size of optional information packet
+const char kEcu2DataDecoderPacketName[] = "ecu2_";    //!< Packet type of optional information packet
+const size_t kEcu2PowerEcuVersionLength = 41 + 1;     //!< Number of characters in the power ECU firmware version + \0
+const size_t kEcu2PowerEcuComVersionLength = 41 + 1;  //!< Number of characters in the power ECU comms structure HASH + \0
+const size_t kRxackDataDecoderPacketSize = 15;        //!< Packet size of the response packet
+const char kRxackDataDecoderPacketName[] = "rxack";   //!< Packet type of the response packet
+const size_t kVerDataDecoderPacketSize = 95;          //!< Packet size of the version information packet
+const char kVerDataDecoderPacketName[] = "ver__";     //!< Packet type of the version information packet
 }  // anonymous namespace
 
 namespace hsrb_power_ecu {
 /**
- * @brief コンストラクタ
- * @param[in] packet_data パケットデータ
+ * @brief Constructor
+ * @param[in] packet_data Packet data
  */
 PowerEcuComEcu1DataDecoder::PowerEcuComEcu1DataDecoder()
     : IPowerEcuComDataDecoder(kEcu1DataDecoderPacketSize, kEcu1DataDecoderPacketName), packet_out_() {
@@ -74,90 +74,90 @@ PowerEcuComEcu1DataDecoder::PowerEcuComEcu1DataDecoder()
   packet_raw_data_.power_ecu_status.reserve(kEcu1EcuStatusLength);
   temp_str.reserve(kEcu1TempStringLength);
 
-  // デコード指示リスト作成
-  // パケットデータの先頭からpush_backしていく
-  // 第1引数 要素デコードクラスとデコード後の型指定
-  // 第2引数 デコード後の代入先
-  // 第3引数 桁数
-  //!< タイムスタンプ           10進10桁 [ms]
+  // Create decode instruction list
+  // Push back from the beginning of packet data
+  // 1st argument: Element decode class & type after decoding
+  // 2nd argument: Assignment destination after decoding
+  // 3rd argument: Number of digits
+  //!< Timestamp                  Decimal 10 digits [ms]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintDecoder<uint32_t> >(
       new hsrb_power_ecu::ElementUintDecoder<uint32_t>(packet_raw_data_.time_stamp, 10)));
-  //!< 日時                     文字 （YYYYMMDDhhmmss）
+  //!< Date and time              String (YYYYMMDDhhmmss)
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementStringDecoder>(
       new hsrb_power_ecu::ElementStringDecoder(packet_raw_data_.date, 14)));
-  //!< 電源ECUステータス        16進2桁      -
+  //!< Power ECU status           Hex 2 digits     -
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementStringDecoder>(
       new hsrb_power_ecu::ElementStringDecoder(packet_raw_data_.power_ecu_status_flag, 2 + 1)));
-  //!< 電源ECU状態 16進数16桁
+  //!< Power ECU condition        Hex 16 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementStringDecoder>(
       new hsrb_power_ecu::ElementStringDecoder(packet_raw_data_.power_ecu_status, 16 + 1)));
-  //!< ダイアグ情報             16進64桁
+  //!< Diagnostic information     Hex 64 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementStringDecoder>(
       new hsrb_power_ecu::ElementStringDecoder(packet_raw_data_.diag_status, 64 + 1)));
-  //!< バッテリ総容量 符号10進5桁  [mAh]
+  //!< Battery total capacity     Signed decimal 5 digits  [mAh]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_raw_data_.battery_total_capacity, 5)));
-  //!< バッテリ残容量 符号10進5桁  [mAh]
+  //!< Battery remaining capacity Signed decimal 5 digits  [mAh]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_raw_data_.battery_remaining_capacity, 5)));
-  //!< 電流値                   符号10進5桁  [mA]
+  //!< Current value              Signed decimal 5 digits  [mA]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_raw_data_.electric_current, 5)));
-  //!< 電池電圧                 符号10進5桁  [mV]
+  //!< Battery voltage            Signed decimal 5 digits  [mV]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_raw_data_.battery_voltage, 5)));
-  //!< 電池温度                 符号10進3桁  [℃]
+  //!< Battery temperature        Signed decimal 3 digits  [℃]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int8_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int8_t>(packet_raw_data_.battery_temperature, 3)));
-  //!< バッテリ状態フラグ       16進4桁      -
+  //!< Battery status flag        Hex 4 digits     -
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementHexUintDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementHexUintDecoder<uint16_t>(packet_raw_data_.battery_state_flag, 4)));
-  //!< バッテリ初期学習容量 10進5桁      [mAh]
+  //!< Initial battery learning capacity Decimal 5 digits [mAh]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementUintDecoder<uint16_t>(packet_raw_data_.battery_initial_learning_capacity, 5)));
-  //!< バッテリ異常ステータス   16進4桁 -
+  //!< Battery abnormal status    Hex 4 digits     -
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementHexUintDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementHexUintDecoder<uint16_t>(packet_raw_data_.battery_error_status, 4)));
-  //!< 相対容量                 10進3桁 [%]
+  //!< Relative capacity          Decimal 3 digits [%]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementUintDecoder<uint8_t> >(
       new hsrb_power_ecu::ElementUintDecoder<uint8_t>(packet_raw_data_.battery_relative_capacity, 3)));
-  //!< 近接、バンパセンサ状態   16進2桁      -
+  //!< Proximity and bumper sensor status Hex 2 digits      -
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementHexUintDecoder<uint8_t> >(
       new hsrb_power_ecu::ElementHexUintDecoder<uint8_t>(packet_raw_data_.bumper_status, 2)));
-  //!< ジャイロ姿勢各演算ステータス 16進数16桁 uint8*8
+  //!< Gyro posture angle calculation status Hex 16 digits uint8*8
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementStringDecoder>(
       new hsrb_power_ecu::ElementStringDecoder(packet_raw_data_.gyro_status, 16 + 1)));
-  //!< quaternion_t             符号10進10桁 x10^-1
+  //!< quaternion_t               Signed decimal 10 digits x10^-1
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int32_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int32_t>(packet_raw_data_.quaternion_t, 10)));
-  //!< quaternion_x             符号10進10桁 x10^-1
+  //!< quaternion_x               Signed decimal 10 digits x10^-1
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int32_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int32_t>(packet_raw_data_.quaternion_x, 10)));
-  //!< quaternion_y             符号10進10桁 x10^-1
+  //!< quaternion_y               Signed decimal 10 digits x10^-1
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int32_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int32_t>(packet_raw_data_.quaternion_y, 10)));
-  //!< quaternion_z             符号10進10桁 x10^-1
+  //!< quaternion_z               Signed decimal 10 digits x10^-1
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int32_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int32_t>(packet_raw_data_.quaternion_z, 10)));
-  //!< 角速度x                  符号10進10桁 x10^-2[rad/s]
+  //!< Angular velocity x         Signed decimal 10 digits x10^-2[rad/s]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int32_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int32_t>(packet_raw_data_.angular_velocity_x, 10)));
-  //!< 角速度y                  符号10進10桁 x10^-2[rad/s]
+  //!< Angular velocity y         Signed decimal 10 digits x10^-2[rad/s]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int32_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int32_t>(packet_raw_data_.angular_velocity_y, 10)));
-  //!< 角速度z                  符号10進10桁 x10^-2[rad/s]
+  //!< Angular velocity z         Signed decimal 10 digits x10^-2[rad/s]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int32_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int32_t>(packet_raw_data_.angular_velocity_z, 10)));
-  //!< 加速度x                  符号10進10桁 x10^-2[m/s^2]
+  //!< Acceleration x             Signed decimal 10 digits x10^-2[m/s^2]
   element_decoder_list_.push_back(
       boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int32_t> >(new hsrb_power_ecu::ElementIntDecoder<int32_t>(
-          packet_raw_data_.acceleration_x, 10)));  //!< 加速度y                  符号10進10桁 x10^-2[m/s^2]
+          packet_raw_data_.acceleration_x, 10)));  //!< Acceleration y             Signed decimal 10 digits x10^-2[m/s^2]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int32_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int32_t>(packet_raw_data_.acceleration_y, 10)));
-  //!< 加速度z                  符号10進10桁 x10^-2[m/s^2]
+  //!< Acceleration z             Signed decimal 10 digits x10^-2[m/s^2]
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int32_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int32_t>(packet_raw_data_.acceleration_z, 10)));
-  //!< 自動充電ステータス         16進8桁      -
+  //!< Automatic charging status  Hex 8 digits     -
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementHexUintDecoder<uint8_t> >(
       new hsrb_power_ecu::ElementHexUintDecoder<uint8_t>(packet_raw_data_.charger_state, 2)));
 
@@ -207,20 +207,20 @@ PowerEcuComEcu1DataDecoder::PowerEcuComEcu1DataDecoder()
 }
 
 /**
- * @brief デコード後処理
- * @return 成功時 True
+ * @brief Post-decoding process
+ * @return True upon success
  */
 bool PowerEcuComEcu1DataDecoder::Update() {
-  //!< タイムスタンプ           10進10桁 [ms]
+  //!< Timestamp                  Decimal 10 digits [ms]
   packet_out_.time_stamp = packet_raw_data_.time_stamp;
-  //!< 日時                     文字 （YYYYMMDDhhmmss）
+  //!< Date and time              String (YYYYMMDDhhmmss)
   if (packet_raw_data_.date.size() <= packet_out_.ecu1_date.capacity()) {
     packet_out_.ecu1_date.clear();
     std::copy(packet_raw_data_.date.begin(), packet_raw_data_.date.end(), std::back_inserter(packet_out_.ecu1_date));
   } else {
     RCLCPP_ERROR(rclcpp::get_logger("power_ecu_com_data_decoder"), "ecu1 date have not enough buffer.");
   }
-  //!< 電源ECUステータス        16進2桁      -
+  //!< Power ECU status           Hex 2 digits     -
   if ((packet_raw_data_.power_ecu_status_flag.size() - 1) <= packet_out_.power_ecu_status_flag.capacity()) {
     packet_out_.power_ecu_status_flag.clear();
     std::copy(packet_raw_data_.power_ecu_status_flag.begin() + 1, packet_raw_data_.power_ecu_status_flag.end(),
@@ -229,7 +229,7 @@ bool PowerEcuComEcu1DataDecoder::Update() {
     RCLCPP_ERROR(rclcpp::get_logger("power_ecu_com_data_decoder"), "ecu1 power_ecu_status have not enough buffer.");
   }
 
-  // ダイアグ情報 ダイアグ
+  // Diagnostic information diagnostic
   // diag[0]      DIAG-P-001
   // diag[1]      DIAG-P-002
   // diag[2]      DIAG-P-003
@@ -298,36 +298,36 @@ bool PowerEcuComEcu1DataDecoder::Update() {
     RCLCPP_ERROR(rclcpp::get_logger("power_ecu_com_data_decoder"), "ecu2 diag_status have not enough buffer.");
   }
 
-  // ①バッテリ総容量   2byte 1mAH 00000～65535  0～65535mAH
+  // ①Battery total capacity   2byte 1mAH 00000～65535  0～65535mAH
   packet_out_.battery_total_capacity = static_cast<double>(packet_raw_data_.battery_total_capacity) * 1e-3;
-  // ②バッテリ残容量   2byte 1mAH 00000～65535  0～65535mAH
+  // ②Battery remaining capacity   2byte 1mAH 00000～65535  0～65535mAH
   packet_out_.battery_remaining_capacity = static_cast<double>(packet_raw_data_.battery_remaining_capacity) * 1e-3;
-  // ③バッテリ電流値   2byte 2mA  -65536～65534 -65536～65534mA ( - :充電, +:放電)
+  // ③Battery current value   2byte 2mA  -65536～65534 -65536～65534mA ( - :Charging, +:Discharging)
   packet_out_.electric_current = static_cast<double>(packet_raw_data_.electric_current) * 1e-3;
-  // ④バッテリ電圧値   2byte 1mV  00000～65535  0～65535mV
+  // ④Battery voltage value   2byte 1mV  00000～65535  0～65535mV
   packet_out_.battery_voltage = static_cast<double>(packet_raw_data_.battery_voltage) * 1e-3;
-  // ⑤バッテリ電池温度 1byte --   -128～127     -128～127℃
+  // ⑤Battery cell temperature 1byte --   -128～127     -128～127℃
   packet_out_.battery_temperature = static_cast<double>(packet_raw_data_.battery_temperature);
-  // ⑦バッテリ：状態フラグ
-  // 1byte目
-  // ビット シンボル ビット名 機能
-  // bit7   CRGOV    過充電   0:過充電以外     1:過充電
-  // bit6   23PAR    並列数   0:2並            1:3並
-  // bit5   STD      学習許可 0:学習禁止       1:学習許可
-  // bit4   FULL     満充電   0:満充電状態以外 1:満充電状態
-  // bit3   DISCOV   過放電   0:過放電以外     1:過放電
-  // bit2   CHG      充電許可 0:充電停止       1:充電許可
-  // bit1   DISC     放電許可 0:放電停止       1:放電許可
-  // bit0   0PER     0%検出   0:0%検出状態以外 1:0%検出状態
+  // ⑦Battery: Status flag
+  // 1st byte
+  // Bit Symbol Bit name Function
+  // bit7   CRGOV    Overcharge   0:Not overcharged     1:Overcharged
+  // bit6   23PAR    Parallel count   0:2 parallel            1:3 parallel
+  // bit5   STD      Learning permission 0:Learning prohibited       1:Learning permitted
+  // bit4   FULL     Fully charged   0:Not fully charged 1:Fully charged
+  // bit3   DISCOV   Overdischarge   0:Not overdischarged     1:Overdischarged
+  // bit2   CHG      Charging permission 0:Charge stop       1:Charge permission
+  // bit1   DISC     Discharge permission 0:Discharge stop       1:Discharge permission
+  // bit0   0PER     0% detection   0:Not 0% detection state 1:0% detection state
   //
-  // 2byte目
-  // ビット     シンボル ビット名               機能
-  // bit7～bit3 reserve  予約ビット             0:固定値
-  // bit2       45PAR    並列数                 0:4並 1:5並
-  // bit1       SEL      最小セル電圧0%検出状態 0:最小セル電圧0%検出状態以外
-  // 1:最小セル電圧0%検出状態
-  // bit0       BAL      セルバランス崩れ       0:セルバランス崩れ以外
-  // 1:セルバランス崩れ
+  // 2nd byte
+  // Bit     Symbol Bit name               Function
+  // bit7～bit3 reserve  Reserved bits             0:Fixed value
+  // bit2       45PAR    Parallel count                 0:4 parallel 1:5 parallel
+  // bit1       SEL      Minimum cell voltage 0% detection state 0:Not minimum cell voltage 0% detection state
+  // 1:Minimum cell voltage 0% detection state
+  // bit0       BAL      Cell imbalance       0:Not cell imbalance
+  // 1:Cell imbalance
   packet_out_.is_battery_45par = ((packet_raw_data_.battery_state_flag & (0x1 << (8 + 2))) > 0);
   packet_out_.is_battery_sel = ((packet_raw_data_.battery_state_flag & (0x1 << (8 + 1))) > 0);
   packet_out_.is_battery_bal = ((packet_raw_data_.battery_state_flag & (0x1 << (8 + 0))) > 0);
@@ -339,25 +339,25 @@ bool PowerEcuComEcu1DataDecoder::Update() {
   packet_out_.is_battery_chg = ((packet_raw_data_.battery_state_flag & (0x1 << (0 + 2))) > 0);
   packet_out_.is_battery_disc = ((packet_raw_data_.battery_state_flag & (0x1 << (0 + 1))) > 0);
   packet_out_.is_battery_0per = ((packet_raw_data_.battery_state_flag & (0x1 << (0 + 0))) > 0);
-  //!< バッテリ初期学習容量 10進5桁      [mAh]
+  //!< Initial battery learning capacity Decimal 5 digits [mAh]
   packet_out_.battery_initial_learning_capacity = packet_raw_data_.battery_initial_learning_capacity;
-  //!< バッテリ異常ステータス   16進4桁 - 内容は仕様書で未定義
+  //!< Battery abnormal status    Hex 4 digits - Contents undefined in specification
   packet_out_.battery_error_status = packet_raw_data_.battery_error_status;
-  //!< 相対容量                 10進3桁 [%]
+  //!< Relative capacity          Decimal 3 digits [%]
   packet_out_.battery_relative_capacity = static_cast<double>(packet_raw_data_.battery_relative_capacity);
 
-  // 電源ECU状態
-  // ビット | シンボル        | ビット名                         | 機能
-  // 24～63 | reserve         | 予約ビット                       | 0:固定値
-  // 16～23 | ECU_PROG_STATUS | "4.5.3のS**の数 電源ECU内部状態" | 0～12
-  // 7～15  | reserve         | 予約ビット                       |
-  // 6      | BAT_STAT        | バッテリ充電状態                 | 0:充電されていない 1:充電されている
-  // 5      | SW_KINOKO       | 有線緊急停止SW                   | 0:押されていない 1:押されている
-  // 4      | SW_PWR          | 電源（プリウスSW)                | 0:押されていない 1:押されている
-  // 3      | SW_DRV          | 駆動SW                           | 0:駆動系が出力されている 1:駆動系が出力されていない
-  // 2      | SW_LATCH        | ラッチ解除SW                     | 0:押されていない 1:押されている
-  // 1      | SW_W_SEL        | 無線切り替えSW                   | 0:無線緊急停止有効 1:無線緊急停止無効
-  // 0      | SW_W_STOP       | 無線緊急停止SW                   | 0:押されていない 1:押されている
+  // Power ECU condition
+  // Bit | Symbol        | Bit name                         | Function
+  // 24～63 | reserve         | Reserved bits                       | 0:Fixed value
+  // 16～23 | ECU_PROG_STATUS | "Number of S** in 4.5.3 Power ECU internal state" | 0～12
+  // 7～15  | reserve         | Reserved bits                       |
+  // 6      | BAT_STAT        | Battery charge status                 | 0:Not charging 1:Charging
+  // 5      | SW_KINOKO       | Wired emergency stop SW                   | 0:Not pressed 1:Pressed
+  // 4      | SW_PWR          | Power (Prius SW)                | 0:Not pressed 1:Pressed
+  // 3      | SW_DRV          | Drive SW                           | 0:Drive system output 1:Drive system not output
+  // 2      | SW_LATCH        | Latch release SW                     | 0:Not pressed 1:Pressed
+  // 1      | SW_W_SEL        | Wireless switch SW                   | 0:Wireless emergency stop enabled 1:Wireless emergency stop disabled
+  // 0      | SW_W_STOP       | Wireless emergency stop SW                   | 0:Not pressed 1:Pressed
   temp_str.clear();
   std::copy(packet_raw_data_.power_ecu_status.end() - 6, packet_raw_data_.power_ecu_status.end() - 4,
             std::back_inserter(temp_str));
@@ -367,32 +367,32 @@ bool PowerEcuComEcu1DataDecoder::Update() {
             std::back_inserter(temp_str));
   uint8_t bits = std::strtol(temp_str.c_str(), NULL, 16);
   packet_out_.is_powerecu_bat_stat = (bits & (0x1 << 6)) != 0;
-  // 有線緊急停止SWのECUからの出力が0と1が逆になっている
-  // ECU側では変更を行わないので上位ソフトにて判定を逆にして対応する
+  // ECU output for wired emergency stop SW is reversed between 0 and 1
+  // No change is made on the ECU side, and the upper software handles it by reversing the judgment
   packet_out_.is_powerecu_sw_kinoko = (bits & (0x1 << 5)) == 0;
   packet_out_.is_powerecu_sw_pwr = (bits & (0x1 << 4)) != 0;
-  // 本来is_powerecu_sw_drvは駆動電源が停止しているかどうかが出力されているべきだが
-  // 2018.03現在、is_powerecu_sw_kinokoとまったく同じ状態がでてしまっているため
-  // 正しい情報として扱うことができない。
-  // そのため別途ECUの内部状態で、駆動電源の出力状態を判定する。
+  // Normally, is_powerecu_sw_drv should output whether the drive power is stopped or not
+  // But as of March 2018, the same state as is_powerecu_sw_kinoko is being output
+  // Therefore, it cannot be treated as correct information.
+  // Thus, the internal state of the ECU separately determines the output state of the drive power.
   // TODO(T.Nishino) 電源ECUのファームウェアが修正された段階で修正する
   packet_out_.is_powerecu_sw_drv = (packet_out_.power_ecu_internal_state != 9);
   packet_out_.is_powerecu_sw_latch = (bits & (0x1 << 2)) != 0;
   packet_out_.is_powerecu_sw_w_sel = (bits & (0x1 << 1)) != 0;
-  // 無線緊急停止SWのECUからの出力が0と1が逆になっている
-  // ECU側では変更を行わないので上位ソフトにて判定を逆にして対応する
+  // ECU output for wireless emergency stop SW is reversed between 0 and 1
+  // No change is made on the ECU side, and the upper software handles it by reversing the judgment
   packet_out_.is_powerecu_sw_w_stop = (bits & (0x1 << 0)) == 0;
 
-  // ⑨電源ボード：近接センサ、バンパセンサ状態
-  // ビット シンボル ビット名              機能
-  // bit7   reserve  予約ビット            0:固定値
-  // bit6   BUMPER2  バンパセンサ状態2     0:接触なし   1:接触あり
-  // bit5   BUMPER1  バンパセンサ状態1     0:接触なし   1:接触あり
-  // bit4   PROX5    近接センサラッチ状態5 0:近接物なし 1:近接物あり
-  // bit3   PROX4    近接センサラッチ状態4 0:近接物なし 1:近接物あり
-  // bit2   PROX3    近接センサラッチ状態3 0:近接物なし 1:近接物あり
-  // bit1   PROX2    近接センサラッチ状態2 0:近接物なし 1:近接物あり
-  // bit0   PROX1    近接センサラッチ状態1 0:近接物なし 1:近接物あり
+  // ⑨Power board: Proximity sensor, bumper sensor status
+  // Bit Symbol Bit name              Function
+  // bit7   reserve  Reserved bits            0:Fixed value
+  // bit6   BUMPER2  Bumper sensor status 2     0:No contact   1:Contact
+  // bit5   BUMPER1  Bumper sensor status 1     0:No contact   1:Contact
+  // bit4   PROX5    Proximity sensor latch state 5 0:No proximity 1:Proximity
+  // bit3   PROX4    Proximity sensor latch state 4 0:No proximity 1:Proximity
+  // bit2   PROX3    Proximity sensor latch state 3 0:No proximity 1:Proximity
+  // bit1   PROX2    Proximity sensor latch state 2 0:No proximity 1:Proximity
+  // bit0   PROX1    Proximity sensor latch state 1 0:No proximity 1:Proximity
   packet_out_.is_bumper_bumper2 = ((packet_raw_data_.bumper_status & (0x1 << 6)) > 0);
   packet_out_.is_bumper_bumper1 = ((packet_raw_data_.bumper_status & (0x1 << 5)) > 0);
   packet_out_.is_bumper_prox5 = ((packet_raw_data_.bumper_status & (0x1 << 4)) > 0);
@@ -401,163 +401,163 @@ bool PowerEcuComEcu1DataDecoder::Update() {
   packet_out_.is_bumper_prox2 = ((packet_raw_data_.bumper_status & (0x1 << 1)) > 0);
   packet_out_.is_bumper_prox1 = ((packet_raw_data_.bumper_status & (0x1 << 0)) > 0);
 
-  //!< ジャイロ姿勢角演算ステータス 16進数16桁
+  //!< Gyro posture angle calculation status Hex 16 digits
   packet_out_.gyro_status.clear();
   std::copy(packet_raw_data_.gyro_status.begin() + 1, packet_raw_data_.gyro_status.end(),
             std::back_inserter(packet_out_.gyro_status));
 
   //!< quaternion x,y,z,t -1.0~1.0
-  packet_out_.imu_quaternions[0] = packet_raw_data_.quaternion_x * 1e-9;  //!< quaternion_x        符号10進10桁 x10^-1
-  packet_out_.imu_quaternions[1] = packet_raw_data_.quaternion_y * 1e-9;  //!< quaternion_y        符号10進10桁 x10^-1
-  packet_out_.imu_quaternions[2] = packet_raw_data_.quaternion_z * 1e-9;  //!< quaternion_z        符号10進10桁 x10^-1
-  packet_out_.imu_quaternions[3] = packet_raw_data_.quaternion_t * 1e-9;  //!< quaternion_t        符号10進10桁 x10^-1
+  packet_out_.imu_quaternions[0] = packet_raw_data_.quaternion_x * 1e-9;  //!< quaternion_x        Signed decimal 10 digits x10^-1
+  packet_out_.imu_quaternions[1] = packet_raw_data_.quaternion_y * 1e-9;  //!< quaternion_y        Signed decimal 10 digits x10^-1
+  packet_out_.imu_quaternions[2] = packet_raw_data_.quaternion_z * 1e-9;  //!< quaternion_z        Signed decimal 10 digits x10^-1
+  packet_out_.imu_quaternions[3] = packet_raw_data_.quaternion_t * 1e-9;  //!< quaternion_t        Signed decimal 10 digits x10^-1
 
-  //!< 角速度 x,y,z [rad/s]
+  //!< Angular velocity x,y,z [rad/s]
   packet_out_.imu_angular_velocities[0] =
-      packet_raw_data_.angular_velocity_x * 1e-8;  //!< 角速度x             符号10進10桁 x10^-2[rad/s]
+      packet_raw_data_.angular_velocity_x * 1e-8;  //!< Angular velocity x     Signed decimal 10 digits x10^-2[rad/s]
   packet_out_.imu_angular_velocities[1] =
-      packet_raw_data_.angular_velocity_y * 1e-8;  //!< 角速度y             符号10進10桁 x10^-2[rad/s]
+      packet_raw_data_.angular_velocity_y * 1e-8;  //!< Angular velocity y     Signed decimal 10 digits x10^-2[rad/s]
   packet_out_.imu_angular_velocities[2] =
-      packet_raw_data_.angular_velocity_z * 1e-8;  //!< 角速度z             符号10進10桁 x10^-2[rad/s]
+      packet_raw_data_.angular_velocity_z * 1e-8;  //!< Angular velocity z     Signed decimal 10 digits x10^-2[rad/s]
 
-  //!< 加速度 x,y,z [m/s^2]
+  //!< Acceleration x,y,z [m/s^2]
   packet_out_.imu_accelerations[0] =
-      packet_raw_data_.acceleration_x * 1e-8;  //!< 加速度x             符号10進10桁 x10^-2[m/s^2]
+      packet_raw_data_.acceleration_x * 1e-8;  //!< Acceleration x         Signed decimal 10 digits x10^-2[m/s^2]
   packet_out_.imu_accelerations[1] =
-      packet_raw_data_.acceleration_y * 1e-8;  //!< 加速度y             符号10進10桁 x10^-2[m/s^2]
+      packet_raw_data_.acceleration_y * 1e-8;  //!< Acceleration y         Signed decimal 10 digits x10^-2[m/s^2]
   packet_out_.imu_accelerations[2] =
-      packet_raw_data_.acceleration_z * 1e-8;  //!< 加速度z             符号10進10桁 x10^-2[m/s^2]
+      packet_raw_data_.acceleration_z * 1e-8;  //!< Acceleration z         Signed decimal 10 digits x10^-2[m/s^2]
 
-  //!< 自動充電ステータス
+  //!< Automatic charging status
   packet_out_.charger_state = packet_raw_data_.charger_state;
 
   return true;
 }
 
 /**
- * @brief コンストラクタ
- * @param[in] packet_data パケットデータ
+ * @brief Constructor
+ * @param[in] packet_data Packet data
  */
 PowerEcuComEcu2DataDecoder::PowerEcuComEcu2DataDecoder()
     : IPowerEcuComDataDecoder(kEcu2DataDecoderPacketSize, kEcu2DataDecoderPacketName), packet_data_() {
-  // std::string* date;     //!<  日時（YYYYMMDDhhmmss） 文字
+  // std::string* date;     //!<  Date and time (YYYYMMDDhhmmss) Character
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementStringDecoder>(
       new hsrb_power_ecu::ElementStringDecoder(packet_data_.ecu2_date, 14)));
-  // uint16_t* d12V_D0_V;   //!<  12Vd0電圧        [mV] 符号1桁+10進数5桁
+  // uint16_t* d12V_D0_V;   //!<  12Vd0 voltage        [mV] Signed 1 digit+decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d12V_D0_V, 5)));
-  // int16_t* d12V_D0_A;    //!<  12Vd0電流        [mA] 符号1桁+10進数5桁
+  // int16_t* d12V_D0_A;    //!<  12Vd0 current        [mA] Signed 1 digit+decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.d12V_D0_A, 5)));
-  // uint16_t* d12V_D1_V;   //!<  12Vd1電圧        [mV] 符号1桁10進数5桁
+  // uint16_t* d12V_D1_V;   //!<  12Vd1 voltage        [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d12V_D1_V, 5)));
-  // int16_t* d12V_D1_A;    //!<  12Vd1電流        [mA] 符号1桁10進数5桁
+  // int16_t* d12V_D1_A;    //!<  12Vd1 current        [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.d12V_D1_A, 5)));
-  // uint16_t* d12V_D2_V;   //!<  12Vd2電圧        [mV] 符号1桁10進数5桁
+  // uint16_t* d12V_D2_V;   //!<  12Vd2 voltage        [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d12V_D2_V, 5)));
-  // int16_t* d12V_D2_A;    //!<  12Vd2電流        [mA] 符号1桁10進数5桁
+  // int16_t* d12V_D2_A;    //!<  12Vd2 current        [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.d12V_D2_A, 5)));
-  // uint16_t* d12V_D3_V;   //!<  12Vd3電圧        [mV] 符号1桁10進数5桁
+  // uint16_t* d12V_D3_V;   //!<  12Vd3 voltage        [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d12V_D3_V, 5)));
-  // int16_t* d12V_D3_A;    //!<  12Vd3電流        [mA] 符号1桁10進数5桁
+  // int16_t* d12V_D3_A;    //!<  12Vd3 current        [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.d12V_D3_A, 5)));
-  // uint16_t* d12V_O1_V;   //!<  12Vo1電圧        [mV] 符号1桁10進数5桁
+  // uint16_t* d12V_O1_V;   //!<  12Vo1 voltage        [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d12V_O1_V, 5)));
-  // int16_t* d12V_O1_A;    //!<  12Vo1電流        [mA] 符号1桁10進数5桁
+  // int16_t* d12V_O1_A;    //!<  12Vo1 current        [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.d12V_O1_A, 5)));
-  // uint16_t* d12V_O2_V;   //!<  12Vo2電圧        [mV] 符号1桁10進数5桁
+  // uint16_t* d12V_O2_V;   //!<  12Vo2 voltage        [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d12V_O2_V, 5)));
-  // int16_t* d12V_O2_A;    //!<  12Vo2電流        [mA] 符号1桁10進数5桁
+  // int16_t* d12V_O2_A;    //!<  12Vo2 current        [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.d12V_O2_A, 5)));
-  // uint16_t* d5VA_V;      //!<  5Va電圧          [mV] 符号1桁10進数5桁
+  // uint16_t* d5VA_V;      //!<  5Va voltage          [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d5VA_V, 5)));
-  // uint16_t* d5VD1_V;     //!<  5Vd1電圧         [mV] 符号1桁10進数5桁
+  // uint16_t* d5VD1_V;     //!<  5Vd1 voltage         [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d5VD1_V, 5)));
-  // int16_t* d5VD1_A;      //!<  5Vd1電流         [mA] 符号1桁10進数5桁
+  // int16_t* d5VD1_A;      //!<  5Vd1 current         [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.d5VD1_A, 5)));
-  // uint16_t* d5VD2_V;     //!<  5Vd2電圧         [mV] 符号1桁10進数5桁
+  // uint16_t* d5VD2_V;     //!<  5Vd2 voltage         [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d5VD2_V, 5)));
-  // int16_t* d5VD2_A;      //!<  5Vd2電流         [mA] 符号1桁10進数5桁
+  // int16_t* d5VD2_A;      //!<  5Vd2 current         [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.d5VD2_A, 5)));
-  // uint16_t* d5VD3_V;     //!<  5Vd3電圧         [mV] 符号1桁10進数5桁
+  // uint16_t* d5VD3_V;     //!<  5Vd3 voltage         [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d5VD3_V, 5)));
-  // int16_t* d5VD3_A;      //!<  5Vd3電流         [mA] 符号1桁10進数5桁
+  // int16_t* d5VD3_A;      //!<  5Vd3 current         [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.d5VD3_A, 5)));
-  // uint16_t* d5VD4_V;     //!<  5Vd4電圧         [mV] 符号1桁10進数5桁
+  // uint16_t* d5VD4_V;     //!<  5Vd4 voltage         [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d5VD4_V, 5)));
-  // int16_t* d5VD4_A;      //!<  5Vd4電流         [mA] 符号1桁10進数5桁
+  // int16_t* d5VD4_A;      //!<  5Vd4 current         [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.d5VD4_A, 5)));
-  // uint16_t* d5VD5_V;     //!<  5Vd5電圧         [mV] 符号1桁10進数5桁
+  // uint16_t* d5VD5_V;     //!<  5Vd5 voltage         [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d5VD5_V, 5)));
-  // int16_t* d5VD5_A;      //!<  5Vd5電流         [mA] 符号1桁10進数5桁
+  // int16_t* d5VD5_A;      //!<  5Vd5 current         [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.d5VD5_A, 5)));
-  // int16_t* Chgsense;     //!<  自動順電挿抜端子電圧 [mV] 符号1桁10進数5桁
+  // int16_t* Chgsense;     //!<  Automatic sequential charging connector voltage [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.Chgsense, 5)));
-  // uint16_t* d2V5VDA1_V;  //!<  2.5Va1電圧(A/D1) [mV] 符号1桁10進数5桁
+  // uint16_t* d2V5VDA1_V;  //!<  2.5Va1 voltage (A/D1) [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d2V5VDA1_V, 5)));
-  // uint16_t* d2V5VDA2_V;  //!<  2.5Va2電圧(A/D2) [mV] 符号1桁10進数5桁
+  // uint16_t* d2V5VDA2_V;  //!<  2.5Va2 voltage (A/D2) [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.d2V5VDA2_V, 5)));
-  // uint16_t* ACDC_V;      //!<  ACDC電圧         [mV] 符号1桁10進数5桁
+  // uint16_t* ACDC_V;      //!<  ACDC voltage         [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.ACDC_V, 5)));
-  // int16_t* ADCD_A;       //!<  ACDC電流         [mA] 符号1桁10進数5桁
+  // int16_t* ADCD_A;       //!<  ACDC current         [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.ADCD_A, 5)));
-  // uint16_t* BATT_V;      //!<  BATT電圧         [mV] 符号1桁10進数5桁
+  // uint16_t* BATT_V;      //!<  BATT voltage         [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.BATT_V, 5)));
-  // int16_t* BATT_A;       //!<  BATT電流         [mA] 符号1桁10進数5桁
+  // int16_t* BATT_A;       //!<  BATT current         [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.BATT_A, 5)));
-  // int16_t* BATT_A2;      //!<  BATT電流2        [10mA] 符号1桁10進数5桁
+  // int16_t* BATT_A2;      //!<  BATT current 2       [10mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.BATT_A2, 5)));
-  // uint16_t* PBM_V;       //!<  PBM電圧          [mV] 符号1桁10進数5桁
+  // uint16_t* PBM_V;       //!<  PBM voltage          [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.PBM_V, 5)));
-  // int16_t* PBM_A;        //!<  PBM電流          [mA] 符号1桁10進数5桁
+  // int16_t* PBM_A;        //!<  PBM current          [mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.PBM_A, 5)));
-  // int16_t* PBM_A2;       //!<  PBM電流2        [10mA] 符号1桁10進数5桁
+  // int16_t* PBM_A2;       //!<  PBM current 2       [10mA] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.PBM_A2, 5)));
-  // uint16_t* PUMP_V;      //!<  ポンプセンサ電圧 [mV] 符号1桁10進数5桁
+  // uint16_t* PUMP_V;      //!<  Pump sensor voltage [mV] Signed 1 digit decimal 5 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<uint16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<uint16_t>(packet_data_.PUMP_V, 5)));
-  // int8_t* ECU_TEMP;      //!<  電源ECU温度     [℃] 符号1桁10進数3桁
+  // int8_t* ECU_TEMP;      //!<  Power ECU temperature      [℃] Signed 1 digit decimal 3 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.ECU_TEMP, 3)));
-  // int8_t* ECU_TEMP1;     //!< 電源ECU温度1     [℃] 符号1桁10進数3桁
+  // int8_t* ECU_TEMP1;     //!< Power ECU temperature 1     [℃] Signed 1 digit decimal 3 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.ECU_TEMP1, 3)));
-  // int8_t* ECU_TEMP2;     //!< 電源ECU温度2     [℃] 符号1桁10進数3桁
+  // int8_t* ECU_TEMP2;     //!< Power ECU temperature 2     [℃] Signed 1 digit decimal 3 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.ECU_TEMP2, 3)));
-  // int8_t* ECU_TEMP3;     //!< 電源ECU温度3     [℃] 符号1桁10進数3桁
+  // int8_t* ECU_TEMP3;     //!< Power ECU temperature 3     [℃] Signed 1 digit decimal 3 digits
   element_decoder_list_.push_back(boost::shared_ptr<hsrb_power_ecu::ElementIntDecoder<int16_t> >(
       new hsrb_power_ecu::ElementIntDecoder<int16_t>(packet_data_.ECU_TEMP3, 3)));
 
@@ -604,16 +604,16 @@ PowerEcuComEcu2DataDecoder::PowerEcuComEcu2DataDecoder()
 }
 
 /**
- * @brief デコード後処理
- * @return 成功時 True
+ * @brief Post-decoding process
+ * @return True upon success
  */
 bool PowerEcuComEcu2DataDecoder::Update() {
   return true;
 }
 
 /**
- * @brief コンストラクタ
- * @param[in] packet_data パケットデータ
+ * @brief Constructor
+ * @param[in] packet_data Packet data
  */
 PowerEcuComRxackDataDecoder::PowerEcuComRxackDataDecoder()
     : IPowerEcuComDataDecoder(kRxackDataDecoderPacketSize, kRxackDataDecoderPacketName), packet_data_() {
@@ -625,8 +625,8 @@ PowerEcuComRxackDataDecoder::PowerEcuComRxackDataDecoder()
 }
 
 /**
- * @brief デコード後処理
- * @return 成功時 True
+ * @brief Post-decoding process
+ * @return True upon success
  */
 bool PowerEcuComRxackDataDecoder::Update() {
   packet_data_.is_receive_ack = true;
@@ -634,17 +634,17 @@ bool PowerEcuComRxackDataDecoder::Update() {
 }
 
 /**
- * @brief コンストラクタ
- * @param[in] packet_data パケットデータ
+ * @brief Constructor
+ * @param[in] packet_data Packet data
  */
 PowerEcuComVerDataDecoder::PowerEcuComVerDataDecoder()
     : IPowerEcuComDataDecoder(kVerDataDecoderPacketSize, kVerDataDecoderPacketName), packet_data_() {
-  // ・バージョン情報ver__(getv_コマンドへの返信はrxackの代わりにこれを返す）
-  // オフセット | バイト数 | 記述例                                     | 内容                      | 表記       | 評価
-  // | 単位
-  // 12         | 42       | hb5b862f5072d516a86e7c469bb015898e7cc631b, | バージョン情報(ECUVER)    | 16進数40桁 | uint8
+  // ・Version information ver__ (This is returned instead of rxack as a reply to the getv_ command)
+  // Offset | Byte count | Description example                            | Content                    | Representation | Evaluation
+  // | Unit
+  // 12         | 42        | hb5b862f5072d516a86e7c469bb015898e7cc631b,  | Version information (ECUVER)| Hex 40 digits  | uint8
   // | -
-  // 54         | 42       | hb5b862f5072d516a86e7c469bb015898e7cc632b, | バージョン情報(ECUCOMVER) | 16進数40桁 | uint9
+  // 54         | 42        | hb5b862f5072d516a86e7c469bb015898e7cc632b,  | Version information (ECUCOMVER) | Hex 40 digits | uint9
   // | -
 
   power_ecu_version_raw_.reserve(kEcu2PowerEcuVersionLength);
@@ -663,8 +663,8 @@ PowerEcuComVerDataDecoder::PowerEcuComVerDataDecoder()
 }
 
 /**
- * @brief デコード後処理
- * @return 成功時 True
+ * @brief Post-decoding process
+ * @return True upon success
  */
 bool PowerEcuComVerDataDecoder::Update() {
   packet_data_.is_receive_version = true;

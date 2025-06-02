@@ -40,7 +40,7 @@ DAMAGE.
 
 namespace hsrb_power_ecu {
 /* *
-* @brief ecu1コマンドのデコーダ
+* @brief Decoder for ecu1 command
 */
 class PowerEcuComEcu1DataDecoder : public hsrb_power_ecu::IPowerEcuComDataDecoder {
  private:
@@ -49,114 +49,114 @@ class PowerEcuComEcu1DataDecoder : public hsrb_power_ecu::IPowerEcuComDataDecode
 
  public:
   /**
-   * @brief ecu1コマンドのhwクラスのメンバ変数ポインタコンテナ
+   * @brief Member variable pointer container for hw class of ecu1 command
    */
   struct PacketData {
-    uint32_t time_stamp;                             //!< タイムスタンプ [ms]
-    std::string ecu1_date;                           //!< 日時 YYYYMMDDhhmmss
-    std::string power_ecu_status_flag;               //!< 電源ECUステータス Sの部分
-    std::string diag_status;                         //!< ダイアグ情報 16進32桁
-    double battery_total_capacity;                   //!< バッテリ総容量 [mAh]
-    double battery_remaining_capacity;               //!< バッテリ残容量 [mAh]
-    double electric_current;                         //!< 電流値 [mA]
-    double battery_voltage;                          //!< 電池電圧 [mV]
-    double battery_temperature;                      //!< 電池温度 [C]
-    bool is_battery_crgov;                           //!< 過充電 1:過充電
-    bool is_battery_23par;                           //!< 並列数 0:2並 1:3並
-    bool is_battery_std;                             //!< 学習許可 1:学習許可
-    bool is_battery_full;                            //!< 満充電 1:満充電状態
-    bool is_battery_discov;                          //!< 過放電 1:過放電
-    bool is_battery_chg;                             //!< 充電許可 1:充電許可
-    bool is_battery_disc;                            //!< 放電許可 1:放電許可
-    bool is_battery_0per;                            //!< 0%検出 1:0%検出状態
-    bool is_battery_45par;                           //!< 並列数 0:4並 1:5並
-    bool is_battery_sel;                             //!< 最小セル電圧0%検出状態 1:0%検出状態
-    bool is_battery_bal;                             //!< セルバランス崩れ 1:崩れ
-    uint16_t battery_initial_learning_capacity;      //!< バッテリ初期学習容量 [mAh]
-    uint16_t battery_error_status;                   //!< バッテリ異常ステータス 仕様未定義
-    double battery_relative_capacity;                //!< 相対容量 [%]
-    uint32_t power_ecu_internal_state;               //!< (新規)4.5.3のS**の数 電源ECU内部状態
-    bool is_powerecu_bat_stat;                       //!< (新規)バッテリ充電状態
-    bool is_powerecu_sw_kinoko;                      //!< (新規)有線緊急停止SW
-    bool is_powerecu_sw_pwr;                         //!< (新規)電源（プリウスSW)
-    bool is_powerecu_sw_drv;                         //!< (新規)駆動SW
-    bool is_powerecu_sw_latch;                       //!< (新規)ラッチ解除SW
-    bool is_powerecu_sw_w_sel;                       //!< (新規)無線切り替えSW
-    bool is_powerecu_sw_w_stop;                      //!< (新規)無線緊急停止SW
-    bool is_bumper_bumper2;                          //!< バンパセンサ状態2 1:接触あり
-    bool is_bumper_bumper1;                          //!< バンパセンサ状態1 1:接触あり
-    bool is_bumper_prox5;                            //!< 近接センサラッチ状態5 1:近接物あり
-    bool is_bumper_prox4;                            //!< 近接センサラッチ状態4 1:近接物あり
-    bool is_bumper_prox3;                            //!< 近接センサラッチ状態3 1:近接物あり
-    bool is_bumper_prox2;                            //!< 近接センサラッチ状態2 1:近接物あり
-    bool is_bumper_prox1;                            //!< 近接センサラッチ状態1 1:近接物あり
-    std::string gyro_status;                         //!< (新規)ジャイロ姿勢角演算ステータス
+    uint32_t time_stamp;                             //!< Timestamp [ms]
+    std::string ecu1_date;                           //!< Date YYYYMMDDhhmmss
+    std::string power_ecu_status_flag;               //!< Power ECU status part of S
+    std::string diag_status;                         //!< Diagnostic information 32-digit hexadecimal
+    double battery_total_capacity;                   //!< Battery total capacity [mAh]
+    double battery_remaining_capacity;               //!< Battery remaining capacity [mAh]
+    double electric_current;                         //!< Electric current value [mA]
+    double battery_voltage;                          //!< Battery voltage [mV]
+    double battery_temperature;                      //!< Battery temperature [C]
+    bool is_battery_crgov;                           //!< Overcharge 1: Overcharge
+    bool is_battery_23par;                           //!< Parallel number 0: 2 parallel 1: 3 parallel
+    bool is_battery_std;                             //!< Learning permission 1: Learning allowed
+    bool is_battery_full;                            //!< Full charge 1: Fully charged state
+    bool is_battery_discov;                          //!< Overdischarge 1: Overdischarged
+    bool is_battery_chg;                             //!< Charge permission 1: Charging allowed
+    bool is_battery_disc;                            //!< Discharge permission 1: Discharge allowed
+    bool is_battery_0per;                            //!< 0% Detection 1: 0% detected state
+    bool is_battery_45par;                           //!< Parallel number 0: 4 parallel 1: 5 parallel
+    bool is_battery_sel;                             //!< Minimum cell voltage 0% detection state 1: 0% detected state
+    bool is_battery_bal;                             //!< Cell balance collapse 1: Unbalanced
+    uint16_t battery_initial_learning_capacity;      //!< Battery initial learning capacity [mAh]
+    uint16_t battery_error_status;                   //!< Battery error status specification undefined
+    double battery_relative_capacity;                //!< Relative capacity [%]
+    uint32_t power_ecu_internal_state;               //!< (New) Number of S** in 4.5.3 Power ECU internal state
+    bool is_powerecu_bat_stat;                       //!< (New) Battery charging state
+    bool is_powerecu_sw_kinoko;                      //!< (New) Wired emergency stop SW
+    bool is_powerecu_sw_pwr;                         //!< (New) Power (Prius SW)
+    bool is_powerecu_sw_drv;                         //!< (New) Drive SW
+    bool is_powerecu_sw_latch;                       //!< (New) Latch release SW
+    bool is_powerecu_sw_w_sel;                       //!< (New) Wireless switch SW
+    bool is_powerecu_sw_w_stop;                      //!< (New) Wireless emergency stop SW
+    bool is_bumper_bumper2;                          //!< Bumper sensor state 2 1: Contact detected
+    bool is_bumper_bumper1;                          //!< Bumper sensor state 1 1: Contact detected
+    bool is_bumper_prox5;                            //!< Proximity sensor latch state 5 1: Proximity detected
+    bool is_bumper_prox4;                            //!< Proximity sensor latch state 4 1: Proximity detected
+    bool is_bumper_prox3;                            //!< Proximity sensor latch state 3 1: Proximity detected
+    bool is_bumper_prox2;                            //!< Proximity sensor latch state 2 1: Proximity detected
+    bool is_bumper_prox1;                            //!< Proximity sensor latch state 1 1: Proximity detected
+    std::string gyro_status;                         //!< (New) Gyro posture angle calculation status
     boost::array<double, 4> imu_quaternions;         //!< quaternion x,y,z,t -1.0~1.0
-    boost::array<double, 3> imu_angular_velocities;  //!< 角速度 x,y,z [rad/s]
-    boost::array<double, 3> imu_accelerations;       //!< 加速度 x,y,z [m/s^2]
-    uint8_t charger_state;                           //!< 自動充電ステータス
+    boost::array<double, 3> imu_angular_velocities;  //!< Angular velocities x,y,z [rad/s]
+    boost::array<double, 3> imu_accelerations;       //!< Accelerations x,y,z [m/s^2]
+    uint8_t charger_state;                           //!< Automatic charging status
   };
 
  private:
   /**
-   * @brief パケットデータ受け取り用の内部コンテナ
+   * @brief Internal container for receiving packet data
    */
   struct PacketRawData {
-    uint32_t time_stamp;                         //!< タイムスタンプ 10進10桁
-    std::string date;                            //!< 日時 文字
-    std::string power_ecu_status_flag;           //!< 電源ECUステータス 16進2桁
-    std::string power_ecu_status;                //!< (新規)電源ECU状態 16進数16桁
-    std::string diag_status;                     //!< uint816ダイアグ情報 16進32桁
-    uint16_t battery_total_capacity;             //!< バッテリ総容量 符号10進5桁
-    uint16_t battery_remaining_capacity;         //!< バッテリ残容量 符号10進5桁
-    int16_t electric_current;                    //!< 電流値 符号10進5桁
-    uint16_t battery_voltage;                    //!< 電池電圧 符号10進5桁
-    int8_t battery_temperature;                  //!< 電池温度 符号10進3桁
-    uint16_t battery_state_flag;                 //!< バッテリ状態フラグ 16進4桁
-    uint16_t battery_initial_learning_capacity;  //!< バッテリ初期学習容量 10進5桁
-    uint16_t battery_error_status;               //!< バッテリ異常ステータス 16進4桁
-    uint8_t battery_relative_capacity;           //!< 相対容量 10進3桁
-    uint8_t bumper_status;                       //!< 近接、バンパセンサ状態 16進2桁
-    std::string gyro_status;                     //!< (新規)ジャイロ姿勢角演算ステータス 16進数16桁
-    int32_t quaternion_t;                        //!< quaternion_t 符号10進10桁
-    int32_t quaternion_x;                        //!< quaternion_x 符号10進10桁
-    int32_t quaternion_y;                        //!< quaternion_y 符号10進10桁
-    int32_t quaternion_z;                        //!< quaternion_z 符号10進10桁
-    int32_t angular_velocity_x;                  //!< 角速度x 符号10進10桁
-    int32_t angular_velocity_y;                  //!< 角速度y 符号10進10桁
-    int32_t angular_velocity_z;                  //!< 角速度z 符号10進10桁
-    int32_t acceleration_x;                      //!< 加速度x 符号10進10桁
-    int32_t acceleration_y;                      //!< 加速度y 符号10進10桁
-    int32_t acceleration_z;                      //!< 加速度z 符号10進10桁
-    uint8_t charger_state;                       //!< 自動充電ステータス
+    uint32_t time_stamp;                         //!< Timestamp 10-digit decimal
+    std::string date;                            //!< Date string
+    std::string power_ecu_status_flag;           //!< Power ECU status 2-digit hexadecimal
+    std::string power_ecu_status;                //!< (New) Power ECU status 16-digit hexadecimal
+    std::string diag_status;                     //!< uint816 diagnostic information 32-digit hexadecimal
+    uint16_t battery_total_capacity;             //!< Battery total capacity sign 5-digit decimal
+    uint16_t battery_remaining_capacity;         //!< Battery remaining capacity sign 5-digit decimal
+    int16_t electric_current;                    //!< Electric current value sign 5-digit decimal
+    uint16_t battery_voltage;                    //!< Battery voltage sign 5-digit decimal
+    int8_t battery_temperature;                  //!< Battery temperature sign 3-digit decimal
+    uint16_t battery_state_flag;                 //!< Battery state flag 4-digit hexadecimal
+    uint16_t battery_initial_learning_capacity;  //!< Battery initial learning capacity 5-digit decimal
+    uint16_t battery_error_status;               //!< Battery error status 4-digit hexadecimal
+    uint8_t battery_relative_capacity;           //!< Relative capacity 3-digit decimal
+    uint8_t bumper_status;                       //!< Proximity, bumper sensor state 2-digit hexadecimal
+    std::string gyro_status;                     //!< (New) Gyro posture angle calculation status 16-digit hexadecimal
+    int32_t quaternion_t;                        //!< quaternion_t sign 10-digit decimal
+    int32_t quaternion_x;                        //!< quaternion_x sign 10-digit decimal
+    int32_t quaternion_y;                        //!< quaternion_y sign 10-digit decimal
+    int32_t quaternion_z;                        //!< quaternion_z sign 10-digit decimal
+    int32_t angular_velocity_x;                  //!< Angular velocity x sign 10-digit decimal
+    int32_t angular_velocity_y;                  //!< Angular velocity y sign 10-digit decimal
+    int32_t angular_velocity_z;                  //!< Angular velocity z sign 10-digit decimal
+    int32_t acceleration_x;                      //!< Acceleration x sign 10-digit decimal
+    int32_t acceleration_y;                      //!< Acceleration y sign 10-digit decimal
+    int32_t acceleration_z;                      //!< Acceleration z sign 10-digit decimal
+    uint8_t charger_state;                       //!< Automatic charging status
   };
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComEcu1DataDecoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComEcu1DataDecoder() {}
 
  private:
   /**
-   * @brief デコード後処理
-   * @return 成功時 True
+   * @brief Post-decoding processing
+   * @return True on success
    */
   virtual bool Update();
 
-  PacketRawData packet_raw_data_;  //!< Hwクラス変数ポインタコンテナ
-  PacketData packet_out_;          //!< 受信データ受け取り用バッファ
-  std::string temp_str;            //!< テンポラリ
+  PacketRawData packet_raw_data_;  //!< Hw class variable pointer container
+  PacketData packet_out_;          //!< Buffer for receiving data
+  std::string temp_str;            //!< Temporary
   uint32_t temp_uint;
 };
 
 /**
-* @brief ecu2コマンドのデコーダ
+* @brief Decoder for ecu2 command
 */
 class PowerEcuComEcu2DataDecoder : public hsrb_power_ecu::IPowerEcuComDataDecoder {
  private:
@@ -165,72 +165,72 @@ class PowerEcuComEcu2DataDecoder : public hsrb_power_ecu::IPowerEcuComDataDecode
 
  public:
   /**
-  * @brief ecu2コマンドのパケットデータ
+  * @brief Packet data for ecu2 command
   */
   struct PacketData {
-    std::string ecu2_date;               //!< 日時（YYYYMMDDhhmmss） 文字
-    uint16_t d12V_D0_V;                  //!< 12Vd0電圧        [mV] 符号1桁+10進数5桁
-    int16_t d12V_D0_A;                   //!< 12Vd0電流        [mA] 符号1桁+10進数5桁
-    uint16_t d12V_D1_V;                  //!< 12Vd1電圧        [mV] 符号1桁10進数5桁
-    int16_t d12V_D1_A;                   //!< 12Vd1電流        [mA] 符号1桁10進数5桁
-    uint16_t d12V_D2_V;                  //!< 12Vd2電圧        [mV] 符号1桁10進数5桁
-    int16_t d12V_D2_A;                   //!< 12Vd2電流        [mA] 符号1桁10進数5桁
-    uint16_t d12V_D3_V;                  //!< 12Vd3電圧        [mV] 符号1桁10進数5桁
-    int16_t d12V_D3_A;                   //!< 12Vd3電流        [mA] 符号1桁10進数5桁
-    uint16_t d12V_O1_V;                  //!< 12Vo1電圧        [mV] 符号1桁10進数5桁
-    int16_t d12V_O1_A;                   //!< 12Vo1電流        [mA] 符号1桁10進数5桁
-    uint16_t d12V_O2_V;                  //!< 12Vo2電圧        [mV] 符号1桁10進数5桁
-    int16_t d12V_O2_A;                   //!< 12Vo2電流        [mA] 符号1桁10進数5桁
-    uint16_t d5VA_V;                     //!< 5Va電圧          [mV] 符号1桁10進数5桁
-    uint16_t d5VD1_V;                    //!< 5Vd1電圧         [mV] 符号1桁10進数5桁
-    int16_t d5VD1_A;                     //!< 5Vd1電流         [mA] 符号1桁10進数5桁
-    uint16_t d5VD2_V;                    //!< 5Vd2電圧         [mV] 符号1桁10進数5桁
-    int16_t d5VD2_A;                     //!< 5Vd2電流         [mA] 符号1桁10進数5桁
-    uint16_t d5VD3_V;                    //!< 5Vd3電圧         [mV] 符号1桁10進数5桁
-    int16_t d5VD3_A;                     //!< 5Vd3電流         [mA] 符号1桁10進数5桁
-    uint16_t d5VD4_V;                    //!< 5Vd4電圧         [mV] 符号1桁10進数5桁
-    int16_t d5VD4_A;                     //!< 5Vd4電流         [mA] 符号1桁10進数5桁
-    uint16_t d5VD5_V;                    //!< 5Vd5電圧         [mV] 符号1桁10進数5桁
-    int16_t d5VD5_A;                     //!< 5Vd5電流         [mA] 符号1桁10進数5桁
-    uint16_t Chgsense;                   //!< 自動順電挿抜端子電圧 [mV] 符号1桁10進数5桁
-    uint16_t d2V5VDA1_V;                 //!< 2.5Va1電圧(A/D1) [mV] 符号1桁10進数5桁
-    uint16_t d2V5VDA2_V;                 //!< 2.5Va2電圧(A/D2) [mV] 符号1桁10進数5桁
-    uint16_t ACDC_V;                     //!< ACDC電圧         [mV] 符号1桁10進数5桁
-    int16_t ADCD_A;                      //!< ACDC電流         [mA] 符号1桁10進数5桁
-    uint16_t BATT_V;                     //!< BATT電圧         [mV] 符号1桁10進数5桁
-    int16_t BATT_A;                      //!< BATT電流         [mA] 符号1桁10進数5桁
-    int16_t BATT_A2;                     //!< BATT電流2        [10mA] 符号1桁10進数5桁
-    uint16_t PBM_V;                      //!< PBM電圧          [mV] 符号1桁10進数5桁
-    int16_t PBM_A;                       //!< PBM電流          [mA] 符号1桁10進数5桁
-    int16_t PBM_A2;                      //!< PBM電流2         [10mA] 符号1桁10進数5桁
-    uint16_t PUMP_V;                     //!< ポンプセンサ電圧 [mV] 符号1桁10進数5桁
-    int16_t ECU_TEMP;                    //!< 電源ECU温度      [℃] 符号1桁10進数3桁
-    int16_t ECU_TEMP1;                   //!< 電源ECU温度1     [℃] 符号1桁10進数3桁
-    int16_t ECU_TEMP2;                   //!< 電源ECU温度2     [℃] 符号1桁10進数3桁
-    int16_t ECU_TEMP3;                   //!< 電源ECU温度3     [℃] 符号1桁10進数3桁
+    std::string ecu2_date;               //!< Date (YYYYMMDDhhmmss) string
+    uint16_t d12V_D0_V;                  //!< 12Vd0 voltage [mV] Sign 1 digit + 5-digit decimal
+    int16_t d12V_D0_A;                   //!< 12Vd0 current [mA] Sign 1 digit + 5-digit decimal
+    uint16_t d12V_D1_V;                  //!< 12Vd1 voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t d12V_D1_A;                   //!< 12Vd1 current [mA] Sign 1 digit 5-digit decimal
+    uint16_t d12V_D2_V;                  //!< 12Vd2 voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t d12V_D2_A;                   //!< 12Vd2 current [mA] Sign 1 digit 5-digit decimal
+    uint16_t d12V_D3_V;                  //!< 12Vd3 voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t d12V_D3_A;                   //!< 12Vd3 current [mA] Sign 1 digit 5-digit decimal
+    uint16_t d12V_O1_V;                  //!< 12Vo1 voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t d12V_O1_A;                   //!< 12Vo1 current [mA] Sign 1 digit 5-digit decimal
+    uint16_t d12V_O2_V;                  //!< 12Vo2 voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t d12V_O2_A;                   //!< 12Vo2 current [mA] Sign 1 digit 5-digit decimal
+    uint16_t d5VA_V;                     //!< 5Va voltage [mV] Sign 1 digit 5-digit decimal
+    uint16_t d5VD1_V;                    //!< 5Vd1 voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t d5VD1_A;                     //!< 5Vd1 current [mA] Sign 1 digit 5-digit decimal
+    uint16_t d5VD2_V;                    //!< 5Vd2 voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t d5VD2_A;                     //!< 5Vd2 current [mA] Sign 1 digit 5-digit decimal
+    uint16_t d5VD3_V;                    //!< 5Vd3 voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t d5VD3_A;                     //!< 5Vd3 current [mA] Sign 1 digit 5-digit decimal
+    uint16_t d5VD4_V;                    //!< 5Vd4 voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t d5VD4_A;                     //!< 5Vd4 current [mA] Sign 1 digit 5-digit decimal
+    uint16_t d5VD5_V;                    //!< 5Vd5 voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t d5VD5_A;                     //!< 5Vd5 current [mA] Sign 1 digit 5-digit decimal
+    uint16_t Chgsense;                   //!< Automatic charging insert/remove terminal voltage [mV] Sign 1 digit 5-digit decimal
+    uint16_t d2V5VDA1_V;                 //!< 2.5Va1 voltage (A/D1) [mV] Sign 1 digit 5-digit decimal
+    uint16_t d2V5VDA2_V;                 //!< 2.5Va2 voltage (A/D2) [mV] Sign 1 digit 5-digit decimal
+    uint16_t ACDC_V;                     //!< ACDC voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t ADCD_A;                      //!< ACDC current [mA] Sign 1 digit 5-digit decimal
+    uint16_t BATT_V;                     //!< BATT voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t BATT_A;                      //!< BATT current [mA] Sign 1 digit 5-digit decimal
+    int16_t BATT_A2;                     //!< BATT current 2 [10mA] Sign 1 digit 5-digit decimal
+    uint16_t PBM_V;                      //!< PBM voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t PBM_A;                       //!< PBM current [mA] Sign 1 digit 5-digit decimal
+    int16_t PBM_A2;                      //!< PBM current 2 [10mA] Sign 1 digit 5-digit decimal
+    uint16_t PUMP_V;                     //!< Pump sensor voltage [mV] Sign 1 digit 5-digit decimal
+    int16_t ECU_TEMP;                    //!< Power ECU temperature [°C] Sign 1 digit 3-digit decimal
+    int16_t ECU_TEMP1;                   //!< Power ECU temperature 1 [°C] Sign 1 digit 3-digit decimal
+    int16_t ECU_TEMP2;                   //!< Power ECU temperature 2 [°C] Sign 1 digit 3-digit decimal
+    int16_t ECU_TEMP3;                   //!< Power ECU temperature 3 [°C] Sign 1 digit 3-digit decimal
   };
 
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComEcu2DataDecoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComEcu2DataDecoder() {}
 
  private:
   /**
-   * @brief デコード後処理
-   * @return 成功時 True
+   * @brief Post-decoding processing
+   * @return True on success
    */
   virtual bool Update();
-  PacketData packet_data_;  //!< パケットデータ
+  PacketData packet_data_;  //!< Packet data
 };
 
 /**
- * @brief RXACKコマンドのデコーダ
+ * @brief Decoder for RXACK command
  */
 class PowerEcuComRxackDataDecoder : public hsrb_power_ecu::IPowerEcuComDataDecoder {
  private:
@@ -239,39 +239,39 @@ class PowerEcuComRxackDataDecoder : public hsrb_power_ecu::IPowerEcuComDataDecod
 
  public:
   /**
-   * @brief Rxackのパケットデータ
+   * @brief Packet data for Rxack
    */
   struct PacketData {
     /**
-     * @brief コンストラクタ
+     * @brief Constructor
      */
     PacketData() : is_receive_ack(false), ack_value(0) {}
-    bool is_receive_ack;  //!< Ackが返ってきたかどうか
-    uint8_t ack_value;    //!< 返信コマンドの戻り値
+    bool is_receive_ack;  //!< Whether Ack has been returned
+    uint8_t ack_value;    //!< Return value of the reply command
   };
 
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComRxackDataDecoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComRxackDataDecoder() {}
 
  private:
   /**
-   * @brief デコード後処理
-   * @return 成功時 True
+   * @brief Post-decoding processing
+   * @return True on success
    */
   virtual bool Update();
 
-  PacketData packet_data_;  //!< パケットデータ
+  PacketData packet_data_;  //!< Packet data
 };
 
 /**
- * @brief Verコマンドのデコーダ
+ * @brief Decoder for Ver command
  */
 class PowerEcuComVerDataDecoder : public hsrb_power_ecu::IPowerEcuComDataDecoder {
  private:
@@ -280,35 +280,35 @@ class PowerEcuComVerDataDecoder : public hsrb_power_ecu::IPowerEcuComDataDecoder
 
  public:
   /**
-   * @brief Verのパケットデータ
+   * @brief Packet data for Ver
    */
   struct PacketData {
     PacketData() : is_receive_version(false) {}
-    std::string ver_power_ecu_version;      //!< 電源ECUファームVer[git hash 20byte] 16進数40桁
-    std::string ver_power_ecu_com_version;  //!< 電源ECU通信構造HASH[hash 20byte] 16進数40桁
-    bool is_receive_version;                //!< Verコマンドを受信したかどうか
+    std::string ver_power_ecu_version;      //!< Power ECU firmware Ver [git hash 20byte] 40-digit hexadecimal
+    std::string ver_power_ecu_com_version;  //!< Power ECU communication structure HASH [hash 20byte] 40-digit hexadecimal
+    bool is_receive_version;                //!< Whether the Ver command has been received
   };
 
   /**
-   * @brief コンストラクタ
-   * @param[in] packet_data パケットデータ
+   * @brief Constructor
+   * @param[in] packet_data Packet data
    */
   PowerEcuComVerDataDecoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComVerDataDecoder() {}
 
  private:
   /**
-   * @brief デコード後処理
-   * @return 成功時 True
+   * @brief Post-decoding processing
+   * @return True on success
    */
   virtual bool Update();
 
-  PacketData packet_data_;                 //!< パケットデータ
-  std::string power_ecu_version_raw_;      //!< 電源ECUファームVer[git hash 20byte] 16進数40桁
-  std::string power_ecu_com_version_raw_;  //!< 電源ECU通信構造HASH[hash 20byte] 16進数40桁
+  PacketData packet_data_;                 //!< Packet data
+  std::string power_ecu_version_raw_;      //!< Power ECU firmware Ver [git hash 20byte] 40-digit hexadecimal
+  std::string power_ecu_com_version_raw_;  //!< Power ECU communication structure HASH [hash 20byte] 40-digit hexadecimal
 };
 
 }  // namespace hsrb_power_ecu

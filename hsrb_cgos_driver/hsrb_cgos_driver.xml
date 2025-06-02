@@ -1,0 +1,9 @@
+<library path="hsrb_cgos_driver">
+  <class name="hsrb_cgos_driver/HsrbCgosHw"
+         type="hsrb_cgos_driver::HsrbCgosHw"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      The ROS 2 Control hsrb GPIO command and state interfaces.
+    </description>
+  </class>
+</library>

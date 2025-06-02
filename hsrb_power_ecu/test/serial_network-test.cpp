@@ -45,12 +45,12 @@ class SerialNetworkTest : public ::testing::Test {
   SerialNetworkTest() : mock_(new ::testing::NiceMock<hsrb_power_ecu::SystemInterfaceMock>()), network_(mock_) {}
 
  public:
-  boost::shared_ptr<hsrb_power_ecu::SystemInterfaceMock> mock_;
-  hsrb_power_ecu::SerialNetwork network_;
+  boost::shared_ptr<hsrb_power_ecu::SystemInterfaceMock> mock_;  //!< Mock class for system calls
+  hsrb_power_ecu::SerialNetwork network_;                        //!< Test target
 };
 
 TEST_F(SerialNetworkTest, NomalOpen) {
-  // Open is called at Open
+  // Open is called when opening
   EXPECT_CALL(*mock_, Open(::testing::_, ::testing::_)).Times(1);
   EXPECT_EQ(network_.Open(), boost::system::errc::success);
 }
@@ -64,13 +64,13 @@ TEST_F(SerialNetworkTest, NomalClose) {
   EXPECT_CALL(*mock_, Open(::testing::_, ::testing::_)).Times(1);
   EXPECT_EQ(network_.Open(), boost::system::errc::success);
 
-  // CLOSE is called when it is open
+  // Close is called when it is open
   EXPECT_CALL(*mock_, Close(::testing::_)).Times(1);
   EXPECT_EQ(network_.Close(), boost::system::errc::success);
 }
 
 TEST_F(SerialNetworkTest, NomalClose2) {
-  // Close is not called when not open
+  // Close is not called when it is not open
   EXPECT_CALL(*mock_, Close(::testing::_)).Times(0);
   EXPECT_EQ(network_.Close(), boost::system::errc::success);
 }
@@ -98,7 +98,7 @@ TEST_F(SerialNetworkTest, NomalSend) {
 
 TEST_F(SerialNetworkTest, FailureSend_SendBigData) {
   EXPECT_EQ(network_.Open(), boost::system::errc::success);
-  // Data larger than the export buffer
+  // Data larger than the write buffer
   hsrb_power_ecu::PacketBuffer buffer(5000);
   for (size_t i = 0; i < buffer.capacity(); ++i) {
     buffer.push_back('0');
@@ -108,7 +108,7 @@ TEST_F(SerialNetworkTest, FailureSend_SendBigData) {
 
 TEST_F(SerialNetworkTest, FailureSend_Busy) {
   EXPECT_EQ(network_.Open(), boost::system::errc::success);
-  // Writing VII (VII canceled on the way)
+  // Write busy (busy released halfway)
   EXPECT_CALL(*mock_, Write(testing::_, testing::_, testing::_))
       .WillOnce(::testing::Return(-1))
       .WillRepeatedly(::testing::Return(4));
@@ -122,7 +122,7 @@ TEST_F(SerialNetworkTest, FailureSend_Busy) {
 }
 
 TEST_F(SerialNetworkTest, FailureSend_Clock_Nanosleep) {
-  // CLOCK_NANOSLEEP failed
+  // Clock_nanosleep failure
   EXPECT_EQ(network_.Open(), boost::system::errc::success);
   EXPECT_CALL(*mock_, Write(testing::_, testing::_, testing::_)).WillOnce(::testing::Return(-1));
   hsrb_power_ecu::SystemInterfaceMock::error_code = EFAULT;
@@ -137,7 +137,7 @@ TEST_F(SerialNetworkTest, FailureSend_Clock_Nanosleep) {
 
 TEST_F(SerialNetworkTest, FailureSend_Timeout) {
   EXPECT_EQ(network_.Open(), boost::system::errc::success);
-  // timeout
+  // Timeout
   EXPECT_CALL(*mock_, Write(testing::_, testing::_, testing::_)).WillRepeatedly(::testing::Return(-1));
   std::string str = "test";
   hsrb_power_ecu::PacketBuffer buffer(1000);

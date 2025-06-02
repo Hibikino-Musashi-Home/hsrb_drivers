@@ -42,28 +42,28 @@ DAMAGE.
 
 namespace hsrb_power_ecu {
 /**
- * @brief パケット要素のエンコーダのインターフェース
+ * @brief Interface for packet element encoder
  */
 class IElementEncoder {
  public:
   /**
-   * @brief IElementEncoderのスマートポインタ
+   * @brief Smart pointer of IElementEncoder
    */
   typedef boost::shared_ptr<IElementEncoder> Ptr;
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~IElementEncoder() {}
   /**
-   * @brief エンコード
-   * @param[out] buffer 出力先のバッファ
-   * @return エンコード成功時 true
+   * @brief Encode
+   * @param[out] buffer Output destination buffer
+   * @return true when encoding succeeds
    */
   virtual bool Encode(PacketBuffer &buffer) = 0;
 };
 
 /**
- * @brief データエンコーダのインターフェース
+ * @brief Interface for data encoder
  */
 class IPowerEcuComDataEncoder {
  private:
@@ -72,24 +72,24 @@ class IPowerEcuComDataEncoder {
 
  protected:
   /**
-   * @brief コンストラクタ
-   * @param packet_size パケットヘッダ部のサイズ
-   * @param packet_name パケットヘッダ部のパケット種別
+   * @brief Constructor
+   * @param packet_size Size of the packet header part
+   * @param packet_name Packet type of the packet header part
    */
   IPowerEcuComDataEncoder(const std::string &packet_size, const std::string &packet_name)
       : packet_size_(packet_size), packet_name_(packet_name) {}
 
  public:
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~IPowerEcuComDataEncoder() {}
   /**
-   * @brief エンコード
-   * @param[out] buffer 出力先のバッファ
+   * @brief Encode
+   * @param[out] buffer Output destination buffer
    * @return
-   * 正常終了 boost::system::errc::success
-   * エンコード失敗 boost::system::errc::protocol_error
+   * Normal termination boost::system::errc::success
+   * Encoding failure boost::system::errc::protocol_error
    */
   virtual inline boost::system::error_code Encode(PacketBuffer &buffer) {
     BOOST_FOREACH (IElementEncoder::Ptr const p, element_encoder_list_) {
@@ -102,25 +102,25 @@ class IPowerEcuComDataEncoder {
     return boost::system::errc::make_error_code(boost::system::errc::success);
   }
   /**
-   * @brief パケットヘッダ部のサイズ取得
-   * @return パケットサイズ
+   * @brief Get the size of the packet header part
+   * @return Packet size
    */
   virtual inline std::string GetPacketSizeStr() const { return packet_size_; }
   /**
-   * @brief パケットヘッダ部のパケット種別取得
-   * @return パケット種別
+   * @brief Get the packet type of the packet header part
+   * @return Packet type
    */
   inline std::string GetPacketName() const { return packet_name_; }
 
   /**
-   * @brief データのポインタを取得
+   * @brief Get the pointer to data
    *
-   * @tparam T データの型
-   * @param[in] name データの名前
+   * @tparam T Data type
+   * @param[in] name Data name
    *
-   * @return 成功時 : データのポインタ<br>
-   *         失敗時 : NULL<br>
-   *         未登録のデータ名、データの型が不一致の場合失敗となる
+   * @return On success: Pointer to data<br>
+   * On failure: NULL<br>
+   * Fails if unregistered data name or data type mismatch occurs
    */
   template <typename T>
   T* GetParamPtr(const std::string& name) const {
@@ -128,43 +128,43 @@ class IPowerEcuComDataEncoder {
   }
 
  protected:
-  std::vector<IElementEncoder::Ptr> element_encoder_list_;  //!< 要素毎のエンコード指示リスト
-  const std::string packet_size_;                           //!< ヘッダ部のパケットサイズ
-  const std::string packet_name_;                           //!< ヘッダ部のパケット種別
-  any_type_pointer_map::Map parameter_map_;                 //!< 制御コマンドのパラメータMap
+  std::vector<IElementEncoder::Ptr> element_encoder_list_;  //!< List of encoding instructions per element
+  const std::string packet_size_;                           //!< Packet size of the header part
+  const std::string packet_name_;                           //!< Packet type of the header part
+  any_type_pointer_map::Map parameter_map_;                 //!< Map of control command parameters
 };
 
 /**
- * @brief 送信パケットのフレームエンコーダ
- * 通信フォーマットをframe, data, elementにの要素に分類分けしている。
+ * @brief Frame encoder for the transmission packet
+ * The communication format is categorized into elements like frame, data, and element.
  *
- * 例) コマンド"H,ledc_,23,000,100,255,h12345678,\0" の場合、
+ * Example) For the command "H,ledc_,23,000,100,255,h12345678,\0",
  * - frame :
- *   通信パケット全体を指す 例) "H,ledc_,23,000,100,255,h12345678,\0"
- *   フレームエンコーダはコマンドのヘッダ、フッダの計算を担当し、
- *   フレームエンコーダは通信パケットのヘッダ、フッダの仕様を知っており、
- *   コマンド名をキーとてデータエンコーダを管理している。
+ * Refers to the entire communication packet e.g. "H,ledc_,23,000,100,255,h12345678,\0"
+ * The frame encoder handles the calculation of the command header and footer,
+ * The frame encoder knows the specification of the header and footer of the communication packet,
+ * Manages the data encoder by using the command name as a key.
  *
  * - data :
- *   通信パケットのヘッダ、フッダを取り除いたものを示す、 例) "000,100,255,"
- *   データエンコーダはdataのelementに切り分けと、エレメントエンコーダの呼び出しを行う。
- *   また、全てのelementをエンコードした後、物理量への変換など後処理を行う。
- *   データエンコーダはコマンド毎に定義され、コマンド名、コマンドサイズ、
- *   elementの構成(並び順、各elementの型と桁数)の他、
- *   エンコードに必要な情報を格納したPacketDataの参照を知っている。
- *   また、コマンド毎にエンコードの元となる情報をPacketData型として持つ。
+ * Indicates the parts with the header and footer removed, e.g. "000,100,255,"
+ * The data encoder divides data into elements and calls the element encoder.
+ * After encoding all elements, performs post-processing like conversion to physical quantities.
+ * The data encoder is defined for each command, with the command name, command size,
+ * Besides the composition of elements (order, type, and digits of each element),
+ * Knows references to PacketData containing information necessary for encoding.
+ * Additionally, holds the information as PacketData type, which serves as the source for encoding for each command.
  *
  * - element :
- *   通信パケットのヘッダ、フッダを取り除いたものを示す 例) "000"
- *   エレメントエンコーダはパケット文字列<=>各要素の型の変換を行う。
- *   エレメントエンコーダは表記(符号付き10進、16進等)毎に定義され、
- *   各要素のフォーマット(符号10進は[+-][0-9]+)を知っている。
+ * Indicates the parts with the header and footer removed, e.g. "000"
+ * The element encoder transforms between packet strings and each element type.
+ * The element encoder is defined by notation (signed decimal, hexadecimal, etc.),
+ * Knows the format for each element (signed decimal is [+-][0-9]+).
  *
- * それぞれのエンコーダはframe->data->elementの親子関係を持つ。
- * また、エンコーダとデコーダの設計は対象性がある。
+ * Each encoder has a parent-child relationship of frame->data->element.
+ * Also, the design of encoder and decoder is symmetric.
  *
- * RobotHWはPacketDataの値の更新した後
- * フレームエンコーダのEncodeメソッドを呼び出しエンコードを行う。
+ * RobotHW updates the values of PacketData
+ * Calls the Encode method of the frame encoder to perform encoding.
  *
  */
 class PowerEcuComFrameEncoder {
@@ -175,40 +175,40 @@ class PowerEcuComFrameEncoder {
   PowerEcuComFrameEncoder(PowerEcuComFrameEncoder const &);             // = delete;
   PowerEcuComFrameEncoder &operator=(PowerEcuComFrameEncoder const &);  // = delete;
 
-  typedef boost::unordered_map<std::string, DataEncoderType> DataEncoderMap;  //!< データエンコーダの辞書
+  typedef boost::unordered_map<std::string, DataEncoderType> DataEncoderMap;  //!< Dictionary of data encoders
 
  public:
   /**
-   * @brief コンストラクタ
+   * @brief Constructor
    */
   PowerEcuComFrameEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   ~PowerEcuComFrameEncoder();
   /**
-   * @brief エンコード
-   * @param[out] buffer     出力先のバッファ
-   * @param[in] packet_name データ検索用のエンコードするパケットの名前
-   * @return 成功時 boost::system::error::success
+   * @brief Encode
+   * @param[out] buffer Output destination buffer
+   * @param[in] packet_name Name of the packet to encode for data search
+   * @return On success boost::system::error::success
    */
   boost::system::error_code Encode(PacketBuffer &buffer, const std::string &packet_name);
   /**
-   * @brief データエンコーダ登録
-   * @param[in] encoder 登録するエンコーダ
-   * @return 成功時 boost::system::errc::success
+   * @brief Register data encoder
+   * @param[in] encoder Encoder to register
+   * @return On success boost::system::errc::success
    */
   boost::system::error_code RegisterDataEncoder(DataEncoderType encoder);
 
   /**
-   * @brief データのポインタを取得
+   * @brief Get the pointer to data
    *
-   * @tparam T データの型
-   * @param[in] name データの名前
+   * @tparam T Data type
+   * @param[in] name Data name
    *
-   * @return 成功時 : データのポインタ<br>
-   *         失敗時 : NULL<br>
-   *         未登録のデータ名、データの型が不一致の場合失敗となる
+   * @return On success: Pointer to data<br>
+   * On failure: NULL<br>
+   * Fails if unregistered data name or data type mismatch occurs
    */
   template <typename T>
   T* GetParamPtr(const std::string& name) const {
@@ -222,9 +222,9 @@ class PowerEcuComFrameEncoder {
   }
 
  private:
-  DataEncoderMap data_encoder_map_;         //!< データエンコーダの辞書
-  uint32_t check_sum_;                      //!< チェックサム計算用の一時格納データ
-  IElementEncoder::Ptr check_sum_encoder_;  //!< チェックサム値を文字列にするエンコーダ
+  DataEncoderMap data_encoder_map_;         //!< Dictionary of data encoders
+  uint32_t check_sum_;                      //!< Temporary storage data for checksum calculation
+  IElementEncoder::Ptr check_sum_encoder_;  //!< Encoder to convert checksum value to string
 };
 }  // namespace hsrb_power_ecu
 #endif  // POWER_ECU_COM_FRAME_ENCODER_HPP_

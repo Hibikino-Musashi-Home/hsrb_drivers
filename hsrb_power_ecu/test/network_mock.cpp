@@ -51,17 +51,17 @@ DAMAGE.
 #include "common_methods.hpp"
 
 namespace {
-//! <Packet list to return ACK
+//!< Packet list to return ACK
 const char kNeedAckPackets[20][9] = {"H,time_,", "H,pdown,", "H,start,", "H,stop_,", "H,heart,",
                                      "H,pump_,", "H,pbmsw,", "H,ledc_,", "H,g_res,", "H,solsw,",
                                      "H,pdcmd,", "H,mute_,", "H,rpros,", "H,rprod,", "H,rproe,",
                                      "H,undck,", "H,12vu_,", "H,5vd3_,", "H,5vd4_,", "H,5vd5_,"};
-const char kNeedVerPacket[] = "H,getv_,";
+const char kNeedVerPacket[] = "H,getv_,";  //!< Packet to return ver
 
-const char kAckPacketString[] = "E,rxack,015,h00,h83693205,\n";
+const char kAckPacketString[] = "E,rxack,015,h00,h83693205,\n";  //!< ACK message
 const char kVerPacketString[] =
     "E,ver__,095,h0040A85DD7B13048AEA3B4D1DC5AA120A314797D,"
-    "hB7335B767D0FA2E6925BC8E965E443291A16A26A,";
+    "hB7335B767D0FA2E6925BC8E965E443291A16A26A,";  //! GetV message
 }  // anonymous namespace
 
 namespace hsrb_power_ecu {
@@ -75,25 +75,52 @@ NetworkMock::NetworkMock()
 
 NetworkMock::~NetworkMock() {}
 
+/**
+ * @brief Open
+ * @return boost::system::errc::success on success
+ */
 boost::system::error_code NetworkMock::Open() {
   return boost::system::errc::make_error_code(boost::system::errc::success);
 }
 
+/**
+ * @brief Close
+ * @return boost::system::errc::success on success
+ */
 boost::system::error_code NetworkMock::Close() {
   return boost::system::errc::make_error_code(boost::system::errc::success);
 }
 
+/**
+ * @brief Change network settings
+ * @param[in] param Name of the setting
+ * @param[in] value Value of the change
+ * @return boost::system::errc::success on successful transmission
+ */
 boost::system::error_code NetworkMock::Configure(const std::string &param, const int32_t value) {
   return Configure(param, boost::lexical_cast<std::string>(value));
 }
 
+/**
+ * @brief Change network settings
+ * @param[in] param Name of the setting
+ * @param[in] value Value of the change
+ * @return boost::system::errc::success on successful transmission
+ */
 boost::system::error_code NetworkMock::Configure(const std::string &param, const double value) {
   return Configure(param, boost::lexical_cast<std::string>(value));
 }
 
+/**
+ * @brief Change network settings
+ * Consolidate actual processing for maintenance into values where value is string.
+ * @param[in] param Name of the setting
+ * @param[in] value Value of the change
+ * @return boost::system::errc::success on successful transmission
+ */
 boost::system::error_code NetworkMock::Configure(const std::string &param, const std::string &value) {
   if (param == "receive_timeout_ms") {
-    // timeout
+    // Timeout
     double const timeout = boost::lexical_cast<double>(value);
     if (timeout < 0) {
       return boost::system::errc::make_error_code(boost::system::errc::invalid_argument);
@@ -108,8 +135,14 @@ boost::system::error_code NetworkMock::Configure(const std::string &param, const
   return boost::system::errc::make_error_code(boost::system::errc::success);
 }
 
+/**
+ * @brief Transmission
+ * Transmit all contents of the buffer received as arguments within the timeout period
+ * @param[in] data Buffer of transmission data
+ * @return boost::system::errc::success on successful transmission
+ */
 boost::system::error_code NetworkMock::Send(const PacketBuffer &data) {
-  // Copy data to the transmission buffer
+  // Copy data to send buffer
   send_buffer_ = "";
   std::copy(data.begin(), data.end(), std::back_inserter(send_buffer_));
 
@@ -128,6 +161,13 @@ boost::system::error_code NetworkMock::Send(const PacketBuffer &data) {
   return boost::system::error_code(boost::system::errc::success, boost::system::system_category());
 }
 
+/**
+ * @brief Reception
+ * Store transmission data at the end of the buffer.
+ * When there is no received data, wait for reception within the timeout period.
+ * @param[out] data Receive buffer
+ * @return
+ */
 boost::system::error_code NetworkMock::Receive(PacketBuffer &data) {
   std::string packet = "";
   if (is_need_ack_) {
@@ -152,7 +192,7 @@ boost::system::error_code NetworkMock::Receive(PacketBuffer &data) {
   }
 
   if (packet != "") {
-    // Copy the contents of the receipt buffer
+    // Copy contents of the receive buffer
     std::copy(packet.begin(), packet.end(), std::back_inserter(data));
   }
   return boost::system::error_code(boost::system::errc::success, boost::system::system_category());

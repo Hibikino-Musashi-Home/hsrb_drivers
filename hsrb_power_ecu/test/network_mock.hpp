@@ -40,36 +40,76 @@ DAMAGE.
 
 namespace hsrb_power_ecu {
 /**
- * @BRIEF Serial Port Mock class
+ * @brief Mock class for the serial port
  */
 class NetworkMock : public INetwork {
  public:
   NetworkMock();
   virtual ~NetworkMock();
 
+  /**
+   * @brief Open
+   * @return boost::system::errc::success on success
+   */
   virtual boost::system::error_code Open();
+  /**
+   * @brief Close
+   * @return boost::system::errc::success on success
+   */
   virtual boost::system::error_code Close();
+  /**
+   * @brief Change network settings
+   * @param[in] param Setting name
+   * @param[in] value Change value
+   * @return boost::system::errc::success on successful transmission
+   */
   virtual boost::system::error_code Configure(const std::string &param, int32_t value);
+  /**
+   * @brief Change network settings
+   * @param[in] param Setting name
+   * @param[in] value Change value
+   * @return boost::system::errc::success on successful transmission
+   */
   virtual boost::system::error_code Configure(const std::string &param, double value);
+  /**
+   * @brief Change network settings
+   * @param[in] param Setting name
+   * @param[in] value Change value
+   * @return boost::system::errc::success on successful transmission
+   */
   virtual boost::system::error_code Configure(const std::string &param, const std::string &value);
+  /**
+   * @brief Transmit
+   * Transmit all contents of the transmission data buffer received as an argument within the timeout period
+   * @param[in] data Transmission data buffer
+   * @return boost::system::errc::success on successful transmission
+   */
   virtual boost::system::error_code Send(const PacketBuffer &data);
+  /**
+   * @brief Receive
+   * Store the transmission data at the end of the buffer.
+   * If there is no received data, wait to receive within the timeout period.
+   * @param[out] data Received buffer
+   * @return boost::system::errc::success on successful transmission
+   */
   virtual boost::system::error_code Receive(PacketBuffer &data);
 
-  std::string GetSendBuffer() const;
-  void ResetSendBuffer();
-  void UpdateBuffer(const std::string& buffer_data);
+  std::string GetSendBuffer() const;  //!< Retrieve the value of the send buffer
+  void ResetSendBuffer();  //!< Clear the send buffer
+  void UpdateBuffer(const std::string& buffer_data);  //!< Change the contents of the receive buffer
 
  private:
-  std::string send_buffer_;
-  std::string receive_buffer_;
-  bool is_update_receive_buffer_;
+  std::string send_buffer_;  //!< Send buffer
+  std::string receive_buffer_;     //!< Receive buffer
+  bool is_update_receive_buffer_;  //!< Receive buffer update flag
   boost::mutex receive_buffer_mutex_;
-  uint32_t timeout_ns_;
-  std::string port_name_;
+  uint32_t timeout_ns_;      //!< Timeout period
+  std::string port_name_;    //!< Port name
 
-  bool is_need_ack_;
-  bool is_need_ver_;
+  bool is_need_ack_;                           //!< Whether an ACK reply is necessary
+  bool is_need_ver_;                           //!< Whether a Ver reply is necessary
 };
+
 }  // namespace hsrb_power_ecu
 
 #endif  // HSRB_POWER_ECU_NETWORK_MOCK_HPP_

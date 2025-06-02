@@ -25,7 +25,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief The one for testing around communication with MPU9150
+/// @brief Used for testing communication with the MPU9150
 #ifndef SERIAL_COMMUNICATION_FOR_MPU9150_TEST_HPP_
 #define SERIAL_COMMUNICATION_FOR_MPU9150_TEST_HPP_
 
@@ -39,7 +39,7 @@ namespace hsrb_imu_sensor_protocol {
 // Serial communication checker
 class SerialCommunication : boost::noncopyable {
  public:
-  // constructor
+  // Constructor
   explicit SerialCommunication(const std::string& port_name, uint32_t baud_rate)
       : serial_port_(io_service_, port_name) {
     // Serial communication settings
@@ -52,14 +52,14 @@ class SerialCommunication : boost::noncopyable {
 
   ~SerialCommunication() {}
 
-  // Reception
+  // Receive
   void Receive(std::vector<uint8_t>& data) {
     data.resize(serial_port_.read_some(boost::asio::buffer(receive_buffer_)));
     for (uint32_t i = 0; i < data.size(); ++i) {
       data[i] = receive_buffer_[i];
     }
   }
-  // send
+  // Send
   void Send(const std::vector<uint8_t>& data) { serial_port_.write_some(boost::asio::buffer(data)); }
 
  private:
@@ -67,7 +67,7 @@ class SerialCommunication : boost::noncopyable {
   boost::asio::io_service io_service_;
   // Serial port
   boost::asio::serial_port serial_port_;
-  // Read buffer
+  // Reading buffer
   boost::array<uint8_t, 1024> receive_buffer_;
 };
 

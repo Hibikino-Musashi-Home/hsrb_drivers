@@ -44,31 +44,31 @@ DAMAGE.
 
 namespace hsrb_power_ecu {
 /**
- * @brief デコード
- * @param[in] start_iterator パケットデータ部の先頭イテレータ
- * @param[in] end_iterator パケットデータ部の終点イテレータ
+ * @brief Decode
+ * @param[in] start_iterator Iterator at the beginning of the packet data part
+ * @param[in] end_iterator Iterator at the end of the packet data part
  * @return
- * 正常終了 boost::system::errc::success
- * デコード失敗 boost::system::errc::protocol_error
+ * Successful completion boost::system::errc::success
+ * Decode failure boost::system::errc::protocol_error
  */
 boost::system::error_code IPowerEcuComDataDecoder::Decode(const PacketBuffer::const_iterator start_iterator,
                                                           const PacketBuffer::const_iterator end_iterator) {
-  // デコードスタート
+  // Start decoding
   PacketBuffer::const_iterator current_iterator = start_iterator;
   BOOST_FOREACH (IElementDecoder::Ptr const decoder, element_decoder_list_) {
-    // 次のカンマのイテレータを取得
+    // Get iterator of the next comma
     PacketBuffer::const_iterator const element_end_iterator = std::find(current_iterator, end_iterator, ',');
-    // カンマが見つからなかったらエラー
+    // Return error if comma is not found
     if (element_end_iterator == end_iterator) {
       return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
     }
-    // 要素デコード
+    // Decode element
     bool const ret = decoder->Decode(current_iterator, element_end_iterator);
 
     if (!ret) {
       return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
     }
-    // カンマの次のイテレータを先頭のイテレータに指定
+    // Set iterator following the comma as the starting iterator
     current_iterator = element_end_iterator + 1;
   }
 
@@ -79,56 +79,56 @@ boost::system::error_code IPowerEcuComDataDecoder::Decode(const PacketBuffer::co
 }
 
 /**
- * @brief コンストラクタ
+ * @brief Constructor
  */
 PowerEcuComFrameDecoder::PowerEcuComFrameDecoder()
     : data_decoder_map_(), packet_name_buffer_(), packet_size_buffer_(), packet_check_sum_buffer_() {
-  // バッファの確保
+  // Allocate buffer
   packet_name_buffer_.reserve(hsrb_power_ecu::com_common::kPacketNameBufferSize);
   packet_size_buffer_.reserve(hsrb_power_ecu::com_common::kPacketSizeBufferSize);
   packet_check_sum_buffer_.reserve(hsrb_power_ecu::com_common::kPacketCheckSumBufferSize);
 }
 
 /**
- * @brief デコード
- * パケット受信バッファを先頭から読み込み、先頭のパケット1つをデコードする。
- * パケット受信バッファの書き換えは行わず、デコード済みのインデックスをencoded_iteratorで返す。
- * @param[in] start_iterator デコード対象の先頭イテレータ
- * @param[in] end_iterator デコード対象の終点イテレータ
- * @param[out] encoded_iterator デコード済みの場所を示すイテレータ
+ * @brief Decode
+ * Read from the start of the packet receive buffer and decode the first packet
+ * Does not modify the packet receive buffer; returns the decoded index with encoded_iterator
+ * @param[in] start_iterator Iterator at the beginning of the target to decode
+ * @param[in] end_iterator Iterator at the end of the target to decode
+ * @param[out] encoded_iterator Iterator indicating the location of the decoded data
  * @return
- * 正常終了 boost::system::errc::success
- * デコード完了 boost::system::errc::result_out_of_range
- * デコードできないパケットがあった boost::system::errc::protocol_error
+ * Successful completion boost::system::errc::success
+ * Decode complete boost::system::errc::result_out_of_range
+ * There was a packet that could not be decoded boost::system::errc::protocol_error
  */
 boost::system::error_code PowerEcuComFrameDecoder::Decode(
     const hsrb_power_ecu::PacketBuffer::const_iterator& start_iterator,
     const hsrb_power_ecu::PacketBuffer::const_iterator& end_iterator,
     hsrb_power_ecu::PacketBuffer::const_iterator& encoded_iterator) {
-  // パケット先頭文字を検索する
+  // Search for the packet's start character
   hsrb_power_ecu::PacketBuffer::const_iterator current_iterator = std::find(start_iterator, end_iterator, 'E');
   if (current_iterator == end_iterator) {
-    // バッファ中に'E'がない=読み込み中のメッセージは存在しない
+    // 'E' is not present in the buffer = No message being read
     encoded_iterator = end_iterator;
     return boost::system::errc::make_error_code(boost::system::errc::result_out_of_range);
   }
   hsrb_power_ecu::PacketBuffer::const_iterator const last_iterator = current_iterator;
 
-  // ヘッダ解析
+  // Header analysis
   size_t packet_size = 0;
-  //// ヘッダサイズ分の受信が終わっているか確認
+  //// Confirm if reception of the header size has been completed
   if (static_cast<uint32_t>(std::distance(current_iterator, end_iterator)) <
       hsrb_power_ecu::com_common::kPacketHeaderLength) {
     encoded_iterator = last_iterator;
     return boost::system::errc::make_error_code(boost::system::errc::result_out_of_range);
   } else {
-    // パケットヘッダ
+    // Packet header
     if (!SkipString("E,", current_iterator)) {
       encoded_iterator = current_iterator;
       return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
     }
-    // パケット種別
-    //// 予めバッファサイズを確認しているので、falseが返ることは想定しない
+    // Packet type
+    //// Since the buffer size has been checked in advance, false return is not expected
     bool ret;
     ret = GetString(5, end_iterator, current_iterator, packet_name_buffer_);
     hsrb_power_ecu::Assert(ret, "GetString return false.");
@@ -136,11 +136,11 @@ boost::system::error_code PowerEcuComFrameDecoder::Decode(
       encoded_iterator = current_iterator;
       return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
     }
-    // パケットサイズ
+    // Packet size
     ret = GetString(3, end_iterator, current_iterator, packet_size_buffer_);
     hsrb_power_ecu::Assert(ret, "GetString return false.");
     packet_size = std::atoi(packet_size_buffer_.c_str());
-    if (packet_size < 11) {  // フッタ長(11)未満のパケットは仕様上ありえない
+    if (packet_size < 11) {  // Packet less than footer length(11) is not possible by specification
       encoded_iterator = current_iterator;
       return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
     }
@@ -150,59 +150,59 @@ boost::system::error_code PowerEcuComFrameDecoder::Decode(
     }
   }
 
-  // パケットの受信が不完全な場合result_out_of_rangeを返す
+  // Return result_out_of_range if packet reception is incomplete
   if (static_cast<uint32_t>(std::distance(current_iterator, end_iterator)) < packet_size) {
     encoded_iterator = last_iterator;
     return boost::system::errc::make_error_code(boost::system::errc::result_out_of_range);
   }
 
-  // フッタ解析
+  // Footer analysis
   size_t const footer_length = hsrb_power_ecu::com_common::kPacketFooterLength;
   size_t const frame_size = hsrb_power_ecu::com_common::kPacketHeaderLength + packet_size;
 
-  // パケットのチェックサム計算
+  // Packet checksum calculation
   uint32_t const check_sum_calc = hsrb_power_ecu::com_common::CalculateCrc32(
-      last_iterator,                                    // 先頭文字列
-      current_iterator + packet_size - footer_length);  // 読み込む文字の次のイテレータ
+      last_iterator,                                    // Beginning character string
+      current_iterator + packet_size - footer_length);  // Iterator following the read character
 
-  // チェックサム文字列取得
+  // Get checksum string
   hsrb_power_ecu::PacketBuffer::const_iterator checksum_iterator =
-      current_iterator + packet_size - footer_length + 1;  // チェックサム文字列先頭の"h"を読みこまない
-  bool ret = GetString(footer_length - 3,              // "h" + ",\n"を読まない
+      current_iterator + packet_size - footer_length + 1;  // Do not read "h" at the head of checksum string
+  bool ret = GetString(footer_length - 3,              // Do not read "h" + ",\n"
                        end_iterator, checksum_iterator, packet_check_sum_buffer_);
   hsrb_power_ecu::Assert(ret, "GetString resturn false.");
   uint32_t const check_sum_res = static_cast<uint32_t>(std::strtol(packet_check_sum_buffer_.c_str(), NULL, 16));
 
-  // チェックサム比較
+  // Compare checksum
   if (check_sum_calc != check_sum_res) {
     encoded_iterator = last_iterator + frame_size;
     return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
   }
 
-  // 対応するデコーダを検索
+  // Search for matching decoder
   DataDecoderMap::iterator const map_it = data_decoder_map_.find(packet_name_buffer_);
 
-  // 対応するデコーダが存在しない時、protocol_errorを返す
+  // Return protocol_error if no matching decoder is found
   if ((map_it == data_decoder_map_.end()) || (map_it->second->GetPacketSize() != packet_size)) {
     encoded_iterator = last_iterator + frame_size;
     return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
   }
 
-  // デコード
+  // Decode
   boost::system::error_code const result =
       map_it->second->Decode(current_iterator,
-                             (current_iterator + packet_size - footer_length));  // 読み込む文字の次のイテレータ
+                             (current_iterator + packet_size - footer_length));  // Iterator following the read character
 
   encoded_iterator = last_iterator + frame_size;
   return result;
 }
 
 /**
- * @brief データデコーダ登録
- * @param [in] decoder 登録するデコーダ
+ * @brief Data decoder registration
+ * @param [in] decoder Decoder to be registered
  * @return
- * 成功時 boost::system::errc::success
- * 登録済み or nullptr boost::system::errc::invalid_argument
+ * Success boost::system::errc::success
+ * Already registered or nullptr boost::system::errc::invalid_argument
  */
 boost::system::error_code PowerEcuComFrameDecoder::RegisterDataDecoder(DataDecoderType decoder) {
   if (decoder == NULL || data_decoder_map_.find(decoder->GetPacketName()) != data_decoder_map_.end()) {
@@ -215,12 +215,12 @@ boost::system::error_code PowerEcuComFrameDecoder::RegisterDataDecoder(DataDecod
 }
 
 /**
- * @brief 文字列を取得
- * @param[in] start_it 先頭のイテレータ
- * @param[in] end_it 終点のイテレータ
- * @param[in] size 読み出しサイズ
- * @param[out] output_string 取得した文字列の格納先
- * @return 成功時 True
+ * @brief Get string
+ * @param[in] start_it Starting iterator
+ * @param[in] end_it Endpoint iterator
+ * @param[in] size Reading size
+ * @param[out] output_string Storage location of the obtained string
+ * @return True if successful
  */
 bool PowerEcuComFrameDecoder::GetString(const size_t size, const hsrb_power_ecu::PacketBuffer::const_iterator& end_it,
                                         hsrb_power_ecu::PacketBuffer::const_iterator& start_it,
@@ -230,7 +230,7 @@ bool PowerEcuComFrameDecoder::GetString(const size_t size, const hsrb_power_ecu:
     return false;
   }
 
-  // string型の内部バッファが足りないとき警告を表示
+  // Display warning if internal buffer of string type is insufficient
   if (output_string.capacity() < distance) {
     output_string.reserve(distance + 1);
   }
@@ -243,10 +243,10 @@ bool PowerEcuComFrameDecoder::GetString(const size_t size, const hsrb_power_ecu:
 }
 
 /**
- * @brief 文字列をスキップ
- * @param[in] skip_string スキップする文字列
- * @param[out] it 先頭のイテレータ
- * @return スキップした文字列が、引数で受け取った文字列と等しいなら true
+ * @brief Skip string
+ * @param[in] skip_string String to be skipped
+ * @param[out] it Starting iterator
+ * @return true if the skipped string is equal to the string received in the argument
  */
 bool PowerEcuComFrameDecoder::SkipString(const std::string& skip_string,
                                          hsrb_power_ecu::PacketBuffer::const_iterator& it) {

@@ -25,8 +25,9 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief Providing classes to communicate with InventeNSE's Gyro Sensor MPU9150
-/// @brief The communication specifications are from Arduino_skethces/tmc_invenseNSENSE_MPU9150_firmware
+/// @brief Provides a class for communicating with Invensense's gyro sensor MPU9150
+/// @brief For communication specifications, refer to arduino_sketches/tmc_invensense_mpu9150_firmware
+/// @brief Refer to Readme.md
 #include <time.h>
 #include <algorithm>
 #include <string>
@@ -75,7 +76,7 @@ inline int64_t Now() {
   return static_cast<int64_t>(t.tv_sec) * 1000000000LL + static_cast<int64_t>(t.tv_nsec);
 }
 
-// constructor
+// Constructor
 MPU9150Network::MPU9150Network(std::string device_name, boost::system::error_code& error_out)
     : fd_(-1), timeout_(50000000), sleep_tick_(10000), parser_() {
   error_out = Init(device_name);
@@ -88,7 +89,7 @@ MPU9150Network::MPU9150Network(std::string device_name, boost::system::error_cod
 }
 
 boost::system::error_code MPU9150Network::Init(const std::string& device_name) {
-  // Open the device
+  // Open device
   int port = open(device_name.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (port < 0) {
     return boost::system::error_code(errno, boost::system::system_category());
@@ -118,13 +119,13 @@ boost::system::error_code MPU9150Network::Init(const std::string& device_name) {
 // Destructor
 MPU9150Network::~MPU9150Network() { (void)close(fd_); }
 
-// Send
+// Transmit
 boost::system::error_code MPU9150Network::Send(uint8_t instruction, const uint8_t* data, uint16_t size) {
   // Size check
   if (size > 1019) {
     return boost::system::error_code(boost::system::errc::no_buffer_space, boost::system::system_category());
   }
-  // Make a packet
+  // Make packet
   size_t length = size + 5;
   buffer_[0] = kMPU9150Header1Command;
   buffer_[1] = kMPU9150Header2Command;
@@ -134,7 +135,7 @@ boost::system::error_code MPU9150Network::Send(uint8_t instruction, const uint8_
     buffer_[i + 4] = data[i];
   }
   buffer_[size + 4] = Checksum(buffer_.begin(), buffer_.begin() + length - 1);
-  // send
+  // Send
   int64_t start = Now();
   int64_t elapsed = start;
   size_t num_done = 0;
@@ -217,18 +218,18 @@ boost::system::error_code MPU9150Network::Receive() {
   return boost::system::error_code(boost::system::errc::timed_out, boost::system::system_category());
 }
 
-/// @brief constructor
+/// @brief Constructor
 MPU9150PacketConverter::MPU9150PacketConverter() : last_timestamp_(0), last_packet_num_(0) {}
 
-// Convert packet from the sensor to Sensorstate to output
+// Convert packet from sensor to SensorState and output
 void MPU9150PacketConverter::ToSensorState(const std::vector<uint8_t>& packet, boost::array<double, 4>& orientation,
                                            boost::array<double, 3>& angular_velocity,
                                            boost::array<double, 3>& linear_acceleration) {
-  // Check if the packet meets the specifications
+  // Check if packet meets specifications
   if (packet.size() != kPacketSize) {
     return;
   }
-  // conversion
+  // Convert
   orientation[3] = SensorPacketToDouble(packet[3], packet[4], packet[5], packet[6], k30BitScale);
   orientation[0] = SensorPacketToDouble(packet[7], packet[8], packet[9], packet[10], k30BitScale);
   orientation[1] = SensorPacketToDouble(packet[11], packet[12], packet[13], packet[14], k30BitScale);
@@ -243,28 +244,28 @@ void MPU9150PacketConverter::ToSensorState(const std::vector<uint8_t>& packet, b
   linear_acceleration[2] = g2acc(SensorPacketToDouble(packet[39], packet[40], packet[41], packet[42], k16BitScale));
 }
 
-// Convert packet from the sensor to Sensorstate to output
+// Convert packet from sensor to SensorState and output
 void MPU9150PacketConverter::ToSensorState(const std::vector<uint8_t>& packets, MPU9150State& sensor_state) {
-  // If anything other than dripping data is mixed, it will be done without doing anything
+  // Do nothing and end if data other than continuous data is mixed
   if (packets.size() % kPacketSize != 0) {
     return;
   }
 
-  // Division for each packet
+  // Split into individual packets
   for (uint32_t i = 0; i < packets.size() / kPacketSize; ++i) {
-    // Time stamp removal
+    // Extract timestamp
     uint32_t current_timestamp = SensorPacketToUInt32(packets[43 + i * kPacketSize], packets[44 + i * kPacketSize],
                                                       packets[45 + i * kPacketSize], packets[46 + i * kPacketSize]);
-    // Compare the time stamp and take out the latest packet NO
+    // Compare timestamps and extract latest packet No
     if (last_timestamp_ < current_timestamp) {
       last_timestamp_ = current_timestamp;
       last_packet_num_ = i;
     }
   }
 
-  // Extract the latest packet
+  // Extract latest packet
   std::vector<uint8_t> packet;
-  // Extracted index
+  // Index to extract
   uint32_t start = last_packet_num_ * kPacketSize;
   uint32_t end = last_packet_num_ * kPacketSize + kPacketSize;
   std::copy(packets.begin() + start, packets.begin() + end, back_inserter(packet));

@@ -41,8 +41,8 @@ namespace hsrb_power_ecu {
 namespace any_type_pointer_map {
 
 /**
- * @brief Registration data interface
- * Define the interface that you down and receive a pointer to centrally manage various types of data.
+ * @brief Interface for registration data
+ * Define an interface to receive a pointer by first downcasting it for unified management of various types of data
  */
 class IElement : boost::noncopyable {
  public:
@@ -50,13 +50,17 @@ class IElement : boost::noncopyable {
   ~IElement() {}
 
   /**
-   * @brief Pointer acquisition
-   * Downcast and receive pointer to manage registration data at once without approaching.
+   * @brief Retrieve pointer
+   * Receive a pointer by downcasting to manage registration data collectively without regard to type
+   *
+   * @return
    */
   virtual void* GetPtr() const = 0;
 
   /**
-   * @brief Type information acquisition
+   * @brief Retrieve type data
+   *
+   * @return
    */
   virtual const std::type_info& GetType() const = 0;
 };
@@ -82,14 +86,14 @@ class Map : boost::noncopyable {
   ~Map() {}
 
   /**
-   * @brief data registration
-   * Registration fails when multiple registration
+   * @brief Register data
+   * Registration fails in the case of multiple registrations
    *
-   * @tparam T type
-   * @param [in] name Data name
-   * @param [in] value Data pointer
+   * @tparam T Type of the data
+   * @param[in] name Data name
+   * @param[in] value Pointer to the data
    *
-   * When registration is completed TRUE
+   * @return True when registration is complete
    */
   template <typename T>
   bool Register(std::string name, T* const value) {
@@ -101,20 +105,24 @@ class Map : boost::noncopyable {
   }
 
   /**
-   * @brief Pointer acquisition
-   * When the data type is uneven or the data name fails
+   * @brief Retrieve pointer to data
+   * Fails when data types do not match or when the data name is not registered
    *
-   * @tparam T type
-   * @param [in] name Data name
+   * @tparam T Type of the data
+   * @param[in] name Data name
+   *
+   * @return
+   * On success: Pointer to data <br>
+   * On failure: NULL
    */
   template <typename T>
   T* GetPtr(const std::string& name) const {
     DicType::const_iterator itr = dic_.find(name);
     if (itr == dic_.end()) {
-      return NULL;  // Unregistered
+      return NULL;  // Unregistered name
     }
     if (itr->second->GetType() != typeid(T)) {
-      return NULL;  // Different from the registered type
+      return NULL;  // Different type than registered
     } else {
       return static_cast<T*>(itr->second->GetPtr());
     }
@@ -123,8 +131,8 @@ class Map : boost::noncopyable {
   bool HasPtr(const std::string& name) const { return (dic_.find(name) != dic_.end()); }
 
  private:
-  typedef boost::unordered_map<std::string, boost::shared_ptr<IElement> > DicType;
-  DicType dic_;
+  typedef boost::unordered_map<std::string, boost::shared_ptr<IElement> > DicType;  //!< Dictionary type
+  DicType dic_;                                                                     //!< Dictionary
 };
 }  // namespace any_type_pointer_map
 }  // namespace hsrb_power_ecu

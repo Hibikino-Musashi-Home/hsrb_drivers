@@ -25,7 +25,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief Providing PARSER class of InventeNSE Gyro Sensor MPU9150
+/// @brief Provides a parser class for Invensense's gyro sensor MPU9150
 #ifndef HSRB_IMU_SENSOR_PROTOCOL_MPU9150_PACKET_PARSER_HPP_
 #define HSRB_IMU_SENSOR_PROTOCOL_MPU9150_PACKET_PARSER_HPP_
 
@@ -37,13 +37,13 @@ DAMAGE.
 
 namespace hsrb_imu_sensor_protocol {
 
-/// Control command header 1 (@)
+/// Control command header 1(@)
 const uint8_t kMPU9150Header1Command = 0x40;
-/// Control command header 2 (g)
+/// Control command header 2(G)
 const uint8_t kMPU9150Header2Command = 0x47;
 
 
-// Checksam calculation
+// Checksum calculation
 template <class InputIterator>
 uint8_t Checksum(InputIterator begin, InputIterator end) {
   size_t sum = 0;
@@ -54,27 +54,29 @@ uint8_t Checksum(InputIterator begin, InputIterator end) {
 }
 
 
-/// INVENSENSE's Gyro Sensor MPU9150 PARSER class
-/// See the TMC_INVENSENSENSE_MPU9150_firmware document for packet specifications
+/// Invensense's gyro sensor MPU9150 parser class
+/// Refer to the tmc_invensense_mpu9150_firmware documentation for packet specifications
 class MPU9150PacketParser : private boost::noncopyable {
  public:
-  /// PARSE result
+  /// Result of parsing
   enum ParseResult {
-    /// fail
+    /// Failure
     kError,
-    /// continuation
+    /// Continue
     kContinue,
-    /// end
+    /// End
     kDone
   };
 
-  /// @brief Candolactors and internal variables are initialized
+  /// @brief Constructor, initializes internal variables
   MPU9150PacketParser() : is_reply_packet_(false) { Reset(); }
 
   /// @brief Destructor
   ~MPU9150PacketParser() {}
 
-  /// @brief Analyze
+  /// @brief Parse
+  /// @param [in] input Data to be parsed
+  /// @return ParserStatus Status after parsing
   ParseResult TryParse(uint8_t input);
 
   /// @brief Reset the state
@@ -86,7 +88,7 @@ class MPU9150PacketParser : private boost::noncopyable {
   bool is_reply_packet() const { return is_reply_packet_; }
 
  private:
-  /// The state and state name of the parser indicate what the next I receive
+  /// The state of the parser, the state name indicates what the next input represents
   enum State {
     /// Header 1
     kStateHeader1,
@@ -94,22 +96,22 @@ class MPU9150PacketParser : private boost::noncopyable {
     kStateHeader2,
     /// Data length
     kStateLength,
-    /// 値
+    /// Value
     kStateData,
     /// Checksum
     kStateChecksum,
-    /// I didn't accept anything because I got an error
+    /// Error occurred, accepting no input
     kStateNothing
   };
-  /// What is the next packet to receive
+  /// What the next packet received will be
   State state_;
-  /// The contents of the packet
+  /// Contents of the packet
   std::vector<uint8_t> packet_;
-  /// All packets received
+  /// All received packets
   std::vector<uint8_t> all_packets_;
   /// Packet data length
   uint8_t length_;
-  /// Presentation of returned packets
+  /// Presence of packet for reply
   bool is_reply_packet_;
 };
 }  // end of namespace hsrb_imu_sensor_protocol

@@ -25,7 +25,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief Inventsense's Gyro Sensor MPU9150 Easy -to -use API test
+/// @brief Test of the user-friendly API for Invensense Gyro Sensor MPU9150
 
 #include <chrono>
 #include <vector>
@@ -75,19 +75,19 @@ const double kGravityAccel = 9.80665;
 const double kEpsilon = 0.001;
 const uint32_t kBaudRate = 57600;
 
-/// Protocol condition
+/// protocol state
 enum ProtocolStatus {
-  /// Waiting for command
+  /// waiting for command state
   kStatusWaiting,
-  /// Wait for reset completion
+  /// waiting for reset completion
   kStatusWaitForReset,
-  /// Receive a reply to complete reset
+  /// receiving completion reply of reset
   kStatusReceiveResetReturn,
 };
 
-// Sensor value reading test, normal system
+// Sensor data reading test, normal case
 TEST_F(MPU9150NodeTest, ReadStateNormal) {
-  // Prepare
+  // Preliminary steps
   SerialCommunication sensor_port("/tmp/mpu9150_protocol_sensor", kBaudRate);
   boost::system::error_code error;
   std::vector<uint8_t> send_packet(96);
@@ -104,8 +104,8 @@ TEST_F(MPU9150NodeTest, ReadStateNormal) {
 
   imu_sub_->StartCaching();
   ASSERT_TRUE(WaitUntil(node_, imu_is_advertised_, 3.0));
-  // Pour two measurement data
-  // 1st measurement data
+  // Streaming two measurement data
+  // First measurement data
   // header
   send_packet[0] = 0x40;
   send_packet[1] = 0x47;
@@ -169,7 +169,7 @@ TEST_F(MPU9150NodeTest, ReadStateNormal) {
   // check sum
   send_packet[47] = 0x60;
 
-  // The second measurement data
+  // Second measurement data
   // header
   send_packet[48] = 0x40;
   send_packet[49] = 0x47;
@@ -232,7 +232,7 @@ TEST_F(MPU9150NodeTest, ReadStateNormal) {
   send_packet[94] = 0x09;
   // check sum
   send_packet[95] = 0x40;
-  // Send a packet
+  // Send packet
   WaitUntilTimuout(node_, 5.0);
   sensor_port.Send(send_packet);
   WaitUntilTimuout(node_, 5.0);
@@ -253,9 +253,9 @@ TEST_F(MPU9150NodeTest, ReadStateNormal) {
   EXPECT_NEAR(1.0 * g, imu_msg.linear_acceleration.y, kEpsilon);
   EXPECT_NEAR(0.5 * g, imu_msg.linear_acceleration.z, kEpsilon);
 }
-// Sensor value reading test, normal system
+// Sensor data reading test, normal case
 TEST_F(MPU9150NodeTest, ResetStatusReceiveResetReturnNormal) {
-  // Prepare
+  // Preliminary steps
   SerialCommunication sensor_port("/tmp/mpu9150_protocol_sensor", kBaudRate);
   boost::system::error_code error;
   std::vector<uint8_t> reset_packet(4);

@@ -41,7 +41,7 @@ DAMAGE.
 namespace hsrb_power_ecu {
 
 /**
- * @brief リプロ開始コマンド
+ * @brief Reproduce Start Command
  */
 class PowerEcuComRprosDataEncoder : public IPowerEcuComDataEncoder {
  private:
@@ -50,18 +50,18 @@ class PowerEcuComRprosDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComRprosDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComRprosDataEncoder() {}
   /**
-   * @brief パラメータ登録
+   * @brief Register Parameters
    *
-   * @param[out] parameter_map 登録先
+   * @param[out] parameter_map Registration Destination
    */
   virtual bool RegisterParameter(hsrb_power_ecu::any_type_pointer_map::Map& parameter_map);
 
@@ -71,7 +71,7 @@ class PowerEcuComRprosDataEncoder : public IPowerEcuComDataEncoder {
 };
 
 /**
- * @brief 時計合わせコマンド
+ * @brief Clock Synchronization Command
  */
 class PowerEcuComRprodDataEncoder : public IPowerEcuComDataEncoder {
  private:
@@ -80,40 +80,40 @@ class PowerEcuComRprodDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief パケットの内部構造
+   * @brief Internal Structure of Packet
    */
   struct PacketData {
-    std::string start_time;  //!< 現在時刻
+    std::string start_time;  //!< Current Time
   };
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComRprodDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComRprodDataEncoder() {}
   /**
-   * @brief パラメータ登録
+   * @brief Register Parameters
    *
-   * @param[out] parameter_map 登録先
+   * @param[out] parameter_map Registration Destination
    */
   virtual bool RegisterParameter(hsrb_power_ecu::any_type_pointer_map::Map& parameter_map);
   /**
-   * @brief エンコード
-   * @param[out] buffer 出力先のバッファ
+   * @brief Encode
+   * @param[out] buffer Output Buffer
    * @return
-   * 正常終了 boost::system::errc::success
-   * エンコード失敗 boost::system::errc::protocol_error
+   * Successful Termination boost::system::errc::success
+   * Encoding Failure boost::system::errc::protocol_error
    */
   virtual inline boost::system::error_code Encode(PacketBuffer& buffer) {
     std::copy(repro_data_.begin(), repro_data_.end(), std::back_inserter(buffer));
     return boost::system::errc::make_error_code(boost::system::errc::success);
   }
   /**
-   * @brief パケットヘッダ部のサイズ取得
-   * @return パケットサイズ
+   * @brief Get Packet Header Size
+   * @return Packet Size
    */
   virtual inline std::string GetPacketSizeStr() const {
     std::stringstream sst;
@@ -126,7 +126,7 @@ class PowerEcuComRprodDataEncoder : public IPowerEcuComDataEncoder {
 };
 
 /**
- * @brief リプログラム終了コマンド
+ * @brief Reprogram End Command
  */
 class PowerEcuComRproeDataEncoder : public IPowerEcuComDataEncoder {
  private:
@@ -134,18 +134,18 @@ class PowerEcuComRproeDataEncoder : public IPowerEcuComDataEncoder {
   PowerEcuComRproeDataEncoder& operator=(PowerEcuComRproeDataEncoder const&);  // = delete;
  public:
   /**
-   * @brief コンストラクタ
-   * @param packet_data パケットデータ
+   * @brief Constructor
+   * @param packet_data Packet data
    */
   PowerEcuComRproeDataEncoder();
   /**
-   * @brief デストラクタ
+   * @brief Destructor
    */
   virtual ~PowerEcuComRproeDataEncoder() {}
   /**
-   * @brief パラメータ登録
+   * @brief Register Parameters
    *
-   * @param[out] parameter_map 登録先
+   * @param[out] parameter_map Registration Destination
    */
   virtual bool RegisterParameter(hsrb_power_ecu::any_type_pointer_map::Map& parameter_map);
 

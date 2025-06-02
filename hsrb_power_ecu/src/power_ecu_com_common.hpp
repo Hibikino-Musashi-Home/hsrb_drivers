@@ -35,30 +35,33 @@ DAMAGE.
 
 namespace hsrb_power_ecu {
 /**
- * @brief Control commands common information of decoders and decoders
+ * @brief Common information for encoder and decoder for control commands
  */
 namespace com_common {
 
 /**
- * @brief CRC32 Checksam calculation
- * @param [in] start_it Checksam string leader
- * @param [in] end_it Checksam string endorator
+ * @brief crc32 checksum calculation
+ * @param[in] start_it Iterator to the start of the checksum string
+ * @param[in] end_it Iterator to the end of the checksum string
+ * @return Checksum result
  */
 uint32_t CalculateCrc32(std::string::const_iterator start_it, std::string::const_iterator end_it);
 
 /**
- * @brief CRC32 Checksam calculation
- * @param [in] start_it Checksam string leader
- * @param [in] end_it Checksam string endorator
+ * @brief crc32 checksum calculation
+ * @param start_it Iterator to the start of the checksum string
+ * @param end_it Iterator to the end of the checksum string
+ * @return Checksum result
  */
 uint32_t CalculateCrc32(hsrb_power_ecu::PacketBuffer::const_iterator start_it,
                         hsrb_power_ecu::PacketBuffer::const_iterator end_it);
 
-const size_t kPacketNameBufferSize = 5 + 1;
-const size_t kPacketSizeBufferSize = 3 + 1;
-const size_t kPacketCheckSumBufferSize = 8 + 1;
-const size_t kPacketHeaderLength = 12;
-const size_t kPacketFooterLength = 11;
+const size_t kPacketNameBufferSize = 5 + 1;      //!< Number of characters in packet header type (5) + '\0'
+const size_t kPacketSizeBufferSize = 3 + 1;      //!< Number of characters in packet header size (3) + '\0'
+const size_t kPacketCheckSumBufferSize = 8 + 1;  //!< Number of characters in checksum in packet data (8) + '\0'
+const size_t kPacketHeaderLength = 12;           //!< Number of characters in packet header
+const size_t kPacketFooterLength = 11;           //!< Number of characters in packet footer
+
 }  // namespace com_common
 }  // namespace hsrb_power_ecu
 #endif  // POWER_ECU_COM_COMMON_HPP_

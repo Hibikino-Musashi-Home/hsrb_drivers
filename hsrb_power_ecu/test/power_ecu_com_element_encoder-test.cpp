@@ -37,14 +37,14 @@ DAMAGE.
 #include "../src/power_ecu_com_element_encoder.hpp"
 #include "common_methods.hpp"
 namespace {
-const size_t kTestValueLengs = 2;
+const size_t kTestValueLengs = 2;  //!< Number of test value parameters
 
 size_t getDigit(const int32_t value, const int32_t base) { return static_cast<size_t>((log(value) / log(base)) + 1); }
 
 template <typename T>
 void HexUintEncoderTestHelper(const size_t digits, const boost::array<T, kTestValueLengs>& test_values,
                               const boost::array<std::string, kTestValueLengs>& test_results) {
-  uint32_t base = 16;
+  uint32_t base = 16;  // After encoding, it is in hexadecimal notation
   T value;
   hsrb_power_ecu::ElementHexUintEncoder<T> encoder(value, digits);
   hsrb_power_ecu::PacketBuffer buffer(1000);
@@ -55,14 +55,14 @@ void HexUintEncoderTestHelper(const size_t digits, const boost::array<T, kTestVa
     SCOPED_TRACE(sst.str().c_str());
     buffer.clear();
     value = test_values[i];
-    EXPECT_TRUE(encoder.Encode(buffer)) << "正常";
+    EXPECT_TRUE(encoder.Encode(buffer)) << "Normal";
     EXPECT_STREQ(read_buffer(buffer).c_str(), test_results[i].c_str());
   }
 
   {
     uint64_t bad_value = std::pow(base, digits) + 1;
     if (bad_value > std::numeric_limits<T>::max()) {
-      // Do not test if the range that can be expressed in the packet exceeds the original value
+      // Do not test if the range the packet can represent exceeds the original value
       return;
     }
     value = static_cast<T>(bad_value);
@@ -112,7 +112,7 @@ void ElementHexUintBitsEncoderTestHelper(const size_t digits, const boost::array
 template <typename T>
 void UintEncoderTestHelper(const size_t digits, const boost::array<T, kTestValueLengs>& test_values,
                            const boost::array<std::string, kTestValueLengs>& test_results) {
-  uint32_t base = 16;
+  uint32_t base = 10;  // After encoding, it is in hexadecimal notation
   T value;
   hsrb_power_ecu::ElementUintEncoder<T> encoder(value, digits);
   hsrb_power_ecu::PacketBuffer buffer(1000);
@@ -123,14 +123,14 @@ void UintEncoderTestHelper(const size_t digits, const boost::array<T, kTestValue
     SCOPED_TRACE(sst.str().c_str());
     buffer.clear();
     value = test_values[i];
-    EXPECT_TRUE(encoder.Encode(buffer)) << "正常";
+    EXPECT_TRUE(encoder.Encode(buffer)) << "Normal";
     EXPECT_STREQ(read_buffer(buffer).c_str(), test_results[i].c_str());
   }
 
   {
     uint64_t bad_value = std::pow(base, digits) + 1;
     if (bad_value > std::numeric_limits<T>::max()) {
-      // Do not test if the range that can be expressed in the packet exceeds the original value
+      // Do not test if the range the packet can represent exceeds the original value
       return;
     }
     value = static_cast<T>(bad_value);
@@ -180,7 +180,7 @@ void StringEncoderTestHelper(const size_t digits, const boost::array<std::string
 
 }  // anonymous namespace
 
-/* Normal test */
+/** Normal test case */
 TEST(ElementHexUintEncoderTest, NomalCase) {
   {
     SCOPED_TRACE("type=uint32_t digits=8");

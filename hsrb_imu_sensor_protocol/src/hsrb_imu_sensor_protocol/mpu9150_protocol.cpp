@@ -25,23 +25,28 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief Easy -to -use API of InventeNSE's Gyro Sensor MPU9150
+/// @brief Easy-to-use API for Invensense gyro sensor MPU9150
 
 #include <hsrb_imu_sensor_protocol/mpu9150_protocol.hpp>
 #include <vector>
 
 namespace hsrb_imu_sensor_protocol {
 
-// Waiting time for reset [SEC]
+// Waiting time during reset [sec]
 const double kMPU9150ResetDuration = 3.0;
-// Waiting time after setting zero acceleration [SEC]
+// Waiting time after setting the accelerometer zero point [sec]
 const double kMPU9150AccelZeroSetDuration = 0.5;
-// Timeout waiting for the end order to MPU9150 [SEC]
+// Timeout for waiting for command termination to MPU9150 [sec]
 const double kMPU9150InstructionTimeout = 5.0;
 
-/// @brief Determines a packet with 0 (checksum only)
+/// @brief Determines if a packet only contains checksum (parameter is 0)
+/// @param [in] packet Packet to be judged
+/// @return bool Returns true if the packet parameter is 0
+/// @note MPU9150 returns a packet with parameter 0 after processing
+///        commands such as resets and range settings.
+///        In that case, the packet length will be 1 (only checksum).
 bool IsParameterZeroPacket(const std::vector<uint8_t>& packet) {
-  // The third packet is the packet length
+  // The third element in the packet is the packet length
   if (packet.size() < 2) {
     return false;
   }
@@ -52,15 +57,15 @@ bool IsParameterZeroPacket(const std::vector<uint8_t>& packet) {
   }
 }
 
-/// @brief constructor
+/// @brief Constructor
 MPU9150Protocol::MPU9150Protocol(MPU9150Network& network) : network_(network), status_(kStatusWaiting) {}
 
-// Read the current sensor value
+// Read current sensor values
 MPU9150Protocol::ErrorCode MPU9150Protocol::ReadState(ImuState& state) {
-  // Do nothing unless it's kstatuswaiting
+  // Do nothing unless status is kStatusWaiting
   MPU9150Protocol::ErrorCode error;
   if (status_ == kStatusWaiting) {
-    // Packet reception from MPU9150
+    // Receive packet from MPU9150
     error = network_.Receive();
     if (error) {
       return error;
@@ -75,18 +80,18 @@ MPU9150Protocol::ErrorCode MPU9150Protocol::ReadState(ImuState& state) {
   return MPU9150Protocol::ErrorCode(boost::system::errc::success, boost::system::system_category());
 }
 
-// Reset the sensor
+// Perform sensor reset
 MPU9150Protocol::ErrorCode MPU9150Protocol::TryReset(ResetResult& result) {
   MPU9150Protocol::ErrorCode error;
   switch (status_) {
     case kStatusWaiting:
-      // Send a reset order
+      // Send reset command
       error = network_.Send(kMPU9150InstructionReset, NULL, 0);
       if (error) {
         result = kError;
         return error;
       } else {
-        // If you can send it, set each time to make kstatuswaitforresset
+        // If successfully sent, set times and switch to kStatusWaitForReset
         instruction_end_time_ =
             rclcpp::Clock(RCL_ROS_TIME).now() + rclcpp::Duration::from_seconds(kMPU9150ResetDuration);
         instruction_timeout_ =
@@ -95,16 +100,16 @@ MPU9150Protocol::ErrorCode MPU9150Protocol::TryReset(ResetResult& result) {
       }
       break;
     case kStatusWaitForReset:
-      // Reply from MPU9150 After the expected time, transition to the reception waiting state
+      // Transition to waiting state if expected reply time from MPU9150 is exceeded
       if (rclcpp::Clock(RCL_ROS_TIME).now() > instruction_end_time_) {
         status_ = kStatusReceiveResetReturn;
       }
       break;
     case kStatusReceiveResetReturn:
-      // Receive a reply to the end of the reset
+      // Receive reply of reset completion
       error = network_.Receive();
       if (error || !network_.is_reply_packet()) {
-        // After crossing the timeout, return to kstatuswaiting
+        // Return to kStatusWaiting if timeout is exceeded
         if (rclcpp::Clock(RCL_ROS_TIME).now() > instruction_timeout_) {
           status_ = kStatusWaiting;
           result = kError;

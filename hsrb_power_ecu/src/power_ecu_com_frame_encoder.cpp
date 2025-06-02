@@ -37,44 +37,44 @@ DAMAGE.
 namespace hsrb_power_ecu {
 
 PowerEcuComFrameEncoder::PowerEcuComFrameEncoder() : check_sum_(0) {
-  // チェックサム作成用のバッファ確保
+  // Allocate buffer for checksum creation
   check_sum_encoder_ = boost::make_shared<hsrb_power_ecu::ElementHexUintEncoder<uint32_t> >(check_sum_, 8);
 }
 
 PowerEcuComFrameEncoder::~PowerEcuComFrameEncoder() {}
 
 /**
- * @brief エンコード
- * @param[out] buffer     出力先のバッファ
- * @param[in] packet_name データデコーダ検索用のエンコードするパケットの名前
- * @return 成功時 boost::system::error::success
+ * @brief Encode
+ * @param[out] buffer     Buffer for output destination
+ * @param[in] packet_name Name of the packet to encode for data decoder search
+ * @return boost::system::error::success on success
  */
 boost::system::error_code PowerEcuComFrameEncoder::Encode(PacketBuffer &buffer, const std::string &packet_name) {
-  //// 対応するエンコーダを検索
+  //// Search for corresponding encoder
   DataEncoderMap::iterator map_it = data_encoder_map_.find(packet_name);
   if (map_it == data_encoder_map_.end()) {
     return boost::system::errc::make_error_code(boost::system::errc::invalid_argument);
   }
 
-  // フレーム作成
-  //// 先頭文字列
+  // Create frame
+  //// Starting string
   buffer.push_back('H');
   buffer.push_back(',');
 
-  //// ヘッダ名
+  //// Header name
   std::copy(packet_name.begin(), packet_name.end(), std::back_inserter(buffer));
   buffer.push_back(',');
 
-  //// サイズ
+  //// Size
   const std::string packet_size = map_it->second->GetPacketSizeStr();
   std::copy(packet_size.begin(), packet_size.end(), std::back_inserter(buffer));
   buffer.push_back(',');
 
-  // データ部エンコード
-  //// データ部エンコード
+  // Encode data section
+  //// Encode data section
   map_it->second->Encode(buffer);
 
-  // チェックサム作成
+  // Create checksum
   check_sum_ = hsrb_power_ecu::com_common::CalculateCrc32(buffer.begin(), buffer.end());
   check_sum_encoder_->Encode(buffer);
   buffer.push_back(',');
@@ -84,17 +84,17 @@ boost::system::error_code PowerEcuComFrameEncoder::Encode(PacketBuffer &buffer, 
 }
 
 /**
- * @brief データエンコーダ登録
- * @param[in] encoder 登録するエンコーダ
- * @return 成功時 boost::system::errc::success
+ * @brief Register data encoder
+ * @param[in] encoder Encoder to register
+ * @return boost::system::errc::success on success
  */
 boost::system::error_code PowerEcuComFrameEncoder::RegisterDataEncoder(DataEncoderType encoder) {
-  // 無効なポインタ、データエンコーダが重複しているときエラー
+  // Error for invalid pointer or when data encoder is duplicated
   if (encoder == NULL || data_encoder_map_.find(encoder->GetPacketName()) != data_encoder_map_.end()) {
     return boost::system::errc::make_error_code(boost::system::errc::invalid_argument);
   }
 
-  // 登録
+  // Registration
   data_encoder_map_[encoder->GetPacketName()] = encoder;
 
   return boost::system::errc::make_error_code(boost::system::errc::success);

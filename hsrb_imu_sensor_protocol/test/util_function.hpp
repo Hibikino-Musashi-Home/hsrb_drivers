@@ -27,7 +27,7 @@ DAMAGE.
 */
 /**
  * @file util_function.hpp
- * Provide functions that perform well in the @brew test
+ * @brief Provides functions for common processes performed in tests
  * @auther Fukukazu Kawata
  *
  *
@@ -44,17 +44,17 @@ namespace test_utils {
 using WaitFunctionType = std::function<bool()>;
 
 /**
- * @BRIEF Wait until some conditions are achieved
+ * @brief Waits until some condition is met
  *
- * @Param condition_function conditional function
- * @param timeout_sec maximum standby time (SEC)
- * @Param Rate_hz Confirmation Calp (Hz) Default 100.0 (Hz)
+ * @param condition_function Condition function
+ * @param timeout_sec Maximum wait time (sec)
+ * @param rate_hz Verification cycle (hz) Default 100.0 (hz)
  *
- * @Return Conditions to achieve or not to reach
+ * @return Condition met or not met
  */
 bool WaitUntil(rclcpp::Node::SharedPtr node, WaitFunctionType condition_function, double timeout_sec,
                double rate_hz = 100.0) {
-  // An argument error check
+  // Error check for arguments
   if (!condition_function) {
     throw std::invalid_argument("Function for waiting is empty.");
   }
@@ -82,17 +82,17 @@ bool WaitUntil(rclcpp::Node::SharedPtr node, WaitFunctionType condition_function
 bool WaitForTopicExistence(rclcpp::Node::SharedPtr node, const std::string& topic_name, std::chrono::seconds timeout) {
   auto start_time = std::chrono::steady_clock::now();
   while (rclcpp::ok()) {
-    // Get a service list
+    // Retrieve service list
     auto topic_names_and_types = node->get_topic_names_and_types();
 
-    // Check if there is a service
+    // Check if service exists
     for (const auto& topic : topic_names_and_types) {
       if (topic.first == ("/" + topic_name)) {
         return true;
       }
     }
 
-    // Check the timeout
+    // Check timeout
     if (std::chrono::steady_clock::now() - start_time > timeout) {
       return false;
     }

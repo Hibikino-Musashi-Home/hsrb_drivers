@@ -35,13 +35,13 @@ DAMAGE.
 #include <boost/system/error_code.hpp>
 
 namespace hsrb_imu_sensor_protocol {
-/// Gyro sensor value
+/// Gyro sensor values
 struct ImuState {
-  /// In the order of posture, xyzw in quotanion
+  /// Attitude, Quaternion in the order of xyzw
   boost::array<double, 4> orientation;
-  /// Corner speed [RAD/SEC]
+  /// Angular velocity [rad/sec]
   boost::array<double, 3> angular_velocity;
-  /// Acceleration [M/SEC^2]
+  /// Acceleration [m/sec^2]
   boost::array<double, 3> linear_acceleration;
 };
 
@@ -50,21 +50,46 @@ class IImuProtocol {
  public:
   typedef boost::system::error_code ErrorCode;
   virtual ~IImuProtocol() {}
-  /// Results of sensor reset
+  /// Result of sensor reset
   enum ResetResult {
-    /// normal termination
+    /// Normal termination
     kDone,
-    /// fail
+    /// Fail
     kError,
-    /// During resetting
+    /// Resetting
     kContinue
   };
 
-  /// @brief Read the current sensor value
+  /// @brief Read the current sensor values
+  /// @param [out] state Current sensor values
+  /// @return boost::system::error_code Error code
+  /// @note Types of error codes
+  ///        Success: errc::success
+  ///        Communication protocol error: errc::protocol_error
+  ///        Timeout: errc::timed_out
   virtual ErrorCode ReadState(ImuState& state) = 0;
-  /// @brief Reset the sensor
+  /// @brief Perform sensor reset
+  /// @param [out] result Result of reset processing
+  /// @return boost::system::error_code Error code
+  /// @note This function does not wait for reset completion.
+  ///       Continue calling until result becomes kDone, kError
+  ///       Types of error codes
+  ///         Success: errc::success
+  ///         Timeout: errc::timed_out
+  ///                         Internally set communication timeout
+  ///         Communication protocol error: errc::protocol_error
   virtual ErrorCode TryReset(ResetResult& result) = 0;
-  /// @brief Reset the sensor
+  /// @brief Perform sensor reset
+  /// @param [in] timeout Timeout [s]
+  /// @return boost::system::error_code Error code
+  /// @note This function waits until timeout
+  ///       Types of error codes
+  ///         Success: errc::success
+  ///         Timeout: errc::timed_out
+  ///                        Set timeout period or
+  ///                        Internally set communication timeout
+  ///                        Timeout occurs whichever is sooner
+  ///         Communication protocol error: errc::protocol_error
   virtual ErrorCode Reset(double timeout) = 0;
 };
 

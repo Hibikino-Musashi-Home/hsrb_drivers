@@ -25,7 +25,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief Providing classes to communicate with InventeNSE's Gyro Sensor MPU9150
+/// @brief Provides a class for communicating with Invensense's gyroscope sensor MPU9150
 #ifndef HSRB_IMU_SENSOR_PROTOCOL_MPU9150_NETWORK_HPP_
 #define HSRB_IMU_SENSOR_PROTOCOL_MPU9150_NETWORK_HPP_
 
@@ -39,7 +39,7 @@ DAMAGE.
 
 namespace hsrb_imu_sensor_protocol {
 
-/// Order to send to MPU9150
+/// Commands to send to MPU9150
 enum MPU9150Instruction {
   /// Read sensor data
   kMPU9150InstructionReadData = 0x61,
@@ -47,59 +47,71 @@ enum MPU9150Instruction {
   kMPU9150InstructionReset = 0x72,
 };
 
-/// Gyro sensor value
+/// Gyroscope sensor values
 struct MPU9150State {
-  /// In the order of posture, xyzw in quotanion
+  /// Orientation in quaternion order xyzw
   boost::array<double, 4> orientation;
-  /// Corner speed [RAD/SEC]
+  /// Angular velocity [rad/sec]
   boost::array<double, 3> angular_velocity;
-  /// Acceleration [M/SEC^2]
+  /// Acceleration [m/sec^2]
   boost::array<double, 3> linear_acceleration;
 };
 
-/// Classes to communicate with INVENSENSE's Gyro Sensor MPU9150
+/// Class for communicating with Invensense's gyroscope sensor MPU9150
 class MPU9150Network : private boost::noncopyable {
  public:
-  /// @brief Constructor, secure communication
+  /// @brief Constructor, establishes communication
+  /// @param [in] device_name Device name
+  /// @param [out] error_code Error code
   MPU9150Network(std::string device_name, boost::system::error_code& error_out);
 
   MPU9150Network(std::string device_name, boost::system::error_code& error_out, int32_t timeout, int32_t sleep_tick);
 
-  /// @brief Destructor, close communication
+  /// @brief Destructor, closes communication
   ~MPU9150Network();
 
   /// @brief Send
+  /// @param instruction Command to send to MPU9150
+  /// @param data Parameter of the command
+  /// @param size Size of data
+  /// @return boost::system::error_code Error code
   boost::system::error_code Send(uint8_t instruction, const uint8_t* data, uint16_t size);
 
   /// @brief Receive
+  /// @return boost::system::error_code Error code
   boost::system::error_code Receive();
 
-  /// @brief Timeout time setting
+  /// @brief Setting timeout duration
+  /// @param [in] timeout Timeout duration [nanoseconds]
   void set_timeout(int32_t timeout) { timeout_ = timeout; }
-  /// @brief Acquisition of timeout time
+  /// @brief Get timeout duration
+  /// @return int32_t Timeout duration [nanoseconds]
   int32_t timeout() const { return timeout_; }
 
-  /// @brief Setting of sleep waiting for sending and receiving
+  /// @brief Setting sleep tick for waiting for send/receive
+  /// @param [in] sleep_tick Sleep tick [nanoseconds]
   void set_sleep_tick(int32_t sleep_tick) { sleep_tick_ = sleep_tick; }
-  /// @brief Acquisition of a chopping sleep waiting for sending and receiving
+  /// @brief Get sleep tick for waiting for send/receive
+  /// @return int32_t Sleep tick [nanoseconds]
   int32_t sleep_tick() const { return sleep_tick_; }
 
-  /// @brief Return the packet received in the last receive function
+  /// @brief Returns the packet received by the last Receive function
+  /// @return const std::vector<uint8_t>& Packet
   const std::vector<uint8_t>& all_packets() const { return parser_.packets(); }
 
   bool is_reply_packet() const { return parser_.is_reply_packet(); }
 
  private:
   boost::system::error_code Init(const std::string& device_name);
-  /// File Discient
+  /// File descriptor
   int fd_;
-  /// Timeout time [nanoseconds]
+  /// Timeout duration [nanoseconds]
   int32_t timeout_;
-  /// Sleep chopped [nanoseconds]
+  /// Sleep tick [nanoseconds]
   int32_t sleep_tick_;
   /// parser
   MPU9150PacketParser parser_;
-  /// Sending and receiving buffer
+  /// Send/receive buffer
   boost::array<uint8_t, 4095> buffer_;
 };
 
@@ -107,17 +119,23 @@ class MPU9150Network : private boost::noncopyable {
 /// Converter class
 class MPU9150PacketConverter {
  public:
-  /// Constructor, initialization of variables
+  /// Constructor, initialize variables
   MPU9150PacketConverter();
 
-  /// Destrocta, nothing
+  /// Destructor, does nothing
   ~MPU9150PacketConverter() {}
 
-  /// @brief Convert packet from the sensor to Sensorstate to output
+  /// @brief Convert packet from sensor to SensorState and output
+  /// @param [in] packet Packet from sensor
+  /// @param [out] orientation Orientation in quaternion order xyzw
+  /// @param [out] angular_velocity Angular velocity [rad/sec]
+  /// @param [out] linear_acceleration Acceleration [m/sec^2]
   void ToSensorState(const std::vector<uint8_t>& packet, boost::array<double, 4>& orientation,
                      boost::array<double, 3>& angular_velocity, boost::array<double, 3>& linear_acceleration);
 
-  /// @brief Convert packet from the sensor to Sensorstate to output
+  /// @brief Convert packet from sensor to SensorState and output
+  /// @param [in] packet Packet from sensor
+  /// @param [out] sensor_state Converted values
   void ToSensorState(const std::vector<uint8_t>& packet, MPU9150State& sensor_state);
 
  private:

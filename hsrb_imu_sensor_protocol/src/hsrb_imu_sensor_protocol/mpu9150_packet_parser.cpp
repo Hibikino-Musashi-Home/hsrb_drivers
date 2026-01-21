@@ -25,8 +25,8 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief Provides the parser class for Invensense's gyro sensor MPU9150
-/// @brief Communication specifications can be found in arduino_sketches/tmc_invensense_mpu9150_firmware
+/// @brief Provides a parser class for Invensense's gyro sensor MPU9150
+/// @brief Communication specifications are in arduino_sketches/tmc_invensense_mpu9150_firmware
 /// @brief Refer to Readme.md
 #include <hsrb_imu_sensor_protocol/mpu9150_packet_parser.hpp>
 
@@ -60,7 +60,7 @@ MPU9150PacketParser::ParseResult MPU9150PacketParser::TryParse(uint8_t input) {
         packet_.clear();
         return kContinue;
       } else if (input == 1) {
-        // If there's no data, proceed to checksum calculation
+        // If there is no data, proceed to checksum calculation
         length_ = input;
         packet_.push_back(input);
         state_ = kStateChecksum;
@@ -84,7 +84,7 @@ MPU9150PacketParser::ParseResult MPU9150PacketParser::TryParse(uint8_t input) {
         // Store all received packets
         all_packets_.insert(all_packets_.end(), packet_.begin(), packet_.end());
         packet_.clear();
-        // Empty packets are for command response
+        // Empty content is for command response packets
         if (length_ == 1) {
           is_reply_packet_ = true;
           return kDone;

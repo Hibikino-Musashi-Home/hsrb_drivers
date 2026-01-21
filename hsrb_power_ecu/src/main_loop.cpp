@@ -47,11 +47,12 @@ const char* const kDefaultPortName = "/dev/ttyCTI3";
 const double kPortReceiveTimeoutMs = 0.5;
 const char* const kDefaultImuFrame = "base_imu_frame";
 
-// ECU parameter names and the names of topics to be issued
+// ECU parameter name and topic name to be published
 const std::vector<std::pair<std::string, std::string>> kParamAndTopicNames {
   {"is_bumper_bumper1", "base_f_bumper_sensor"}, {"is_bumper_bumper2", "base_b_bumper_sensor"},
   {"is_powerecu_sw_kinoko", "emergency_stop_button"}, {"is_powerecu_sw_w_stop", "wireless_stop_button"},
-  {"is_powerecu_sw_w_sel", "wireless_stop_enable"}, {"is_powerecu_bat_stat", "battery_charging"}
+  {"is_powerecu_sw_w_sel", "wireless_stop_enable"}, {"is_powerecu_bat_stat", "battery_charging"},
+  {"is_bumper_prox1", "base_magnetic_sensor_1"}, {"is_bumper_prox2", "base_magnetic_sensor_2"}
 };
 }  // anonymous namespace
 
@@ -73,15 +74,15 @@ int32_t main(int32_t argc, char** argv) {
 
   if (!protocol->Open()) {
     RCLCPP_FATAL(node->get_logger(), "Protocol Open failed.");
-    exit(EXIT_FAILURE);  // Currently, it is impossible to recover in case of network open failure
+    exit(EXIT_FAILURE);  // Currently, recovery is impossible if network open fails
   }
   if (!protocol->Init()) {
     RCLCPP_FATAL(node->get_logger(), "Protocol Init Failed");
-    exit(EXIT_FAILURE);  // Currently, it is impossible to recover in case of network open failure
+    exit(EXIT_FAILURE);  // Currently, recovery is impossible if network open fails
   }
   if (protocol->Start() != boost::system::errc::success) {
     RCLCPP_FATAL(node->get_logger(), "start failed");
-    exit(EXIT_FAILURE);  // Currently, it is impossible to recover in case of network open failure
+    exit(EXIT_FAILURE);  // Currently, recovery is impossible if network open fails
   }
 
   auto led_command_subscriber = std::make_shared<hsrb_power_ecu::LedCommandSubscriber>(node, protocol);

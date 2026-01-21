@@ -41,7 +41,7 @@ DAMAGE.
 namespace hsrb_power_ecu {
 
 /**
- * @brief Reproduce Start Command
+ * @brief Repro start command
  */
 class PowerEcuComRprosDataEncoder : public IPowerEcuComDataEncoder {
  private:
@@ -59,9 +59,9 @@ class PowerEcuComRprosDataEncoder : public IPowerEcuComDataEncoder {
    */
   virtual ~PowerEcuComRprosDataEncoder() {}
   /**
-   * @brief Register Parameters
+   * @brief Parameter registration
    *
-   * @param[out] parameter_map Registration Destination
+   * @param[out] parameter_map Registration destination
    */
   virtual bool RegisterParameter(hsrb_power_ecu::any_type_pointer_map::Map& parameter_map);
 
@@ -71,7 +71,7 @@ class PowerEcuComRprosDataEncoder : public IPowerEcuComDataEncoder {
 };
 
 /**
- * @brief Clock Synchronization Command
+ * @brief Clock synchronization command
  */
 class PowerEcuComRprodDataEncoder : public IPowerEcuComDataEncoder {
  private:
@@ -80,10 +80,10 @@ class PowerEcuComRprodDataEncoder : public IPowerEcuComDataEncoder {
 
  public:
   /**
-   * @brief Internal Structure of Packet
+   * @brief Internal structure of the packet
    */
   struct PacketData {
-    std::string start_time;  //!< Current Time
+    std::string start_time;  //!< Current time
   };
   /**
    * @brief Constructor
@@ -95,25 +95,25 @@ class PowerEcuComRprodDataEncoder : public IPowerEcuComDataEncoder {
    */
   virtual ~PowerEcuComRprodDataEncoder() {}
   /**
-   * @brief Register Parameters
+   * @brief Parameter registration
    *
-   * @param[out] parameter_map Registration Destination
+   * @param[out] parameter_map Registration destination
    */
   virtual bool RegisterParameter(hsrb_power_ecu::any_type_pointer_map::Map& parameter_map);
   /**
-   * @brief Encode
-   * @param[out] buffer Output Buffer
+   * @brief Encoding
+   * @param[out] buffer Output buffer
    * @return
-   * Successful Termination boost::system::errc::success
-   * Encoding Failure boost::system::errc::protocol_error
+   * Normal termination boost::system::errc::success
+   * Encoding failure boost::system::errc::protocol_error
    */
   virtual inline boost::system::error_code Encode(PacketBuffer& buffer) {
     std::copy(repro_data_.begin(), repro_data_.end(), std::back_inserter(buffer));
     return boost::system::errc::make_error_code(boost::system::errc::success);
   }
   /**
-   * @brief Get Packet Header Size
-   * @return Packet Size
+   * @brief Get packet header size
+   * @return Packet size
    */
   virtual inline std::string GetPacketSizeStr() const {
     std::stringstream sst;
@@ -126,7 +126,7 @@ class PowerEcuComRprodDataEncoder : public IPowerEcuComDataEncoder {
 };
 
 /**
- * @brief Reprogram End Command
+ * @brief Reprogram end command
  */
 class PowerEcuComRproeDataEncoder : public IPowerEcuComDataEncoder {
  private:
@@ -143,9 +143,9 @@ class PowerEcuComRproeDataEncoder : public IPowerEcuComDataEncoder {
    */
   virtual ~PowerEcuComRproeDataEncoder() {}
   /**
-   * @brief Register Parameters
+   * @brief Parameter registration
    *
-   * @param[out] parameter_map Registration Destination
+   * @param[out] parameter_map Registration destination
    */
   virtual bool RegisterParameter(hsrb_power_ecu::any_type_pointer_map::Map& parameter_map);
 

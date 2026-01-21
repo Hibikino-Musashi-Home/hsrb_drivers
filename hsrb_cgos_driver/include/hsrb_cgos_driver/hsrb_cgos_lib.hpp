@@ -36,7 +36,7 @@ DAMAGE.
 
 namespace hsrb_cgos_driver {
 
-/// congatec's CGOS compliant board class
+/// Board class for congatec CGOS-compliant boards
 enum HsrbCgosLibBoardClass {
   // Default type
   kCgosBoardClassDefault = 0,
@@ -48,16 +48,16 @@ enum HsrbCgosLibBoardClass {
   kCgosBoardClassIo = 4
 };
 
-/// Flags for opening a congatec's CGOS compliant board
+/// Flags for opening congatec CGOS-compliant boards
 enum HsrbCgosLibBoardOpenFlags {
   // Scan for matches with the specified board class
   kCgosBoardOpenFlagsDefault = 0,
-  // Scan for matches with the Primary Class of the board
+  // Scan for matches with the Primary Class board class
   kCgosBoardOpenFlagsPrimaryOnly = 1
 };
 
 /**
- * @brief Interface for embedded Linux functions
+ * @brief Interface for Linux built-in functions
  * Extracted to facilitate mock testing
  */
 class ISystemInterface {

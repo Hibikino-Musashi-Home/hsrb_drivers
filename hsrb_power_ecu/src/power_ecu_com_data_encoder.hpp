@@ -54,15 +54,15 @@ struct Color {
 };
 
 // TODO(kitsunai): 送信コマンドで未実装の物がある
-// Power shutdown command pdown, executes shutdown of power ECU
-// Basic information read command info1, reads basic information of power ECU once
-// Option information read command info2, reads option information of power ECU once
-// Reprogram start command rpros, starts reprogramming
-// Reprogram data command rprod, sends data for reprogramming
-// Reprogram end command rproe, ends reprogramming
+// Power shutdown command       pdown, performs shutdown of the power ECU
+// Basic information read command           info1, reads basic information of the power ECU once
+// Optional information read command     info2, reads optional information of the power ECU once
+// Reprogram start command         rpros, starts reprogramming
+// Reprogram data command       rprod, sends data for reprogramming
+// Reprogram end command         rproe, ends reprogramming
 
 /**
- * @brief Clock adjustment command
+ * @brief Clock synchronization command
  */
 class PowerEcuComTimeDataEncoder : public IPowerEcuComDataEncoder {
  private:
@@ -90,7 +90,7 @@ class PowerEcuComTimeDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;  //!< Packet data
 };
 
-// Start command for periodic basic information transmission start, initiates continuous transmission of power ECU
+// Basic information periodic transmission start command start, starts continuous transmission of the power ECU
 class PowerEcuComStartDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComStartDataEncoder(PowerEcuComStartDataEncoder const&);             // = delete;
@@ -118,7 +118,7 @@ class PowerEcuComStartDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;  //!< Packet data
 };
 
-// Stop command for periodic basic information transmission stop_, stops continuous transmission of power ECU
+// Basic information periodic transmission stop command stop_, stops continuous transmission of the power ECU
 class PowerEcuComStopDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComStopDataEncoder(PowerEcuComStopDataEncoder const&);             // = delete;
@@ -136,7 +136,7 @@ class PowerEcuComStopDataEncoder : public IPowerEcuComDataEncoder {
   virtual ~PowerEcuComStopDataEncoder() {}
 };
 
-// Heartbeat heart, main CPU performs survival check of power ECU
+// Heartbeat                     heart, main CPU checks the survival of the power ECU
 class PowerEcuComHeartDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComHeartDataEncoder(PowerEcuComHeartDataEncoder const&);             // = delete;
@@ -147,8 +147,8 @@ class PowerEcuComHeartDataEncoder : public IPowerEcuComDataEncoder {
    * @brief Internal structure of the packet
    */
   struct PacketData {
-    uint16_t error_state;  //!< Error state 4-digit hexadecimal uint16
-    uint32_t counts;       //!< Count value (increments +1 per transmission) 8-digit hexadecimal uint32
+    uint16_t error_state;  //!< Error state                4-digit hexadecimal uint16
+    uint32_t counts;       //!< Count value (+1 for each transmission) 8-digit hexadecimal uint32
   };
   /**
    * @brief Constructor
@@ -164,7 +164,7 @@ class PowerEcuComHeartDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;  //!< Packet data
 };
 
-// Pump switch pump_, controls the pump switch
+// Pump switch                   pump_, controls the pump switch
 class PowerEcuComPumpDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComPumpDataEncoder(PowerEcuComPumpDataEncoder const&);             // = delete;
@@ -191,7 +191,7 @@ class PowerEcuComPumpDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;  //!< Packet data
 };
 
-// Drive system switch pbmsw, controls the power of drive system
+// Drive system switch                   pbmsw, controls the power of the drive system
 class PowerEcuComPbmswDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComPbmswDataEncoder(PowerEcuComPbmswDataEncoder const&);             // = delete;
@@ -202,7 +202,7 @@ class PowerEcuComPbmswDataEncoder : public IPowerEcuComDataEncoder {
    * @brief Internal structure of the packet
    */
   struct PacketData {
-    uint8_t is_motor_enable;  //!< Drive system switch (0:OFF 1:ON) 1-digit decimal uint8
+    uint8_t is_motor_enable;  //!< Drive system switch (0 : OFF 1 : ON) 1-digit decimal uint8
   };
   /**
    * @brief Constructor
@@ -218,7 +218,7 @@ class PowerEcuComPbmswDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;  //!< Packet data
 };
 
-// Multi-purpose LED color specification ledc_, specifies lighting/blinking and color of multi-purpose LED
+// Multi-purpose LED color specification                ledc_, specifies lighting/blinking and color of the multi-purpose LED
 class PowerEcuComLedcDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComLedcDataEncoder(PowerEcuComLedcDataEncoder const&);             // = delete;
@@ -245,7 +245,7 @@ class PowerEcuComLedcDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;  //!< Packet data
 };
 
-// Attitude calculation reset (g_res)
+// Attitude angle calculation reset (g_res)
 class PowerEcuComGResDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComGResDataEncoder(PowerEcuComGResDataEncoder const&);             // = delete;
@@ -356,7 +356,7 @@ class PowerEcuComMuteDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// Version information retrieval command (getv_)
+// Version information acquisition command (getv_)
 class PowerEcuComGetvDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuComGetvDataEncoder(PowerEcuComGetvDataEncoder const&);             // = delete;
@@ -411,7 +411,7 @@ class PowerEcuComUndckDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// 12Vu enable command (12vu_)
+// 12Vu_ enable command (12vu_)
 class PowerEcuCom12VuDataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuCom12VuDataEncoder(PowerEcuCom12VuDataEncoder const&);             // = delete;
@@ -438,7 +438,7 @@ class PowerEcuCom12VuDataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// 5Vd3 enable command (5vd3_)
+// 5Vd3_ enable command (5vd3_)
 class PowerEcuCom5Vd3DataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuCom5Vd3DataEncoder(PowerEcuCom5Vd3DataEncoder const&);             // = delete;
@@ -465,7 +465,7 @@ class PowerEcuCom5Vd3DataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// 5Vd4 enable command (5vd4_)
+// 5Vd4_ enable command (5vd4_)
 class PowerEcuCom5Vd4DataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuCom5Vd4DataEncoder(PowerEcuCom5Vd4DataEncoder const&);             // = delete;
@@ -492,7 +492,7 @@ class PowerEcuCom5Vd4DataEncoder : public IPowerEcuComDataEncoder {
   PacketData packet_data_;
 };
 
-// 5Vd5 enable command (5vd5_)
+// 5Vd5_ enable command (5vd5_)
 class PowerEcuCom5Vd5DataEncoder : public IPowerEcuComDataEncoder {
  private:
   PowerEcuCom5Vd5DataEncoder(PowerEcuCom5Vd5DataEncoder const&);             // = delete;

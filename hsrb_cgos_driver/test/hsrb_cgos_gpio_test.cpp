@@ -94,6 +94,34 @@ TEST_F(HsrbCgosHwDeathTest, on_configure) {
   ASSERT_EQ(hw_->on_configure(rclcpp_lifecycle::State()), hardware_interface::CallbackReturn::SUCCESS);
 }
 
+// Initialize failed on successful on_configure (returns SUCCESS)
+TEST_F(HsrbCgosHwDeathTest, OnConfigure_InitializeFails_ReturnsSuccess) {
+  gpio_info_.parameters["pin"] = "0";
+  gpio_info_.parameters["direction"] = "in";
+  hardware_info_.gpios.push_back(gpio_info_);
+
+  hw_->on_init(hardware_info_);
+
+  EXPECT_CALL(*cgos_mock_, Initialize()).WillOnce(::testing::Return(false));
+
+  ASSERT_EQ(hw_->on_configure(rclcpp_lifecycle::State()), hardware_interface::CallbackReturn::SUCCESS);
+}
+
+// BoardOpen failed on successful on_configure (returns SUCCESS)
+TEST_F(HsrbCgosHwDeathTest, OnConfigure_BoardOpenFails_ReturnsSuccess) {
+  gpio_info_.parameters["pin"] = "0";
+  gpio_info_.parameters["direction"] = "in";
+  hardware_info_.gpios.push_back(gpio_info_);
+
+  hw_->on_init(hardware_info_);
+
+  EXPECT_CALL(*cgos_mock_, Initialize()).WillOnce(::testing::Return(true));
+  EXPECT_CALL(*cgos_mock_, BoardOpen(::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    .WillOnce(::testing::Return(false));
+
+  ASSERT_EQ(hw_->on_configure(rclcpp_lifecycle::State()), hardware_interface::CallbackReturn::SUCCESS);
+}
+
 // read successful
 TEST_F(HsrbCgosHwDeathTest, read) {
   gpio_info_.parameters["pin"] = "0";
@@ -101,11 +129,34 @@ TEST_F(HsrbCgosHwDeathTest, read) {
   hardware_info_.gpios.push_back(gpio_info_);
 
   hw_->on_init(hardware_info_);
-  hw_->on_configure(rclcpp_lifecycle::State());
+
+  EXPECT_CALL(*cgos_mock_, Initialize()).WillOnce(::testing::Return(true));
+  // Set a valid handle value (non-zero) for successful BoardOpen
+  EXPECT_CALL(*cgos_mock_, BoardOpen(::testing::_, ::testing::_, ::testing::_, ::testing::_))
+      .WillOnce(::testing::DoAll(::testing::SetArgPointee<3>(1), ::testing::Return(true)));
+  // Set a valid handle value (non-zero) for successful GetIOCount
+  EXPECT_CALL(*cgos_mock_, GetIOCount(::testing::_, ::testing::_))
+      .WillOnce(::testing::DoAll(::testing::SetArgPointee<1>(1), ::testing::Return(true)));
+  ASSERT_EQ(hw_->on_configure(rclcpp_lifecycle::State()), hardware_interface::CallbackReturn::SUCCESS);
 
   EXPECT_CALL(*cgos_mock_, IORead(::testing::_, ::testing::_, ::testing::_))
-    .WillOnce(::testing::DoAll(::testing::SetArgPointee<2>(1), ::testing::Return(true)));
+      .WillOnce(::testing::DoAll(::testing::SetArgPointee<2>(1), ::testing::Return(true)));
 
+  ASSERT_EQ(hw_->read(rclcpp::Time(), rclcpp::Duration(0, 0)), hardware_interface::return_type::OK);
+}
+
+// Skip read when cgos_handle is invalid
+TEST_F(HsrbCgosHwDeathTest, ReadNoHandleSkip) {
+  gpio_info_.parameters["pin"] = "0";
+  gpio_info_.parameters["direction"] = "in";
+  hardware_info_.gpios.push_back(gpio_info_);
+
+  hw_->on_init(hardware_info_);
+
+  EXPECT_CALL(*cgos_mock_, Initialize()).WillOnce(::testing::Return(false));
+  EXPECT_CALL(*cgos_mock_, IORead).Times(0);
+
+  ASSERT_EQ(hw_->on_configure(rclcpp_lifecycle::State()), hardware_interface::CallbackReturn::SUCCESS);
   ASSERT_EQ(hw_->read(rclcpp::Time(), rclcpp::Duration(0, 0)), hardware_interface::return_type::OK);
 }
 
@@ -116,10 +167,33 @@ TEST_F(HsrbCgosHwDeathTest, write) {
   hardware_info_.gpios.push_back(gpio_info_);
 
   hw_->on_init(hardware_info_);
-  hw_->on_configure(rclcpp_lifecycle::State());
+
+  EXPECT_CALL(*cgos_mock_, Initialize()).WillOnce(::testing::Return(true));
+  // Set a valid handle value (non-zero) for successful BoardOpen
+  EXPECT_CALL(*cgos_mock_, BoardOpen(::testing::_, ::testing::_, ::testing::_, ::testing::_))
+      .WillOnce(::testing::DoAll(::testing::SetArgPointee<3>(1), ::testing::Return(true)));
+  // Set a valid handle value (non-zero) for successful GetIOCount
+  EXPECT_CALL(*cgos_mock_, GetIOCount(::testing::_, ::testing::_))
+      .WillOnce(::testing::DoAll(::testing::SetArgPointee<1>(1), ::testing::Return(true)));
+  ASSERT_EQ(hw_->on_configure(rclcpp_lifecycle::State()), hardware_interface::CallbackReturn::SUCCESS);
 
   EXPECT_CALL(*cgos_mock_, IOWrite(::testing::_, ::testing::_, ::testing::_)).WillOnce(::testing::Return(true));
 
+  ASSERT_EQ(hw_->write(rclcpp::Time(), rclcpp::Duration(0, 0)), hardware_interface::return_type::OK);
+}
+
+// Skip write when cgos_handle is invalid
+TEST_F(HsrbCgosHwDeathTest, WriteNoHandleSkip) {
+  gpio_info_.parameters["pin"] = "0";
+  gpio_info_.parameters["direction"] = "in";
+  hardware_info_.gpios.push_back(gpio_info_);
+
+  hw_->on_init(hardware_info_);
+
+  EXPECT_CALL(*cgos_mock_, Initialize()).WillOnce(::testing::Return(false));
+  EXPECT_CALL(*cgos_mock_, IOWrite).Times(0);
+
+  ASSERT_EQ(hw_->on_configure(rclcpp_lifecycle::State()), hardware_interface::CallbackReturn::SUCCESS);
   ASSERT_EQ(hw_->write(rclcpp::Time(), rclcpp::Duration(0, 0)), hardware_interface::return_type::OK);
 }
 
@@ -138,13 +212,13 @@ TEST_F(HsrbCgosHwDeathTest, on_cleanup) {
   ASSERT_EQ(hw_->on_cleanup(rclcpp_lifecycle::State()), hardware_interface::CallbackReturn::SUCCESS);
 }
 
-// when empty
+// When empty
 TEST_F(HsrbCgosHwDeathTest, EmptygpiosTest) {
   auto result = hw_->on_init(hardware_info_);
   EXPECT_EQ(result, hardware_interface::CallbackReturn::ERROR);
 }
 
-// when pin is missing
+// When pin is missing
 TEST_F(HsrbCgosHwDeathTest, MissingPinParametersTest) {
   gpio_info_.parameters["direction"] = "in";
   hardware_info_.gpios.push_back(gpio_info_);
@@ -153,7 +227,7 @@ TEST_F(HsrbCgosHwDeathTest, MissingPinParametersTest) {
   EXPECT_EQ(result, hardware_interface::CallbackReturn::ERROR);
 }
 
-// when direction is missing
+// When direction is missing
 TEST_F(HsrbCgosHwDeathTest, MissingDirectionParametersTest) {
   gpio_info_.parameters["pin"] = "0";
   hardware_info_.gpios.push_back(gpio_info_);
@@ -162,7 +236,7 @@ TEST_F(HsrbCgosHwDeathTest, MissingDirectionParametersTest) {
   EXPECT_EQ(result, hardware_interface::CallbackReturn::ERROR);
 }
 
-// in case of input, when pin is out of valid range
+// When pin is out of valid range for input
 TEST_F(HsrbCgosHwDeathTest, InvalidPinInputRangeTest) {
   gpio_info_.parameters["pin"] = "4";
   gpio_info_.parameters["direction"] = "in";
@@ -172,7 +246,7 @@ TEST_F(HsrbCgosHwDeathTest, InvalidPinInputRangeTest) {
   EXPECT_EQ(result, hardware_interface::CallbackReturn::ERROR);
 }
 
-// in case of output, when pin is out of valid range
+// When pin is out of valid range for output
 TEST_F(HsrbCgosHwDeathTest, InvalidPinOutputRangeTest) {
   gpio_info_.parameters["pin"] = "8";
   gpio_info_.parameters["direction"] = "out";
@@ -182,7 +256,7 @@ TEST_F(HsrbCgosHwDeathTest, InvalidPinOutputRangeTest) {
   EXPECT_EQ(result, hardware_interface::CallbackReturn::ERROR);
 }
 
-// when pin is an invalid value
+// When pin has an invalid value
 TEST_F(HsrbCgosHwDeathTest, PinParsingFailureTest) {
   gpio_info_.parameters["pin"] = "pin_ng";
   gpio_info_.parameters["direction"] = "in";
@@ -192,7 +266,7 @@ TEST_F(HsrbCgosHwDeathTest, PinParsingFailureTest) {
   EXPECT_EQ(result, hardware_interface::CallbackReturn::ERROR);
 }
 
-// when direction is an invalid value
+// When direction has an invalid value
 TEST_F(HsrbCgosHwDeathTest, InvalidDirectionTest) {
   gpio_info_.parameters["pin"] = "0";
   gpio_info_.parameters["direction"] = "direction_ng";

@@ -57,7 +57,7 @@ class IElementDecoder {
    * @brief Decode
    * @param[in] start_iterator Start of the packet
    * @param[in] end_iterator End of the packet
-   * @return True if decoding is successful
+   * @return True on successful decode
    */
   virtual bool Decode(const PacketBuffer::const_iterator start_iterator,
                       const PacketBuffer::const_iterator end_iterator) = 0;
@@ -88,8 +88,8 @@ class IPowerEcuComDataDecoder {
 
   /**
    * @brief Decode
-   * @param[in] start_iterator Start iterator of the packet data
-   * @param[in] end_iterator End iterator of the packet data
+   * @param[in] start_iterator Start iterator of the packet data section
+   * @param[in] end_iterator End iterator of the packet data section
    * @return
    * Normal termination boost::system::errc::success
    * Decode failure boost::system::errc::protocol_error
@@ -97,26 +97,26 @@ class IPowerEcuComDataDecoder {
   virtual boost::system::error_code Decode(const PacketBuffer::const_iterator start_iterator,
                                            const PacketBuffer::const_iterator end_iterator);
   /**
-   * @brief Retrieve the packet header size
+   * @brief Get the size of the packet header
    * @return Packet size
    */
   inline size_t GetPacketSize() const { return packet_size_; }
 
   /**
-   * @brief Retrieve the packet type from the header
+   * @brief Get the type of the packet header
    * @return Packet type
    */
   inline std::string GetPacketName() const { return packet_name_; }
 
   /**
-   * @brief Obtain the pointer to the data
+   * @brief Get the pointer to the data
    *
    * @tparam T Type of the data
    * @param[in] name Name of the data
    *
-   * @return If successful: Pointer to the data<br>
-   *         If failed: NULL<br>
-   *         Failure occurs when the data name is unregistered, or the data type mismatches
+   * @return On success: Pointer to the data<br>
+   *         On failure: NULL<br>
+   *         Failure occurs if the data name is unregistered or the data type does not match
    */
   template <typename T>
   T* GetParamPtr(const std::string& name) const {
@@ -127,47 +127,47 @@ class IPowerEcuComDataDecoder {
   /**
    * @brief Post-processing
    * Function called after the Decode function
-   * @return True if successful
+   * @return True on success
    */
   inline virtual bool Update() { return true; }
 
-  std::vector<IElementDecoder::Ptr> element_decoder_list_;  //!< Decode instruction list per element
+  std::vector<IElementDecoder::Ptr> element_decoder_list_;  //!< List of decode instructions for each element
   const size_t packet_size_;                                //!< Size of the packet
   const std::string packet_name_;                           //!< Type of the packet
-  any_type_pointer_map::Map parameter_map_;                 //!< Parameter Map of the control command
+  any_type_pointer_map::Map parameter_map_;                 //!< Parameter map for control commands
 };
 
 /**
- * @brief Frame Decoder
- * Classifying communication format into elements of frame, data, and element.
+ * @brief Frame decoder
+ * Classifies the communication format into elements of frame, data, and element.
  *
- * Example: For command "H,ledc_,23,000,100,255,h12345678,\0"
+ * Example) For the command "H,ledc_,23,000,100,255,h12345678,\0",
  * - frame :
- *   Refers to the entire communication packet, e.g., "H,ledc_,23,000,100,255,h12345678,\0"
- *   Frame decoder is responsible for calculating the header and footer of the command,
- *   Frame decoder is aware of the specifications of the header and footer of the communication packet,
- *   Manages data decoders keyed by command names.
+ *   Refers to the entire communication packet Example) "H,ledc_,23,000,100,255,h12345678,\0"
+ *   The frame decoder is responsible for calculating the header and footer of the command,
+ *   The frame decoder knows the specifications of the header and footer of the communication packet,
+ *   Manages the data decoder with the command name as the key.
  *
  * - data :
- *   Indicates the part of the communication packet with header and footer removed, e.g., "000,100,255,"
- *   Data decoder separates elements of data and calls the element decoder.
- *   Additionally, after decoding all elements, it performs post-processing such as conversion to physical quantities.
- *   Data decoder is defined for each command, with knowledge of command name, command size,
- *   Composition of elements (order, type, and digit of each element), and
- *   Knows the reference to PacketData that stores the decoded information.
- *   Also holds information as PacketData type, where decoded data is stored for each command.
+ *   Refers to the part with the header and footer of the communication packet removed, Example) "000,100,255,"
+ *   The data decoder divides into elements of data and calls the element decoder.
+ *   Also, after decoding all elements, performs post-processing such as conversion to physical quantities.
+ *   The data decoder is defined for each command, and knows the command name, command size,
+ *   the structure of elements (order, type, and digit count of each element),
+ *   and the reference to PacketData where the decoded information is stored.
+ *   Also, for each command, holds the information to be stored after decoding as PacketData type
  *
  * - element :
- *   Indicates the part of the communication packet with header and footer removed, e.g., "000"
- *   Element decoder performs conversion between packet string and each element type.
- *   Element decoder is defined for each notation (signed decimal, hexadecimal, etc.),
- *   Knows the format of each element (signed decimal is [+-][0-9]+).
+ *   Refers to the part with the header and footer of the communication packet removed Example) "000"
+ *   The element decoder converts between packet strings and types of each element.
+ *   The element decoder is defined for each notation (signed decimal, hexadecimal, etc.),
+ *   and knows the format of each element (signed decimal is [+-][0-9]+).
  *
- * Each decoder holds a parent-child relationship of frame->data->element.
- * Additionally, the design of decoder and encoder is symmetrical.
+ * Each decoder has a parent-child relationship of frame->data->element.
+ * Also, the design of the decoder and encoder is symmetric.
  *
  * RobotHW decodes by calling the Decode method of the frame encoder on the receive buffer.
- * Decode result is automatically stored in PacketData linked to the data decoder.
+ * The decode result is automatically stored in PacketData linked to the data decoder.
  *
  */
 class PowerEcuComFrameDecoder {
@@ -177,7 +177,7 @@ class PowerEcuComFrameDecoder {
  private:
   PowerEcuComFrameDecoder(PowerEcuComFrameDecoder const&);                    // = delete;
   PowerEcuComFrameDecoder& operator=(PowerEcuComFrameDecoder const&);         // = delete;
-  typedef boost::unordered_map<std::string, DataDecoderType> DataDecoderMap;  //!< Dictionary type for data decoder
+  typedef boost::unordered_map<std::string, DataDecoderType> DataDecoderMap;  //!< Dictionary type for data decoders
 
  public:
   /**
@@ -186,15 +186,15 @@ class PowerEcuComFrameDecoder {
   PowerEcuComFrameDecoder();
   /**
    * @brief Decode
-   * Reads from the start of the packet receive buffer and decodes the first packet from the start.
-   * Does not rewrite the packet receive buffer, and returns the decoded index with encoded_iterator.
-   * @param[in] start_iterator Start iterator for decode target
-   * @param[in] end_iterator End iterator for decode target
-   * @param[out] encoded_iterator Iterator pointing to the decoded location
+   * Reads from the start of the packet receive buffer and decodes the first packet.
+   * Does not modify the packet receive buffer and returns the decoded index with encoded_iterator.
+   * @param[in] start_iterator Start iterator of the decode target
+   * @param[in] end_iterator End iterator of the decode target
+   * @param[out] encoded_iterator Iterator indicating the decoded location
    * @return
    * Normal termination boost::system::errc::success
    * Decode complete boost::system::errc::result_out_of_range
-   * Packet that could not be decoded boost::system::errc::protocol_error
+   * There was a packet that could not be decoded boost::system::errc::protocol_error
    */
   boost::system::error_code Decode(const hsrb_power_ecu::PacketBuffer::const_iterator& start_iterator,
                                    const hsrb_power_ecu::PacketBuffer::const_iterator& end_iterator,
@@ -203,20 +203,20 @@ class PowerEcuComFrameDecoder {
    * @brief Register data decoder
    * @param [in] decoder Decoder to register
    * @return
-   * Success boost::system::errc::success
+   * On success boost::system::errc::success
    * Already registered or nullptr boost::system::errc::invalid_argument
    */
   boost::system::error_code RegisterDataDecoder(DataDecoderType decoder);
 
   /**
-   * @brief Obtain the pointer to the data
+   * @brief Get the pointer to the data
    *
    * @tparam T Type of the data
    * @param[in] name Name of the data
    *
-   * @return If successful: Pointer to the data<br>
-   *         If failed: NULL<br>
-   *         Failure occurs when the data name is unregistered, or the data type mismatches
+   * @return On success: Pointer to the data<br>
+   *         On failure: NULL<br>
+   *         Failure occurs if the data name is unregistered or the data type does not match
    */
   template <typename T>
   T* GetParamPtr(const std::string& name) const {
@@ -231,27 +231,27 @@ class PowerEcuComFrameDecoder {
 
  private:
   /**
-   * @brief Retrieve string
+   * @brief Get the string
    * @param[in] start_it Start iterator
    * @param[in] end_it End iterator
    * @param[in] size Read size
-   * @param[out] output_string Storage for the retrieved string
-   * @return True if successful
+   * @param[out] output_string Storage for the obtained string
+   * @return True on success
    */
   bool GetString(const size_t size, const hsrb_power_ecu::PacketBuffer::const_iterator& end_it,
                  hsrb_power_ecu::PacketBuffer::const_iterator& start_it, std::string& output_string);
   /**
-   * @brief Skip string
+   * @brief Skip the string
    * @param[in] skip_string String to skip
    * @param[out] it Start iterator
-   * @return True if the skipped string equals the string received as an argument
+   * @return True if the skipped string is equal to the string received as an argument
    */
   bool SkipString(const std::string& skip_string, hsrb_power_ecu::PacketBuffer::const_iterator& it);
 
-  DataDecoderMap data_decoder_map_;      //!< Dictionary for data decoders
-  std::string packet_name_buffer_;       //!< Buffer for storing header name during packet decoding
-  std::string packet_size_buffer_;       //!< Buffer for storing packet size during packet decoding
-  std::string packet_check_sum_buffer_;  //!< Buffer for storing checksum during packet decoding
+  DataDecoderMap data_decoder_map_;      //!< Dictionary of data decoders
+  std::string packet_name_buffer_;       //!< Buffer for storing header name during packet decode
+  std::string packet_size_buffer_;       //!< Buffer for storing packet size during packet decode
+  std::string packet_check_sum_buffer_;  //!< Buffer for storing checksum during packet decode
 };
 }  // namespace hsrb_power_ecu
 #endif  // HSRB_POWER_ECU_POWER_ECU_COM_FRAME_DECODER_HPP_

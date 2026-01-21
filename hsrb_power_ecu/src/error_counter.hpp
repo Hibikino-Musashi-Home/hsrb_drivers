@@ -35,14 +35,14 @@ DAMAGE.
 
 namespace hsrb_power_ecu {
 /**
- * @brief Class to calculate the error rate
+ * @brief Class to calculate error rate
  */
 class ErrorCounter : boost::noncopyable {
  public:
   /**
    * @brief Constructor
    *
-   * @param buffer_size Size of the buffer used to aggregate the error rate
+   * @param buffer_size Size of the buffer used for error rate aggregation
    */
   explicit ErrorCounter(uint32_t buffer_size) : error_count_(0), buffer_size_(buffer_size) {
     buffer_.resize(buffer_size, true);
@@ -51,7 +51,7 @@ class ErrorCounter : boost::noncopyable {
   /**
    * @brief Data registration
    *
-   * @param[in] result Data to register, true for success
+   * @param[in] result Data to be registered, true indicates success
    */
   void Register(bool result) {
     if (!result) {
@@ -69,12 +69,12 @@ class ErrorCounter : boost::noncopyable {
   }
 
   /**
-   * @brief Get the total number of errors
+   * @brief Get total number of errors
    */
   uint32_t GetErrorCount() const { return error_count_; }
 
   /**
-   * @brief Get the error rate
+   * @brief Get error rate
    */
   double GetErrorRate() const { return static_cast<double>(GetErrorCount()) / static_cast<double>(buffer_.size()); }
 

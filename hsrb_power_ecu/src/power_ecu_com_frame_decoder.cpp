@@ -45,10 +45,10 @@ DAMAGE.
 namespace hsrb_power_ecu {
 /**
  * @brief Decode
- * @param[in] start_iterator Iterator at the beginning of the packet data part
- * @param[in] end_iterator Iterator at the end of the packet data part
+ * @param[in] start_iterator Start iterator of the packet data section
+ * @param[in] end_iterator End iterator of the packet data section
  * @return
- * Successful completion boost::system::errc::success
+ * Normal termination boost::system::errc::success
  * Decode failure boost::system::errc::protocol_error
  */
 boost::system::error_code IPowerEcuComDataDecoder::Decode(const PacketBuffer::const_iterator start_iterator,
@@ -56,19 +56,19 @@ boost::system::error_code IPowerEcuComDataDecoder::Decode(const PacketBuffer::co
   // Start decoding
   PacketBuffer::const_iterator current_iterator = start_iterator;
   BOOST_FOREACH (IElementDecoder::Ptr const decoder, element_decoder_list_) {
-    // Get iterator of the next comma
+    // Get the iterator of the next comma
     PacketBuffer::const_iterator const element_end_iterator = std::find(current_iterator, end_iterator, ',');
-    // Return error if comma is not found
+    // Error if comma is not found
     if (element_end_iterator == end_iterator) {
       return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
     }
-    // Decode element
+    // Element decode
     bool const ret = decoder->Decode(current_iterator, element_end_iterator);
 
     if (!ret) {
       return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
     }
-    // Set iterator following the comma as the starting iterator
+    // Specify the iterator after the comma as the start iterator
     current_iterator = element_end_iterator + 1;
   }
 
@@ -91,13 +91,13 @@ PowerEcuComFrameDecoder::PowerEcuComFrameDecoder()
 
 /**
  * @brief Decode
- * Read from the start of the packet receive buffer and decode the first packet
- * Does not modify the packet receive buffer; returns the decoded index with encoded_iterator
- * @param[in] start_iterator Iterator at the beginning of the target to decode
- * @param[in] end_iterator Iterator at the end of the target to decode
- * @param[out] encoded_iterator Iterator indicating the location of the decoded data
+ * Read from the start of the packet receive buffer and decode the first packet.
+ * Does not rewrite the packet receive buffer, returns the decoded index with encoded_iterator.
+ * @param[in] start_iterator Start iterator of the target to decode
+ * @param[in] end_iterator End iterator of the target to decode
+ * @param[out] encoded_iterator Iterator indicating the decoded location
  * @return
- * Successful completion boost::system::errc::success
+ * Normal termination boost::system::errc::success
  * Decode complete boost::system::errc::result_out_of_range
  * There was a packet that could not be decoded boost::system::errc::protocol_error
  */
@@ -105,10 +105,10 @@ boost::system::error_code PowerEcuComFrameDecoder::Decode(
     const hsrb_power_ecu::PacketBuffer::const_iterator& start_iterator,
     const hsrb_power_ecu::PacketBuffer::const_iterator& end_iterator,
     hsrb_power_ecu::PacketBuffer::const_iterator& encoded_iterator) {
-  // Search for the packet's start character
+  // Search for the packet start character
   hsrb_power_ecu::PacketBuffer::const_iterator current_iterator = std::find(start_iterator, end_iterator, 'E');
   if (current_iterator == end_iterator) {
-    // 'E' is not present in the buffer = No message being read
+    // 'E' is not in the buffer = No message being read
     encoded_iterator = end_iterator;
     return boost::system::errc::make_error_code(boost::system::errc::result_out_of_range);
   }
@@ -116,7 +116,7 @@ boost::system::error_code PowerEcuComFrameDecoder::Decode(
 
   // Header analysis
   size_t packet_size = 0;
-  //// Confirm if reception of the header size has been completed
+  //// Check if reception of header size is complete
   if (static_cast<uint32_t>(std::distance(current_iterator, end_iterator)) <
       hsrb_power_ecu::com_common::kPacketHeaderLength) {
     encoded_iterator = last_iterator;
@@ -128,7 +128,7 @@ boost::system::error_code PowerEcuComFrameDecoder::Decode(
       return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
     }
     // Packet type
-    //// Since the buffer size has been checked in advance, false return is not expected
+    //// Since the buffer size is checked in advance, false is not expected to be returned
     bool ret;
     ret = GetString(5, end_iterator, current_iterator, packet_name_buffer_);
     hsrb_power_ecu::Assert(ret, "GetString return false.");
@@ -140,7 +140,7 @@ boost::system::error_code PowerEcuComFrameDecoder::Decode(
     ret = GetString(3, end_iterator, current_iterator, packet_size_buffer_);
     hsrb_power_ecu::Assert(ret, "GetString return false.");
     packet_size = std::atoi(packet_size_buffer_.c_str());
-    if (packet_size < 11) {  // Packet less than footer length(11) is not possible by specification
+    if (packet_size < 11) {  // A packet less than footer length (11) is not possible by specification
       encoded_iterator = current_iterator;
       return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
     }
@@ -160,14 +160,14 @@ boost::system::error_code PowerEcuComFrameDecoder::Decode(
   size_t const footer_length = hsrb_power_ecu::com_common::kPacketFooterLength;
   size_t const frame_size = hsrb_power_ecu::com_common::kPacketHeaderLength + packet_size;
 
-  // Packet checksum calculation
+  // Calculate packet checksum
   uint32_t const check_sum_calc = hsrb_power_ecu::com_common::CalculateCrc32(
-      last_iterator,                                    // Beginning character string
-      current_iterator + packet_size - footer_length);  // Iterator following the read character
+      last_iterator,                                    // Start string
+      current_iterator + packet_size - footer_length);  // Iterator after the character to read
 
   // Get checksum string
   hsrb_power_ecu::PacketBuffer::const_iterator checksum_iterator =
-      current_iterator + packet_size - footer_length + 1;  // Do not read "h" at the head of checksum string
+      current_iterator + packet_size - footer_length + 1;  // Do not read the "h" at the start of the checksum string
   bool ret = GetString(footer_length - 3,              // Do not read "h" + ",\n"
                        end_iterator, checksum_iterator, packet_check_sum_buffer_);
   hsrb_power_ecu::Assert(ret, "GetString resturn false.");
@@ -179,10 +179,10 @@ boost::system::error_code PowerEcuComFrameDecoder::Decode(
     return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
   }
 
-  // Search for matching decoder
+  // Search for corresponding decoder
   DataDecoderMap::iterator const map_it = data_decoder_map_.find(packet_name_buffer_);
 
-  // Return protocol_error if no matching decoder is found
+  // Return protocol_error if no corresponding decoder exists
   if ((map_it == data_decoder_map_.end()) || (map_it->second->GetPacketSize() != packet_size)) {
     encoded_iterator = last_iterator + frame_size;
     return boost::system::errc::make_error_code(boost::system::errc::protocol_error);
@@ -191,17 +191,17 @@ boost::system::error_code PowerEcuComFrameDecoder::Decode(
   // Decode
   boost::system::error_code const result =
       map_it->second->Decode(current_iterator,
-                             (current_iterator + packet_size - footer_length));  // Iterator following the read character
+                             (current_iterator + packet_size - footer_length));  // Iterator after the character to read
 
   encoded_iterator = last_iterator + frame_size;
   return result;
 }
 
 /**
- * @brief Data decoder registration
- * @param [in] decoder Decoder to be registered
+ * @brief Register data decoder
+ * @param [in] decoder Decoder to register
  * @return
- * Success boost::system::errc::success
+ * On success boost::system::errc::success
  * Already registered or nullptr boost::system::errc::invalid_argument
  */
 boost::system::error_code PowerEcuComFrameDecoder::RegisterDataDecoder(DataDecoderType decoder) {
@@ -216,11 +216,11 @@ boost::system::error_code PowerEcuComFrameDecoder::RegisterDataDecoder(DataDecod
 
 /**
  * @brief Get string
- * @param[in] start_it Starting iterator
- * @param[in] end_it Endpoint iterator
- * @param[in] size Reading size
- * @param[out] output_string Storage location of the obtained string
- * @return True if successful
+ * @param[in] start_it Start iterator
+ * @param[in] end_it End iterator
+ * @param[in] size Read size
+ * @param[out] output_string Storage location for the obtained string
+ * @return True on success
  */
 bool PowerEcuComFrameDecoder::GetString(const size_t size, const hsrb_power_ecu::PacketBuffer::const_iterator& end_it,
                                         hsrb_power_ecu::PacketBuffer::const_iterator& start_it,
@@ -230,7 +230,7 @@ bool PowerEcuComFrameDecoder::GetString(const size_t size, const hsrb_power_ecu:
     return false;
   }
 
-  // Display warning if internal buffer of string type is insufficient
+  // Display warning when the internal buffer of string type is insufficient
   if (output_string.capacity() < distance) {
     output_string.reserve(distance + 1);
   }
@@ -244,9 +244,9 @@ bool PowerEcuComFrameDecoder::GetString(const size_t size, const hsrb_power_ecu:
 
 /**
  * @brief Skip string
- * @param[in] skip_string String to be skipped
- * @param[out] it Starting iterator
- * @return true if the skipped string is equal to the string received in the argument
+ * @param[in] skip_string String to skip
+ * @param[out] it Start iterator
+ * @return True if the skipped string is equal to the string received as an argument
  */
 bool PowerEcuComFrameDecoder::SkipString(const std::string& skip_string,
                                          hsrb_power_ecu::PacketBuffer::const_iterator& it) {

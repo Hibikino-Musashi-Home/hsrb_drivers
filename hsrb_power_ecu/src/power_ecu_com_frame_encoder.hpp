@@ -47,7 +47,7 @@ namespace hsrb_power_ecu {
 class IElementEncoder {
  public:
   /**
-   * @brief Smart pointer of IElementEncoder
+   * @brief Smart pointer for IElementEncoder
    */
   typedef boost::shared_ptr<IElementEncoder> Ptr;
   /**
@@ -56,8 +56,8 @@ class IElementEncoder {
   virtual ~IElementEncoder() {}
   /**
    * @brief Encode
-   * @param[out] buffer Output destination buffer
-   * @return true when encoding succeeds
+   * @param[out] buffer Buffer for output
+   * @return true on successful encoding
    */
   virtual bool Encode(PacketBuffer &buffer) = 0;
 };
@@ -73,8 +73,8 @@ class IPowerEcuComDataEncoder {
  protected:
   /**
    * @brief Constructor
-   * @param packet_size Size of the packet header part
-   * @param packet_name Packet type of the packet header part
+   * @param packet_size Size of the packet header
+   * @param packet_name Type of packet in the packet header
    */
   IPowerEcuComDataEncoder(const std::string &packet_size, const std::string &packet_name)
       : packet_size_(packet_size), packet_name_(packet_name) {}
@@ -86,7 +86,7 @@ class IPowerEcuComDataEncoder {
   virtual ~IPowerEcuComDataEncoder() {}
   /**
    * @brief Encode
-   * @param[out] buffer Output destination buffer
+   * @param[out] buffer Buffer for output
    * @return
    * Normal termination boost::system::errc::success
    * Encoding failure boost::system::errc::protocol_error
@@ -102,25 +102,25 @@ class IPowerEcuComDataEncoder {
     return boost::system::errc::make_error_code(boost::system::errc::success);
   }
   /**
-   * @brief Get the size of the packet header part
+   * @brief Get size of the packet header
    * @return Packet size
    */
   virtual inline std::string GetPacketSizeStr() const { return packet_size_; }
   /**
-   * @brief Get the packet type of the packet header part
+   * @brief Get type of packet in the packet header
    * @return Packet type
    */
   inline std::string GetPacketName() const { return packet_name_; }
 
   /**
-   * @brief Get the pointer to data
+   * @brief Get pointer to data
    *
-   * @tparam T Data type
-   * @param[in] name Data name
+   * @tparam T Type of data
+   * @param[in] name Name of the data
    *
    * @return On success: Pointer to data<br>
-   * On failure: NULL<br>
-   * Fails if unregistered data name or data type mismatch occurs
+   *         On failure: NULL<br>
+   *         Failure occurs if the data name is unregistered or the data type does not match
    */
   template <typename T>
   T* GetParamPtr(const std::string& name) const {
@@ -128,37 +128,37 @@ class IPowerEcuComDataEncoder {
   }
 
  protected:
-  std::vector<IElementEncoder::Ptr> element_encoder_list_;  //!< List of encoding instructions per element
-  const std::string packet_size_;                           //!< Packet size of the header part
-  const std::string packet_name_;                           //!< Packet type of the header part
-  any_type_pointer_map::Map parameter_map_;                 //!< Map of control command parameters
+  std::vector<IElementEncoder::Ptr> element_encoder_list_;  //!< List of encoding instructions for each element
+  const std::string packet_size_;                           //!< Packet size in the header
+  const std::string packet_name_;                           //!< Packet type in the header
+  any_type_pointer_map::Map parameter_map_;                 //!< Parameter map for control commands
 };
 
 /**
- * @brief Frame encoder for the transmission packet
- * The communication format is categorized into elements like frame, data, and element.
+ * @brief Frame encoder for transmission packets
+ * Communication format is classified into elements of frame, data, and element.
  *
- * Example) For the command "H,ledc_,23,000,100,255,h12345678,\0",
+ * Example) For command "H,ledc_,23,000,100,255,h12345678,\0",
  * - frame :
- * Refers to the entire communication packet e.g. "H,ledc_,23,000,100,255,h12345678,\0"
- * The frame encoder handles the calculation of the command header and footer,
- * The frame encoder knows the specification of the header and footer of the communication packet,
- * Manages the data encoder by using the command name as a key.
+ *   Refers to the entire communication packet Example) "H,ledc_,23,000,100,255,h12345678,\0"
+ *   Frame encoder is responsible for calculating the header and footer of the command,
+ *   Frame encoder knows the specifications of the header and footer of the communication packet,
+ *   Manages data encoder with the command name as the key.
  *
  * - data :
- * Indicates the parts with the header and footer removed, e.g. "000,100,255,"
- * The data encoder divides data into elements and calls the element encoder.
- * After encoding all elements, performs post-processing like conversion to physical quantities.
- * The data encoder is defined for each command, with the command name, command size,
- * Besides the composition of elements (order, type, and digits of each element),
- * Knows references to PacketData containing information necessary for encoding.
- * Additionally, holds the information as PacketData type, which serves as the source for encoding for each command.
+ *   Indicates the part with the header and footer removed from the communication packet, Example) "000,100,255,"
+ *   Data encoder performs the division into elements of data and calls the element encoder.
+ *   Also, after encoding all elements, performs post-processing such as conversion to physical quantities.
+ *   Data encoder is defined for each command, command name, command size,
+ *   In addition to the configuration of elements (order, type and digit count of each element),
+ *   Knows the reference to PacketData that stores information necessary for encoding.
+ *   Also, holds information for encoding as PacketData type for each command.
  *
  * - element :
- * Indicates the parts with the header and footer removed, e.g. "000"
- * The element encoder transforms between packet strings and each element type.
- * The element encoder is defined by notation (signed decimal, hexadecimal, etc.),
- * Knows the format for each element (signed decimal is [+-][0-9]+).
+ *   Indicates the part with the header and footer removed from the communication packet Example) "000"
+ *   Element encoder performs conversion between packet string <=> type of each element.
+ *   Element encoder is defined for each notation (signed decimal, hexadecimal, etc.),
+ *   Knows the format of each element (signed decimal is [+-][0-9]+).
  *
  * Each encoder has a parent-child relationship of frame->data->element.
  * Also, the design of encoder and decoder is symmetric.
@@ -188,7 +188,7 @@ class PowerEcuComFrameEncoder {
   ~PowerEcuComFrameEncoder();
   /**
    * @brief Encode
-   * @param[out] buffer Output destination buffer
+   * @param[out] buffer     Buffer for output
    * @param[in] packet_name Name of the packet to encode for data search
    * @return On success boost::system::error::success
    */
@@ -201,14 +201,14 @@ class PowerEcuComFrameEncoder {
   boost::system::error_code RegisterDataEncoder(DataEncoderType encoder);
 
   /**
-   * @brief Get the pointer to data
+   * @brief Get pointer to data
    *
-   * @tparam T Data type
-   * @param[in] name Data name
+   * @tparam T Type of data
+   * @param[in] name Name of the data
    *
    * @return On success: Pointer to data<br>
-   * On failure: NULL<br>
-   * Fails if unregistered data name or data type mismatch occurs
+   *         On failure: NULL<br>
+   *         Failure occurs if the data name is unregistered or the data type does not match
    */
   template <typename T>
   T* GetParamPtr(const std::string& name) const {

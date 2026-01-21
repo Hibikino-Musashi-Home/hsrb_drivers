@@ -46,7 +46,7 @@ class SerialNetworkTest : public ::testing::Test {
 
  public:
   boost::shared_ptr<hsrb_power_ecu::SystemInterfaceMock> mock_;  //!< Mock class for system calls
-  hsrb_power_ecu::SerialNetwork network_;                        //!< Test target
+  hsrb_power_ecu::SerialNetwork network_;                        //!< Test subject
 };
 
 TEST_F(SerialNetworkTest, NomalOpen) {
@@ -64,13 +64,13 @@ TEST_F(SerialNetworkTest, NomalClose) {
   EXPECT_CALL(*mock_, Open(::testing::_, ::testing::_)).Times(1);
   EXPECT_EQ(network_.Open(), boost::system::errc::success);
 
-  // Close is called when it is open
+  // Close is called when open
   EXPECT_CALL(*mock_, Close(::testing::_)).Times(1);
   EXPECT_EQ(network_.Close(), boost::system::errc::success);
 }
 
 TEST_F(SerialNetworkTest, NomalClose2) {
-  // Close is not called when it is not open
+  // Close is not called when not open
   EXPECT_CALL(*mock_, Close(::testing::_)).Times(0);
   EXPECT_EQ(network_.Close(), boost::system::errc::success);
 }
@@ -108,7 +108,7 @@ TEST_F(SerialNetworkTest, FailureSend_SendBigData) {
 
 TEST_F(SerialNetworkTest, FailureSend_Busy) {
   EXPECT_EQ(network_.Open(), boost::system::errc::success);
-  // Write busy (busy released halfway)
+  // Write busy (busy released midway)
   EXPECT_CALL(*mock_, Write(testing::_, testing::_, testing::_))
       .WillOnce(::testing::Return(-1))
       .WillRepeatedly(::testing::Return(4));

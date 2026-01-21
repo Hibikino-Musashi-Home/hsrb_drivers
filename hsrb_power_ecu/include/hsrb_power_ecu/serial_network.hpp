@@ -43,11 +43,11 @@ class ISystemInterface;
 
 /**
  * @brief Serial port
- * Among the communication specifications, the following specifications are fixed and cannot be changed
+ * The following specifications of the communication protocol are fixed and cannot be changed
  *     - Baud rate 3Mbps
- *     - Data bit 8bit
+ *     - Data bits 8bit
  *     - Parity bit None
- *     - Stop bit 1bit
+ *     - Stop bits 1bit
  *
  * The following specifications can be changed with the Configure function
  * - Communication timeout time (ms)
@@ -70,48 +70,48 @@ class SerialNetwork : private boost::noncopyable, public INetwork {
   virtual ~SerialNetwork();
   /**
    * @brief Open
-   * @return boost::system::errc::success if successful
+   * @return On success boost::system::errc::success
    */
   virtual boost::system::error_code Open();
   /**
    * @brief Close
-   * @return boost::system::errc::success if successful
+   * @return On success boost::system::errc::success
    */
   virtual boost::system::error_code Close();
   /**
    * @brief Change network settings
    * @param[in] param Setting name
    * @param[in] value Change value
-   * @return boost::system::errc::success if transmission is successful
+   * @return On successful transmission boost::system::errc::success
    */
   virtual boost::system::error_code Configure(const std::string &param, int32_t value);
   /**
    * @brief Change network settings
    * @param[in] param Setting name
    * @param[in] value Change value
-   * @return boost::system::errc::success if transmission is successful
+   * @return On successful transmission boost::system::errc::success
    */
   virtual boost::system::error_code Configure(const std::string &param, double value);
   /**
    * @brief Change network settings
    * @param[in] param Setting name
    * @param[in] value Change value
-   * @return boost::system::errc::success if transmission is successful
+   * @return On successful transmission boost::system::errc::success
    */
   virtual boost::system::error_code Configure(const std::string &param, const std::string &value);
   /**
-   * @brief Transmit
-   * Transmit all contents of the transmission data buffer received as arguments within the timeout period
+   * @brief Send
+   * Send all contents of the transmission data buffer received as an argument within the timeout period
    * @param[in] data Transmission data buffer
-   * @return boost::system::errc::success if transmission is successful
+   * @return On successful transmission boost::system::errc::success
    */
   virtual boost::system::error_code Send(const PacketBuffer &data);
   /**
    * @brief Receive
-   * Store the transmitted data at the end of the buffer.
-   * If there is no received data, wait to receive within the timeout time.
+   * Store the transmission data at the end of the buffer.
+   * If there is no received data, wait for reception within the timeout period.
    * @param[out] data Receive buffer
-   * @return boost::system::errc::success if transmission is successful
+   * @return On successful transmission boost::system::errc::success
    */
   virtual boost::system::error_code Receive(PacketBuffer &data);
 

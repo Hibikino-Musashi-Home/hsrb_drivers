@@ -37,7 +37,7 @@ DAMAGE.
 #include "power_ecu_protocol.hpp"
 
 /**
- * @brief Sample code for bool_state_publisher that publishes bool information like button states via topics
+ * @brief Sample code for the operation of bool_state_publisher that publishes bool information such as buttons via topics
  */
 int32_t main(int32_t argc, char** argv) {
   // Command line parsing
@@ -50,7 +50,7 @@ int32_t main(int32_t argc, char** argv) {
     if (argc == 2) {
       // When there is one option
       if (std::string(argv[1]) == "--help") {
-        // No error returned when --help is specified
+        // No error is returned when --help is specified
         can_run = false;
         is_display_help = true;
       } else {

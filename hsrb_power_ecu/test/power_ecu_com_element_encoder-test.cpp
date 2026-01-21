@@ -44,7 +44,7 @@ size_t getDigit(const int32_t value, const int32_t base) { return static_cast<si
 template <typename T>
 void HexUintEncoderTestHelper(const size_t digits, const boost::array<T, kTestValueLengs>& test_values,
                               const boost::array<std::string, kTestValueLengs>& test_results) {
-  uint32_t base = 16;  // After encoding, it is in hexadecimal notation
+  uint32_t base = 16;  // After encoding, it is represented in base 16
   T value;
   hsrb_power_ecu::ElementHexUintEncoder<T> encoder(value, digits);
   hsrb_power_ecu::PacketBuffer buffer(1000);
@@ -62,7 +62,7 @@ void HexUintEncoderTestHelper(const size_t digits, const boost::array<T, kTestVa
   {
     uint64_t bad_value = std::pow(base, digits) + 1;
     if (bad_value > std::numeric_limits<T>::max()) {
-      // Do not test if the range the packet can represent exceeds the original value
+      // Do not test if the range that the packet can represent exceeds the original value
       return;
     }
     value = static_cast<T>(bad_value);
@@ -112,7 +112,7 @@ void ElementHexUintBitsEncoderTestHelper(const size_t digits, const boost::array
 template <typename T>
 void UintEncoderTestHelper(const size_t digits, const boost::array<T, kTestValueLengs>& test_values,
                            const boost::array<std::string, kTestValueLengs>& test_results) {
-  uint32_t base = 10;  // After encoding, it is in hexadecimal notation
+  uint32_t base = 10;  // After encoding, it is represented in base 16
   T value;
   hsrb_power_ecu::ElementUintEncoder<T> encoder(value, digits);
   hsrb_power_ecu::PacketBuffer buffer(1000);
@@ -130,7 +130,7 @@ void UintEncoderTestHelper(const size_t digits, const boost::array<T, kTestValue
   {
     uint64_t bad_value = std::pow(base, digits) + 1;
     if (bad_value > std::numeric_limits<T>::max()) {
-      // Do not test if the range the packet can represent exceeds the original value
+      // Do not test if the range that the packet can represent exceeds the original value
       return;
     }
     value = static_cast<T>(bad_value);
@@ -180,7 +180,7 @@ void StringEncoderTestHelper(const size_t digits, const boost::array<std::string
 
 }  // anonymous namespace
 
-/** Normal test case */
+/** Normal system test */
 TEST(ElementHexUintEncoderTest, NomalCase) {
   {
     SCOPED_TRACE("type=uint32_t digits=8");

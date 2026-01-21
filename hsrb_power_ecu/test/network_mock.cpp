@@ -51,12 +51,12 @@ DAMAGE.
 #include "common_methods.hpp"
 
 namespace {
-//!< Packet list to return ACK
+//!< Packet list that should return ACK
 const char kNeedAckPackets[20][9] = {"H,time_,", "H,pdown,", "H,start,", "H,stop_,", "H,heart,",
                                      "H,pump_,", "H,pbmsw,", "H,ledc_,", "H,g_res,", "H,solsw,",
                                      "H,pdcmd,", "H,mute_,", "H,rpros,", "H,rprod,", "H,rproe,",
                                      "H,undck,", "H,12vu_,", "H,5vd3_,", "H,5vd4_,", "H,5vd5_,"};
-const char kNeedVerPacket[] = "H,getv_,";  //!< Packet to return ver
+const char kNeedVerPacket[] = "H,getv_,";  //!< Packet that should return ver_
 
 const char kAckPacketString[] = "E,rxack,015,h00,h83693205,\n";  //!< ACK message
 const char kVerPacketString[] =
@@ -93,8 +93,8 @@ boost::system::error_code NetworkMock::Close() {
 
 /**
  * @brief Change network settings
- * @param[in] param Name of the setting
- * @param[in] value Value of the change
+ * @param[in] param Setting name
+ * @param[in] value Change value
  * @return boost::system::errc::success on successful transmission
  */
 boost::system::error_code NetworkMock::Configure(const std::string &param, const int32_t value) {
@@ -103,8 +103,8 @@ boost::system::error_code NetworkMock::Configure(const std::string &param, const
 
 /**
  * @brief Change network settings
- * @param[in] param Name of the setting
- * @param[in] value Value of the change
+ * @param[in] param Setting name
+ * @param[in] value Change value
  * @return boost::system::errc::success on successful transmission
  */
 boost::system::error_code NetworkMock::Configure(const std::string &param, const double value) {
@@ -113,9 +113,9 @@ boost::system::error_code NetworkMock::Configure(const std::string &param, const
 
 /**
  * @brief Change network settings
- * Consolidate actual processing for maintenance into values where value is string.
- * @param[in] param Name of the setting
- * @param[in] value Value of the change
+ * Consider maintainability and consolidate actual processing into those with string value.
+ * @param[in] param Setting name
+ * @param[in] value Change value
  * @return boost::system::errc::success on successful transmission
  */
 boost::system::error_code NetworkMock::Configure(const std::string &param, const std::string &value) {
@@ -136,13 +136,13 @@ boost::system::error_code NetworkMock::Configure(const std::string &param, const
 }
 
 /**
- * @brief Transmission
- * Transmit all contents of the buffer received as arguments within the timeout period
- * @param[in] data Buffer of transmission data
+ * @brief Send
+ * Send all contents of the transmission data buffer received as an argument within the timeout period
+ * @param[in] data Transmission data buffer
  * @return boost::system::errc::success on successful transmission
  */
 boost::system::error_code NetworkMock::Send(const PacketBuffer &data) {
-  // Copy data to send buffer
+  // Copy data to the transmission buffer
   send_buffer_ = "";
   std::copy(data.begin(), data.end(), std::back_inserter(send_buffer_));
 
@@ -162,9 +162,9 @@ boost::system::error_code NetworkMock::Send(const PacketBuffer &data) {
 }
 
 /**
- * @brief Reception
+ * @brief Receive
  * Store transmission data at the end of the buffer.
- * When there is no received data, wait for reception within the timeout period.
+ * If there is no received data, wait for reception within the timeout period.
  * @param[out] data Receive buffer
  * @return
  */

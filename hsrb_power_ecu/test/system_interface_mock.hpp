@@ -79,7 +79,7 @@ class SystemInterfaceMock : public ISystemInterface {
 
   SystemInterfaceMock() {
     ON_CALL(*this, Now()).WillByDefault(::testing::Invoke(&system_, &hsrb_power_ecu::System::Now));
-    // Set the default return value for MockMethod to write
+    // Set the default return value for the MockMethod to write
     ON_CALL(*this, Tcgetattr(::testing::_, ::testing::_)).WillByDefault(::testing::Return(0));
     ON_CALL(*this, Tcsetattr(::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Return(0));
     ON_CALL(*this, Tcflush(::testing::_, ::testing::_)).WillByDefault(::testing::Return(0));

@@ -71,7 +71,7 @@ def test_read(mocker):
     assert connect.front_bumper_sensor()
     assert connect.rear_bumper_sensor()
 
-    # Load failure does not update the value
+    # Loading failure does not update the value
     serial_mock.return_value.read.return_value = '00000'.encode()
     connect.run(0.1)
 

@@ -40,7 +40,7 @@ DAMAGE.
 #include "common_methods.hpp"
 namespace {
 const size_t kTestValueLengs = 3;  //!< Number of test value parameters
-const size_t kBufferSize = 1000;   //!< Size of the PacketBuffer
+const size_t kBufferSize = 1000;   //!< Size of PacketBuffer
 
 template <typename T>
 void ElementUintDecoderTestHelper(const size_t digits, const boost::array<std::string, kTestValueLengs>& test_values,

@@ -46,7 +46,7 @@ T* ExistParamPtr(const PowerEcuProtocol::Ptr protocol, const std::string& name) 
   return ret;
 }
 
-// Retrieve parameters with default values
+// Get parameters with default values
 template <typename ParameterType>
 auto GetParameter(const rclcpp::Node::SharedPtr& node,
                   const std::string& name,
@@ -58,7 +58,7 @@ auto GetParameter(const rclcpp::Node::SharedPtr& node,
   }
 }
 
-// Retrieve parameters with default values, use default values even when the parameter is negative
+// Get parameters with default values, use default values even if parameters are non-positive
 template <typename ParameterType>
 auto GetPositiveParameter(const rclcpp::Node::SharedPtr& node,
                           const std::string& name,

@@ -25,7 +25,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief Test of the user-friendly API for Invensense Gyro Sensor MPU9150
+/// @brief Test of the easy-to-use API for Invensense's gyro sensor MPU9150
 
 #include <chrono>
 #include <vector>
@@ -75,19 +75,19 @@ const double kGravityAccel = 9.80665;
 const double kEpsilon = 0.001;
 const uint32_t kBaudRate = 57600;
 
-/// protocol state
+/// State of the protocol
 enum ProtocolStatus {
-  /// waiting for command state
+  /// Command waiting state
   kStatusWaiting,
-  /// waiting for reset completion
+  /// Waiting for reset completion
   kStatusWaitForReset,
-  /// receiving completion reply of reset
+  /// Receiving the response of reset completion
   kStatusReceiveResetReturn,
 };
 
-// Sensor data reading test, normal case
+// Test of sensor value reading, normal case
 TEST_F(MPU9150NodeTest, ReadStateNormal) {
-  // Preliminary steps
+  // Preparation
   SerialCommunication sensor_port("/tmp/mpu9150_protocol_sensor", kBaudRate);
   boost::system::error_code error;
   std::vector<uint8_t> send_packet(96);
@@ -253,9 +253,9 @@ TEST_F(MPU9150NodeTest, ReadStateNormal) {
   EXPECT_NEAR(1.0 * g, imu_msg.linear_acceleration.y, kEpsilon);
   EXPECT_NEAR(0.5 * g, imu_msg.linear_acceleration.z, kEpsilon);
 }
-// Sensor data reading test, normal case
+// Test of sensor value reading, normal case
 TEST_F(MPU9150NodeTest, ResetStatusReceiveResetReturnNormal) {
-  // Preliminary steps
+  // Preparation
   SerialCommunication sensor_port("/tmp/mpu9150_protocol_sensor", kBaudRate);
   boost::system::error_code error;
   std::vector<uint8_t> reset_packet(4);

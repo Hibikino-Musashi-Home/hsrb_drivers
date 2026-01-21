@@ -37,7 +37,7 @@ DAMAGE.
 namespace hsrb_imu_sensor_protocol {
 /// Gyro sensor values
 struct ImuState {
-  /// Attitude, Quaternion in the order of xyzw
+  /// Orientation, in the order of xyzw for quaternion
   boost::array<double, 4> orientation;
   /// Angular velocity [rad/sec]
   boost::array<double, 3> angular_velocity;
@@ -52,15 +52,15 @@ class IImuProtocol {
   virtual ~IImuProtocol() {}
   /// Result of sensor reset
   enum ResetResult {
-    /// Normal termination
+    /// Normal completion
     kDone,
-    /// Fail
+    /// Failure
     kError,
     /// Resetting
     kContinue
   };
 
-  /// @brief Read the current sensor values
+  /// @brief Read current sensor values
   /// @param [out] state Current sensor values
   /// @return boost::system::error_code Error code
   /// @note Types of error codes
@@ -69,14 +69,14 @@ class IImuProtocol {
   ///        Timeout: errc::timed_out
   virtual ErrorCode ReadState(ImuState& state) = 0;
   /// @brief Perform sensor reset
-  /// @param [out] result Result of reset processing
+  /// @param [out] result Result of reset process
   /// @return boost::system::error_code Error code
-  /// @note This function does not wait for reset completion.
-  ///       Continue calling until result becomes kDone, kError
+  /// @note This function does not wait for the reset to complete.
+  ///       Continue calling until result becomes kDone or kError
   ///       Types of error codes
   ///         Success: errc::success
   ///         Timeout: errc::timed_out
-  ///                         Internally set communication timeout
+  ///                         Communication timeout set internally
   ///         Communication protocol error: errc::protocol_error
   virtual ErrorCode TryReset(ResetResult& result) = 0;
   /// @brief Perform sensor reset
@@ -86,9 +86,9 @@ class IImuProtocol {
   ///       Types of error codes
   ///         Success: errc::success
   ///         Timeout: errc::timed_out
-  ///                        Set timeout period or
-  ///                        Internally set communication timeout
-  ///                        Timeout occurs whichever is sooner
+  ///                        The time set by timeout or
+  ///                        Communication timeout set internally
+  ///                        Whichever is earlier will timeout
   ///         Communication protocol error: errc::protocol_error
   virtual ErrorCode Reset(double timeout) = 0;
 };

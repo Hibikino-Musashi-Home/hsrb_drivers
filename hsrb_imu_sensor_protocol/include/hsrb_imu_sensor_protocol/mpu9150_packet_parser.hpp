@@ -54,11 +54,11 @@ uint8_t Checksum(InputIterator begin, InputIterator end) {
 }
 
 
-/// Invensense's gyro sensor MPU9150 parser class
-/// Refer to the tmc_invensense_mpu9150_firmware documentation for packet specifications
+/// Parser class for Invensense's gyro sensor MPU9150
+/// Refer to the packet specifications in the tmc_invensense_mpu9150_firmware documentation
 class MPU9150PacketParser : private boost::noncopyable {
  public:
-  /// Result of parsing
+  /// Result of parse
   enum ParseResult {
     /// Failure
     kError,
@@ -76,7 +76,7 @@ class MPU9150PacketParser : private boost::noncopyable {
 
   /// @brief Parse
   /// @param [in] input Data to be parsed
-  /// @return ParserStatus Status after parsing
+  /// @return ParserStatus State after parsing
   ParseResult TryParse(uint8_t input);
 
   /// @brief Reset the state
@@ -88,7 +88,7 @@ class MPU9150PacketParser : private boost::noncopyable {
   bool is_reply_packet() const { return is_reply_packet_; }
 
  private:
-  /// The state of the parser, the state name indicates what the next input represents
+  /// Parser state, the state name indicates what the next input to be received is
   enum State {
     /// Header 1
     kStateHeader1,
@@ -100,18 +100,18 @@ class MPU9150PacketParser : private boost::noncopyable {
     kStateData,
     /// Checksum
     kStateChecksum,
-    /// Error occurred, accepting no input
+    /// Error occurred, so nothing is accepted
     kStateNothing
   };
-  /// What the next packet received will be
+  /// What the next packet to be received is
   State state_;
   /// Contents of the packet
   std::vector<uint8_t> packet_;
-  /// All received packets
+  /// All packets that could be received
   std::vector<uint8_t> all_packets_;
   /// Packet data length
   uint8_t length_;
-  /// Presence of packet for reply
+  /// Presence of a reply packet
   bool is_reply_packet_;
 };
 }  // end of namespace hsrb_imu_sensor_protocol

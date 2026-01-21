@@ -35,32 +35,32 @@ DAMAGE.
 
 namespace hsrb_power_ecu {
 /**
- * @brief Common information for encoder and decoder for control commands
+ * @brief Common information for control command encoder and decoder
  */
 namespace com_common {
 
 /**
  * @brief crc32 checksum calculation
- * @param[in] start_it Iterator to the start of the checksum string
- * @param[in] end_it Iterator to the end of the checksum string
+ * @param[in] start_it Start iterator of the checksum string
+ * @param[in] end_it End iterator of the checksum string
  * @return Checksum result
  */
 uint32_t CalculateCrc32(std::string::const_iterator start_it, std::string::const_iterator end_it);
 
 /**
  * @brief crc32 checksum calculation
- * @param start_it Iterator to the start of the checksum string
- * @param end_it Iterator to the end of the checksum string
+ * @param start_it Start iterator of the checksum string
+ * @param end_it End iterator of the checksum string
  * @return Checksum result
  */
 uint32_t CalculateCrc32(hsrb_power_ecu::PacketBuffer::const_iterator start_it,
                         hsrb_power_ecu::PacketBuffer::const_iterator end_it);
 
-const size_t kPacketNameBufferSize = 5 + 1;      //!< Number of characters in packet header type (5) + '\0'
-const size_t kPacketSizeBufferSize = 3 + 1;      //!< Number of characters in packet header size (3) + '\0'
-const size_t kPacketCheckSumBufferSize = 8 + 1;  //!< Number of characters in checksum in packet data (8) + '\0'
-const size_t kPacketHeaderLength = 12;           //!< Number of characters in packet header
-const size_t kPacketFooterLength = 11;           //!< Number of characters in packet footer
+const size_t kPacketNameBufferSize = 5 + 1;      //!< Number of characters in the packet header type (5) + '\0'
+const size_t kPacketSizeBufferSize = 3 + 1;      //!< Number of characters in the packet header size (3) + '\0'
+const size_t kPacketCheckSumBufferSize = 8 + 1;  //!< Number of characters in the packet data checksum (8) + '\0'
+const size_t kPacketHeaderLength = 12;           //!< Number of characters in the packet header
+const size_t kPacketFooterLength = 11;           //!< Number of characters in the packet footer
 
 }  // namespace com_common
 }  // namespace hsrb_power_ecu

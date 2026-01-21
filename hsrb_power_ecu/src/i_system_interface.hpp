@@ -40,8 +40,8 @@ DAMAGE.
 namespace hsrb_power_ecu {
 
 /**
- * @brief Interface for embedded Linux functions
- * Separated for easier mock testing
+ * @brief Interface for built-in functions in Linux
+ * Extracted to facilitate mock testing
  */
 class ISystemInterface {
  public:

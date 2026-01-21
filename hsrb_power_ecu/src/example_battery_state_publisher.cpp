@@ -35,7 +35,7 @@ DAMAGE.
 #include "power_ecu_protocol.hpp"
 
 /**
- * @brief Sample code for the operation of battery_state_publisher that publishes battery information as a topic
+ * @brief Sample code for the operation of battery_state_publisher that publishes battery information on a topic
  */
 int32_t main(int32_t argc, char** argv) {
   // Command line parsing
@@ -48,14 +48,14 @@ int32_t main(int32_t argc, char** argv) {
     if (argc == 2) {
       // When there is one option
       if (std::string(argv[1]) == "--help") {
-        // Returns no error when --help is specified
+        // Do not return an error when --help is specified
         can_run = false;
         is_display_help = true;
       } else {
         port_name = argv[1];
       }
     } else {
-      // Error when there are no command line arguments or two or more arguments
+      // Error when there are no command line arguments or more than two
       can_run = false;
     }
 

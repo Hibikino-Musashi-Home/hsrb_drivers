@@ -49,14 +49,14 @@ DAMAGE.
 namespace hsrb_power_ecu {
 
 /**
- * @brief Control Command Information Management Class
+ * @brief Control command information management class
  *
- * CPU->control command transmission to Power ECU requires confirmation of ACK from Power ECU after each transmission,
- * Furthermore, due to the possibility of communication failure, it is necessary to perform retry processing for each control command,
- * Only at most one transmission is performed per cycle.
- * On the other hand, commands from the topic are constantly accepted, so
- * It is necessary to queue commands for sequential processing of each command.
- * The CommandState class is a class that holds the information of control commands that are queued.
+ * The control command transmission from CPU to power ECU requires confirmation of ACK from power ECU for each transmission,
+ * Also, considering communication failure, it is necessary to perform retry processing for each control command,
+ * Only one transmission is performed per cycle.
+ * On the other hand, since commands from topics are always accepted,
+ * It is necessary to queue commands to process each command sequentially.
+ * The CommandState class is a class that holds information about queued control commands.
  */
 class CommandState {
  private:
@@ -68,7 +68,7 @@ class CommandState {
 
   /**
    * @brief Constructor
-   * @param[in] command_name Command Name
+   * @param[in] command_name Command name
    */
   explicit CommandState(const std::string& command_name)
       : command_name_(command_name), return_value_(0), is_processing_(0), retry_count_(0) {}
@@ -77,55 +77,55 @@ class CommandState {
    */
   ~CommandState() {}
   /**
-   * @brief Get Command Name
-   * @return Command Name
+   * @brief Get command name
+   * @return Command name
    */
   inline const std::string& GetCommandName() const { return command_name_; }
   /**
-   * @brief Get Command Return Value
-   * The assignment process of the command return value is implemented but not yet used.
-   * @return Command Return Value
+   * @brief Get command return value
+   * The assignment process for the command return value is implemented but not yet used.
+   * @return Command return value
    */
   inline uint8_t GetReturnValue() const { return return_value_; }
   /**
-   * @brief Assign Command Return Value
-   * @param[in] value Command Return Value
+   * @brief Assign command return value
+   * @param[in] value Command return value
    */
   inline void SetReturnValue(const uint8_t value) { return_value_ = value; }
   /**
-   * @brief Assign Command Processing Flag
-   * Returns True from command transmission to ACK reception.
-   * The assignment process of the flag value is implemented but not yet used.
-   * @param[in] value Flag Value
+   * @brief Assign command processing flag
+   * Returns True from command transmission to ack reception.
+   * The assignment process for the flag value is implemented but not yet used.
+   * @param[in] value Flag value
    */
   inline void SetProcessingStatus(const bool value) { is_processing_ = value; }
   /**
-   * @brief Get Command Processing Flag
-   * @return Command Processing True
+   * @brief Get command processing flag
+   * @return Command processing True
    */
   inline bool IsProcessing() const { return is_processing_; }
   /**
-   * @brief Increment Retry Count
+   * @brief Increment retry count
    */
   inline void IncrementRetryCount() { ++retry_count_; }
   /**
-   * @brief Clear Retry Count
+   * @brief Clear retry count
    */
   inline void ClearRetryCount() { retry_count_ = 0; }
   /**
-   * @brief Get Retry Count
-   * @return Retry Count
+   * @brief Get retry count
+   * @return Retry count
    */
   inline uint32_t GetRetryCount() const { return retry_count_; }
 
  private:
   const std::string command_name_;  //!< Command name
   uint8_t return_value_;            //!< Return value
-  bool is_processing_;              //!< Processing flag (True while processing)
+  bool is_processing_;              //!< Processing flag (True during processing)
   uint32_t retry_count_;            //!< Retry count
 };
 
-// @n When put into the Protocol class, the class name can be Versions only
+// @n When included in the Protocol class, the class name can be Versions only
 struct PowerEcuVersions {
   std::string power_ecu_version;
   std::string power_ecu_com_version;
@@ -134,20 +134,20 @@ struct PowerEcuVersions {
 /**
  * @brief Class that performs processing independent of the communication command protocol version <br>
  * <br>
- * The processing independent of the communication protocol version is as follows <br>
+ * Processing independent of the communication protocol version is as follows <br>
  *   - Version confirmation <br>
- *   - Control command transmission, ACK reception <br>
+ *   - Control command transmission, ack reception <br>
  *   - Heartbeat transmission <br>
  * <br>
- * Also, for the extension of control commands,
- * It publicly offers registration functions to the command queue and data decoder/encoder. <br>
- * Processing sent from the topic is asynchronous, but
- * The communication with the Power ECU needs to be sequential, so a queuing design is adopted. <br>
+ * Also, for the expansion of control commands,
+ * It provides registration functions for command queues and data decoders/encoders.<br>
+ * Processing sent from topics is asynchronous, but,
+ * Communication with the power ECU needs to be processed sequentially, so it is designed to perform queuing.<br>
  *
- * Additionally, since this class is used in applications called by the rosrun command
- * This class has a design that is independent of roscore.
- * If you wish to emit the errors of this class as topics like diagnostics,
- * The upper-level class managing this class should take on that function.
+ * Also, since this class is used in applications called by the rosrun command,
+ * This class is designed to be independent of roscore.
+ * If you want to emit errors of this class as topics like diagnostics,
+ * The upper class managing this class should handle that function.
  */
 class PowerEcuProtocol : boost::noncopyable {
  public:
@@ -168,30 +168,30 @@ class PowerEcuProtocol : boost::noncopyable {
   void Close();
 
   /**
-   * @brief Obtain version information from ECU and prepare for protocol communication
+   * @brief Obtain version information from ECU and prepare protocol communication
    */
   bool Init();
 
   /**
-   * @brief Start Communication
+   * @brief Start communication
    *
    * @return
    */
   boost::system::error_code Start();
 
   /**
-   * @brief End Communication
+   * @brief End communication
    *
    * @return
    */
   boost::system::error_code Stop();
 
   /**
-  * @brief Return the status management information regarding the command by name
+  * @brief Return status management information related to command by name
   *
-  * Returns false if the command is unacceptable
+  * Returns false if the command is not acceptable
   *
-  * @param[in] command Command name to retrieve
+  * @param[in] command Command name to obtain
   * @param[out] command_state
   */
   inline bool GetCommandState(const std::string& command, hsrb_power_ecu::CommandState::Ptr& command_state) const {
@@ -204,7 +204,7 @@ class PowerEcuProtocol : boost::noncopyable {
   }
 
   /**
-   * @brief Check if the command is valid
+   * @brief Check if command is valid
    *
    * @param[in] name Command name
    *
@@ -213,14 +213,14 @@ class PowerEcuProtocol : boost::noncopyable {
   inline bool HasCommand(const std::string& name) const { return (command_map_.find(name) != command_map_.end()); }
 
   /**
-   * @brief Obtain pointer to data
+   * @brief Get data pointer
    *
    * @tparam T Data type
    * @param[in] name Data name
    *
-   * @return On success: pointer to data<br>
-   *         On failure: NULL<br>
-   *         Failure occurs if the data name is unregistered or if the data type is mismatched.
+   * @return Success: Data pointer<br>
+   *         Failure: NULL<br>
+   *         Failure occurs if the data name is unregistered or the data type does not match
    */
   template <typename T>
   T* GetParamPtr(const std::string& name) const {
@@ -233,13 +233,13 @@ class PowerEcuProtocol : boost::noncopyable {
   }
 
   /**
-   * @brief Obtain Receive error rate
+   * @brief Get Receive error rate
    * @return Error rate
    */
   inline double GetReceiveErrorRate() const { return read_error_counter_.GetErrorRate(); }
 
   /**
-   * @brief Obtain Send error rate
+   * @brief Get Send error rate
    * @return Error rate
    */
   inline double GetSendErrorRate() const { return write_error_counter_.GetErrorRate(); }
@@ -254,13 +254,13 @@ class PowerEcuProtocol : boost::noncopyable {
   bool GetPowerEcuVersions(PowerEcuVersions& result);
 
   /**
-   * @brief Add to Command Queue
+   * @brief Add to command queue
    *
    *
    * @param[in] command_name Command to add
    *
-   * @return On success: true<br>
-   * Returns false when the command is unacceptable
+   * @return Success: true<br>
+   * Returns false when the command is not acceptable
    */
   bool AddCommandQueue(const std::string& command_name) {
     CommandMapType::const_iterator it = command_map_.find(command_name);
@@ -272,63 +272,63 @@ class PowerEcuProtocol : boost::noncopyable {
   }
 
   /**
-   * @brief Process all Command Queue
+   * @brief Process all command queues
    *
-   * This method is intended to be called during non-real-time processes.
+   * This method is intended to be called during non-real-time processes
    *
-   * @param[in] check_ros Whether to check ros::ok() true: Check needed false: Check not needed
+   * @param[in] check_ros ros::ok() check necessity true: check required false: check not required
    * @param[in] cycle_hz Polling cycle [hz]
-   * @param[in] error_rate Allowable error rate
+   * @param[in] error_rate Acceptable error rate
    *
-   * @return Execution Result
-   * @retval On success boost::system::errc::success
-   * @retval Argument error boost::system::errc::invalid_argument
+   * @return Execution result
+   * @retval Success boost::system::errc::success
+   * @retval Invalid argument boost::system::errc::invalid_argument
    * @retval Communication error boost::system::errc::operation_canceled
    * @retval Communication timeout boost::system::errc::timed_out
-   * @retval roscore not running boost::system::errc::operation_not_permitted
+   * @retval Roscore not started boost::system::errc::operation_not_permitted
    */
   boost::system::error_code ProcessCommandQueue(bool check_ros, double cycle_hz, double error_rate);
 
   /**
-   * @brief Receive Processing
+   * @brief Receive processing
    *
-   * Irrecoverable errors on the communication protocol (control command retry limit exceedance, ACK timeout)
-   * Cause exit within this function
+   * Irrecoverable errors in the communication protocol (exceeding control command retry allowance, ACK timeout)
+   * Exit within this function
    *
-   * @return Execution Result
+   * @return Execution result
    * @retval Normal boost::system::errc::success
-   * @retval network Receive failure boost::system::errc::network_down
-   * @retval Corrupted received packet boost::system::errc::protocol_error
+   * @retval Network Receive failure boost::system::errc::network_down
+   * @retval Received packet is corrupted boost::system::errc::protocol_error
    * @retval Control command retransmission boost::system::errc::resource_unavailable_try_again
    */
   boost::system::error_code ReceiveAll();
 
   /**
-   * @brief Send Processing
+   * @brief Send processing
    *
-   * @return Execution Result
+   * @return Execution result
    * @retval Normal boost::system::errc::success
-   * @retval network Send failure boost::system::errc::network_down
+   * @retval Network Send failure boost::system::errc::network_down
    */
   boost::system::error_code SendAll();
 
  private:
   typedef boost::unordered_map<std::string, hsrb_power_ecu::CommandState::Ptr>
-      CommandMapType;  //!< Map type for control commands
+      CommandMapType;  //!< Type of control command map
   typedef boost::circular_buffer<hsrb_power_ecu::CommandState::Ptr>
-      CommandBuffer;  //!< Command queue type
+      CommandBuffer;  //!< Type of control command queue
 
   /**
-   * @brief Add to Command Queue (internal)
+   * @brief Add to command queue (internal use)
    *
    * @param[in] command command_state
    */
   void AddCommandQueue(hsrb_power_ecu::CommandState::Ptr command);
 
   /**
-   * @brief Register Data Decoder
+   * @brief Register data decoder
    *
-   * @tparam T Data decoder type
+   * @tparam T Type of data decoder
    */
   template <typename T>
   void RegisterDataDecoder() {
@@ -338,10 +338,10 @@ class PowerEcuProtocol : boost::noncopyable {
   }
 
   /**
-   * @brief Register Data Encoder
+   * @brief Register data encoder
    *
-   * @tparam T Data encoder type
-   * @param[out] name Command Name
+   * @tparam T Type of data encoder
+   * @param[out] name Command name
    */
   template <typename T>
   std::string RegisterDataEncoder() {
@@ -355,30 +355,30 @@ class PowerEcuProtocol : boost::noncopyable {
   }
 
   /**
-   * @brief Send Command
-   * Send a command to the serial device.
+   * @brief Send command
+   * Send command to serial device.
    *
-   * Because commands are managed in the command queue,
-   * It is basic to use the AddCommandQueue method for command transmission.
+   * Since commands are managed in the command queue,
+   * Basically, use the AddCommandQueue method to send commands.
    *
-   * Control commands managed by the command queue need to return the Rxack command as a return value.
-   * For control commands that do not return the Rxack command (like getv_command),
-   * A dedicated method is created, and the command is sent directly using SendCommand.
+   * Control commands managed in the command queue need to return an Rxack command as a return value by design.
+   * Control commands that do not return an Rxack command (such as getv_ command) should have a dedicated method created,
+   * Use SendCommand to send commands directly.
    *
-   * @param[in] command Information of the command to send
-   * @return Execution Result
+   * @param[in] command Command information to send
+   * @return Execution result
    * @retval Normal boost::system::errc::success
-   * @retval network Send failure boost::system::errc::network_down
+   * @retval Network Send failure boost::system::errc::network_down
    */
   boost::system::error_code SendCommand(const hsrb_power_ecu::CommandState::Ptr command);
 
   // Variables
-  // Network Interface Management
+  // Network interface management
   boost::shared_ptr<hsrb_power_ecu::INetwork> network_;  //!< Network interface
   PacketBuffer receive_buffer_;                          //!< Receive buffer
   PacketBuffer send_buffer_;                             //!< Send buffer
 
-  // Transport Management
+  // Transport management
   //// Decoder
   hsrb_power_ecu::PowerEcuComFrameDecoder frame_decoder_;  //!< Frame decoder
   //// Encoder
@@ -392,31 +392,31 @@ class PowerEcuProtocol : boost::noncopyable {
 
   bool is_waiting_ack_;            //!< Flag indicating whether waiting for ACK
 
-  ErrorCounter read_error_counter_;   //!< Read method error rate
-  ErrorCounter write_error_counter_;  //!< Write method error rate
+  ErrorCounter read_error_counter_;   //!< Error rate of Read method
+  ErrorCounter write_error_counter_;  //!< Error rate of Write method
 
   // Command map
   CommandMapType command_map_;               //!< Map of control commands
 
   // Received command data
   //// rxack
-  bool* is_receive_ack_;  //!< Whether ACK was received
-  uint8_t* ack_value_;    //!< Return value of the reply command
+  bool* is_receive_ack_;  //!< Whether ACK has been returned
+  uint8_t* ack_value_;    //!< Return value of reply command
   //// ver
-  std::string* ver_power_ecu_version_;      //!< Power ECU firmware version [git hash 20 bytes] 40-digit hexadecimal
-  std::string* ver_power_ecu_com_version_;  //!< Power ECU communication structure HASH [hash 20 bytes] 40-digit hexadecimal
-  bool* is_receive_version_;                //!< Whether the Ver command was received
-  // Send command data
+  std::string* ver_power_ecu_version_;      //!< Power ECU firmware Ver [git hash 20 bytes] 40 hexadecimal digits
+  std::string* ver_power_ecu_com_version_;  //!< Power ECU communication structure HASH [hash 20 bytes] 40 hexadecimal digits
+  bool* is_receive_version_;                //!< Whether Ver command has been received
+  // Sent command data
   //// heart
-  uint32_t* counts;  //!< Heartbeat count value (incremented by +1 each transmission) 8-digit hexadecimal uint32
+  uint32_t* counts;  //!< Heartbeat count value (incremented by +1 for each transmission) 8 hexadecimal digits uint32
 
-  // Command name
-  std::string heart_command_name_;  //!< Heart command
-  std::string getv_command_name_;   //!< getv_command
-  std::string time_command_name_;   //!< Time command
-  std::string start_command_name_;  //!< Start command
-  std::string stop_command_name_;   //!< Stop command
-  std::string mute_command_name_;   //!< Mute command
+  // Command names
+  std::string heart_command_name_;  //!< heart command
+  std::string getv_command_name_;   //!< getv_ command
+  std::string time_command_name_;   //!< time command
+  std::string start_command_name_;  //!< start command
+  std::string stop_command_name_;   //!< stop command
+  std::string mute_command_name_;   //!< mute command
 };
 
 }  // namespace hsrb_power_ecu

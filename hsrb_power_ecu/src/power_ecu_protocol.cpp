@@ -45,10 +45,10 @@ const size_t kCommandQueueSize = 1000;           //!< Maximum number of command 
 const uint32_t kErrorCounterSize = 1000;         //!< Buffer size for error rate
 const uint32_t kRetryCount = 10;                 //!< Allowable retry count
 const double kRetryRate = 0.9;                   //!< Allowable error rate
-const uint32_t kProcessCommandQueueTimeOut = 5;  //!< Timeout time for resolving command queue (sec)
+const uint32_t kProcessCommandQueueTimeOut = 5;  //!< Timeout duration for resolving command queue (sec)
 const double kCycleHz = 100.0;                   //!< Polling cycle (Hz)
-const double kCommandTimeout = 10;               //!< Timeout time
-// Heartbeat transmission cycle (half of the timeout time of 10 seconds)
+const double kCommandTimeout = 10;               //!< Timeout duration
+// Heartbeat transmission cycle (half of the timeout duration of 10 seconds)
 const rclcpp::Duration kHeartbeatDuration = rclcpp::Duration::from_seconds(kCommandTimeout * 0.5);
 
 const char kEcuComVersion1String[] = "B7335B767D0FA2E6925BC8E965E443291A16A26A";  //!< Protocol version 1
@@ -78,12 +78,12 @@ PowerEcuProtocol::PowerEcuProtocol(boost::shared_ptr<hsrb_power_ecu::INetwork> n
       clock_(node->get_clock()),
       last_heartbeat_time_(clock_->now()) {
   // Data decoder registration
-  // It is theoretically impossible to fail to register the decoder
+  // It is designed to be impossible to fail in registering the decoder
   RegisterDataDecoder<hsrb_power_ecu::PowerEcuComRxackDataDecoder>();
   RegisterDataDecoder<hsrb_power_ecu::PowerEcuComVerDataDecoder>();
 
   // Frame encoder registration
-  // It is theoretically impossible to fail to register the encoder
+  // It is designed to be impossible to fail in registering the encoder
   //// heart
   heart_command_name_ = RegisterDataEncoder<hsrb_power_ecu::PowerEcuComHeartDataEncoder>();
   getv_command_name_ = RegisterDataEncoder<hsrb_power_ecu::PowerEcuComGetvDataEncoder>();
@@ -270,19 +270,19 @@ bool PowerEcuProtocol::Init() {
 boost::system::error_code PowerEcuProtocol::Start() {
   // When adding version switching functionality, extract this process as a class
   {
-    // RTC synchronization
+    // RTC adjustment
     //// Set current time
     auto in_time_t = static_cast<time_t>((int32_t)(clock_->now().seconds()));
     std::stringstream string_stream;
     string_stream << std::put_time(std::localtime(&in_time_t), "%Y%m%d%H%M%S");
     std::string time_string = string_stream.str();
 
-    // Assumes format like 20170210095651
+    // Assumes a format like 20170210095651
     hsrb_power_ecu::Assert((time_string.size() == 14), "time_string format error");
     *(this->GetParamPtr<std::string>("start_time")) = time_string;
     AddCommandQueue(time_command_name_);
 
-    // unmute
+    // Unmute
     *(this->GetParamPtr<bool>("is_amp_mute")) = false;
     AddCommandQueue(mute_command_name_);
 
@@ -351,9 +351,9 @@ boost::system::error_code PowerEcuProtocol::ProcessCommandQueue(bool check_ros,
   // Command processing
   const auto start_time = clock_->now();
 
-  // Polling cycle check - consider argument abnormal if it is equal to or more than the command queue resolving time
+  // Polling cycle check - If it is longer than the command queue resolution time, consider it an argument error
   if (cycle_hz < (1.0 / kProcessCommandQueueTimeOut)) {
-    // Argument is abnormal if polling cycle is 0 or less
+    // Polling cycle less than or equal to 0 is an argument error
     return boost::system::errc::make_error_code(boost::system::errc::invalid_argument);
   }
   rclcpp::WallRate loop_rate(cycle_hz);
@@ -362,7 +362,7 @@ boost::system::error_code PowerEcuProtocol::ProcessCommandQueue(bool check_ros,
     if (SendAll() != boost::system::errc::success) {
       RCLCPP_WARN(rclcpp::get_logger("power_ecu_protocol"), "Send failed");
       if (GetSendErrorRate() > error_rate) {
-        // Returns failure when exceeding allowable error rate
+        // Return failure when allowable error rate is exceeded
         return boost::system::errc::make_error_code(boost::system::errc::operation_canceled);
       }
     }
@@ -371,7 +371,7 @@ boost::system::error_code PowerEcuProtocol::ProcessCommandQueue(bool check_ros,
     if (ReceiveAll() != boost::system::errc::success) {
       RCLCPP_WARN(rclcpp::get_logger("power_ecu_protocol"), "Receive failed");
       if (GetReceiveErrorRate() > error_rate) {
-        // Returns failure when exceeding allowable error rate
+        // Return failure when allowable error rate is exceeded
         return boost::system::errc::make_error_code(boost::system::errc::operation_canceled);
       }
     }
@@ -387,19 +387,19 @@ boost::system::error_code PowerEcuProtocol::ProcessCommandQueue(bool check_ros,
 
 boost::system::error_code PowerEcuProtocol::ReceiveAll() {
   const auto time = clock_->now();
-  // Analyze read buffer
-  // Receive process
+  // Analyze the read buffer
+  // Reception processing
   boost::system::error_code ret = network_->Receive(receive_buffer_);
 
   if (ret != boost::system::errc::success) {
-    // Receive failure
-    // If serial_network was used as a communication device, the following are the causes of failure
-    //   - Receive timeout
-    //     May occur even if the serial port receive buffer is empty, so there is a possibility of normal operation
+    // Reception failure
+    // If serial_network is used as a communication device, the following are the causes of failure
+    //   - Reception timeout
+    //     It can occur even if the serial port's receive buffer is empty, so there is a possibility of normal operation
     //   - Other serial port errors
     //
-    // Because network behavior is only defined as success upon success,
-    // notify the upper layer as network_down for anything other than success
+    // Since network is defined to behave as success only when successful,
+    // Notify the upper layer as network_down for anything other than success
     read_error_counter_.Register(false);
     return boost::system::errc::make_error_code(boost::system::errc::network_down);
   }
@@ -411,44 +411,44 @@ boost::system::error_code PowerEcuProtocol::ReceiveAll() {
   while (receive_buffer_.size() > 0 && ret != boost::system::errc::result_out_of_range) {
     ret = frame_decoder_.Decode(current_it, receive_buffer_.end(), encoded_it);
     if (ret != boost::system::errc::success && ret != boost::system::errc::result_out_of_range) {
-      // protocol_error when received packet is corrupted
+      // When the received packet is corrupted, protocol_error
       result = boost::system::errc::make_error_code(boost::system::errc::protocol_error);
     }
     current_it = encoded_it;
   }
 
-  // Clear decoded region
+  // Clear the decoded area
   hsrb_power_ecu::PacketBuffer::const_iterator start_it = receive_buffer_.begin();
   size_t size = std::distance(start_it, encoded_it);
   receive_buffer_.erase_begin(size);
 
 
-  // Ack receive confirmation
-  // 1. No reply comes
-  //    Wait for reply for timeout time
-  //    If a timeout occurs, output RCLCPP_ERROR
-  // 2. Failure is returned
+  // Ack reception confirmation
+  // 1. No reply received
+  //    Wait for reply for timeout duration
+  //    If timeout occurs, output RCLCPP_ERROR
+  // 2. Failure returned
   //    Output RCLCPP_ERROR
   //
-  // Set is_waiting_ack_ flag when a command is sent using the Write method.
-  // If a command is sent directly using the SendCommand method, this process is not performed.
-  // Commands like getv_ or info that do not return Rxack should be sent using SendCommand method directly
-  // Send command
+  // The is_waiting_ack_ flag is set when a command is sent using the Write method.
+  // This process is not performed when a command is sent using the SendCommand method directly.
+  // Commands like getv_command or info command that do not return Rxack are sent directly using the SendCommand method
+  // to send commands
   if (is_waiting_ack_) {     // When waiting for Ack reception
     if (*is_receive_ack_) {  // When a reply has been received
       is_waiting_ack_ = false;
       CommandBuffer::iterator current_command = command_queue_.begin();
       if (*ack_value_ != 0) {  // If failure is returned
-        // End of command processing
+        // End command processing
         result = boost::system::errc::make_error_code(boost::system::errc::operation_canceled);
         RCLCPP_ERROR(rclcpp::get_logger("power_ecu_protocol"),
                      "Failed send command. %s",
                      (*current_command)->GetCommandName().c_str());
       }
-      // Delete from queue if a reply has been received
+      // If a reply has been received, remove from the queue
       command_queue_.pop_front();
     } else if ((time - last_send_command_time_).seconds() > kCommandTimeout) {
-      // Delete from queue at Ack timeout
+      // Remove from the queue in case of Ack timeout
       is_waiting_ack_ = false;
       RCLCPP_ERROR(rclcpp::get_logger("power_ecu_protocol"),
                    "command timeout: %s",
@@ -467,7 +467,7 @@ boost::system::error_code PowerEcuProtocol::SendAll() {
   rclcpp::Time time = clock_->now();
   boost::system::error_code ret;
   if (command_queue_.size() != 0 && !is_waiting_ack_) {
-    // Create and send new command
+    // Create and send a new command
     CommandBuffer::iterator current_command = command_queue_.begin();
     ret = SendCommand(*current_command);
     if (ret != boost::system::errc::success) {
@@ -500,23 +500,23 @@ void PowerEcuProtocol::AddCommandQueue(hsrb_power_ecu::CommandState::Ptr command
 }
 
 boost::system::error_code PowerEcuProtocol::SendCommand(hsrb_power_ecu::CommandState::Ptr command) {
-  // Initialize variable
+  // Variable initialization
   send_buffer_.clear();
 
   // Create send command
   if (!frame_encoder_.Encode(send_buffer_, command->GetCommandName()) == boost::system::errc::success) {
-    // Since the command addition is completed within this class, the absence of an encoder child is theoretically impossible
+    // Since command addition is completed within this class, it is designed to be impossible for the encoder to not exist
     RCLCPP_FATAL(rclcpp::get_logger("power_ecu_protocol"), "Packet encode failed.");
     exit(EXIT_FAILURE);
   }
 
   // Send command
   if (network_->Send(send_buffer_) != boost::system::errc::success) {
-    // Consider network as down when command sending fails
+    // If command sending fails, consider the network to be down
     return boost::system::errc::make_error_code(boost::system::errc::network_down);
   }
 
-  // Lower ack receive flag
+  // Drop ack reception flag
   *is_receive_ack_ = false;
   return boost::system::errc::make_error_code(boost::system::errc::success);
 }

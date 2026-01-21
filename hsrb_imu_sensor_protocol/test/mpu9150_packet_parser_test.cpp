@@ -44,7 +44,7 @@ TEST(MPU9150PacketParserTest, ParsePacketWithData) {
     ASSERT_EQ(MPU9150PacketParser::kContinue, parser.TryParse(packet_5[i]));
   }
 
-  // Verify contents
+  // Check contents
   ASSERT_EQ(5, parser.packets().size());
   for (uint32_t i = 0; i < 5; ++i) {
     EXPECT_EQ(packet_5[i], parser.packets().at(i));
@@ -58,19 +58,19 @@ TEST(MPU9150PacketParserTest, ParsePacketWithData) {
     ASSERT_EQ(MPU9150PacketParser::kContinue, parser.TryParse(packet_6[i]));
   }
 
-  // Verify contents
+  // Check contents
   ASSERT_EQ(6, parser.packets().size());
   for (uint32_t i = 0; i < 6; ++i) {
     EXPECT_EQ(packet_6[i], parser.packets().at(i));
   }
 
-  // Test if packets continue accumulating until being reset
+  // Test if packets continue to accumulate until reset
   // Execute parse
   for (uint32_t i = 0; i < 5; ++i) {
     ASSERT_EQ(MPU9150PacketParser::kContinue, parser.TryParse(packet_5[i]));
   }
 
-  // Verify contents
+  // Check contents
   ASSERT_EQ(11, parser.packets().size());
   for (uint32_t i = 0; i < 6; ++i) {
     EXPECT_EQ(packet_6[i], parser.packets().at(i));
@@ -86,7 +86,7 @@ TEST(MPU9150PacketParserTest, ParsePacketWithoutData) {
   boost::array<uint8_t, 4> packet = { { 0x40, 0x47, 0x01, 0x77 } };
   MPU9150PacketParser parser;
 
-  // Check response flag
+  // Check reply flag
   EXPECT_FALSE(parser.is_reply_packet());
 
   // Execute parse
@@ -95,10 +95,10 @@ TEST(MPU9150PacketParserTest, ParsePacketWithoutData) {
   }
   EXPECT_EQ(MPU9150PacketParser::kDone, parser.TryParse(packet[3]));
 
-  // Check response flag
+  // Check reply flag
   EXPECT_TRUE(parser.is_reply_packet());
 
-  // Verify contents
+  // Check contents
   ASSERT_EQ(4, parser.packets().size());
   for (uint32_t i = 0; i < 4; ++i) {
     EXPECT_EQ(packet[i], parser.packets().at(i));
@@ -111,7 +111,7 @@ TEST(MPU9150PacketParserTest, ResetParser) {
   boost::array<uint8_t, 4> packet = { { 0x40, 0x47, 0x01, 0x77 } };
   MPU9150PacketParser parser;
 
-  // Check response flag
+  // Check reply flag
   EXPECT_FALSE(parser.is_reply_packet());
 
   // Execute parse
@@ -119,7 +119,7 @@ TEST(MPU9150PacketParserTest, ResetParser) {
     ASSERT_EQ(MPU9150PacketParser::kContinue, parser.TryParse(packet[i]));
   }
 
-  // Reset halfway
+  // Reset midway
   parser.Reset();
 
   // Execute again
@@ -128,10 +128,10 @@ TEST(MPU9150PacketParserTest, ResetParser) {
   }
   EXPECT_EQ(MPU9150PacketParser::kDone, parser.TryParse(packet[3]));
 
-  // Check response flag
+  // Check reply flag
   EXPECT_TRUE(parser.is_reply_packet());
 
-  // Verify contents
+  // Check contents
   ASSERT_EQ(4, parser.packets().size());
   for (uint32_t i = 0; i < 4; ++i) {
     EXPECT_EQ(packet[i], parser.packets().at(i));

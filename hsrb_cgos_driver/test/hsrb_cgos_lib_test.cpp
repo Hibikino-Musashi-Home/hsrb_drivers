@@ -67,7 +67,7 @@ class SystemInterfaceMock : public ISystemInterface {
     return IoctrlSetRet(fd, request, argp, 0);
   }
 
-  // Get Ioctl version
+  // Ioctl version retrieval
   int GetVerion(int fd, unsigned int request, void *argp) {
     return IoctrlSetRet(fd, request, argp, 0x01000000);
   }
@@ -109,7 +109,7 @@ class HsrbCgosLibTest : public ::testing::Test {
 
  public:
   std::shared_ptr<SystemInterfaceMock> mock_;
-  HsrbCgosLib cgos_;  // Test subject
+  HsrbCgosLib cgos_;  // Test target
 };
 
 // Test of Initialize()
@@ -129,7 +129,7 @@ TEST_F(HsrbCgosLibTest, Initialize) {
   EXPECT_CALL(*mock_, Ioctl(::testing::_, ::testing::_, ::testing::_)).WillOnce(testing::Return(-1));
   EXPECT_FALSE(cgos_.Initialize());
 
-  // Initialize failure (version abnormal)
+  // Initialize failure (Version error)
   EXPECT_CALL(*mock_, Open(::testing::_, ::testing::_)).WillOnce(testing::Return(0));
   EXPECT_CALL(*mock_, Ioctl(::testing::_, ::testing::_, ::testing::_));
   EXPECT_FALSE(cgos_.Initialize());

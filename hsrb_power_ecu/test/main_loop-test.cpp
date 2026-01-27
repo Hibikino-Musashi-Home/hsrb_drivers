@@ -48,23 +48,30 @@ DAMAGE.
 
 
 namespace {
-// Parameter names of the ECU and the names of the topics to be published
+// ECU parameter names and topic names to be published
 const std::vector<std::pair<std::string, std::string>> kParamAndTopicNames {
   {"is_bumper_bumper1", "base_f_bumper_sensor"}, {"is_bumper_bumper2", "base_b_bumper_sensor"},
   {"is_powerecu_sw_kinoko", "emergency_stop_button"}, {"is_powerecu_sw_w_stop", "wireless_stop_button"},
-  {"is_powerecu_sw_w_sel", "wireless_stop_enable"}, {"is_powerecu_bat_stat", "battery_charging"}
+  {"is_powerecu_sw_w_sel", "wireless_stop_enable"}, {"is_powerecu_bat_stat", "battery_charging"},
+  {"is_bumper_prox1", "base_magnetic_sensor_1"}, {"is_bumper_prox2", "base_magnetic_sensor_2"}
 };
 
 const rclcpp::Duration kLoopTimeout = rclcpp::Duration::from_seconds(1.0);
 
 class IPublishChecker {
  public:
-  IPublishChecker() : is_update_(false) {}
+  IPublishChecker() : is_update_(false), count_(0) {}
   virtual ~IPublishChecker() = default;
-  void Reset() {is_update_ = false;}
+  void Reset() {is_update_ = false; count_ = 0;}
   bool CheckUpdated() const {return is_update_;}
+  uint32_t GetCount() const {return count_;}
+
  protected:
   bool is_update_;
+  void IncrementCount() {++count_;}
+
+ private:
+  uint32_t count_;
 };
 
 class BatteryStatePublishChecker : public IPublishChecker {
@@ -82,6 +89,7 @@ class BatteryStatePublishChecker : public IPublishChecker {
   sensor_msgs::msg::BatteryState last_battery_state_;
 
   void Callback(const sensor_msgs::msg::BatteryState::SharedPtr message) {
+    IncrementCount();
     last_battery_state_ = *message;
     is_update_ = true;
   }
@@ -102,6 +110,7 @@ class BoolPublishChecker : public IPublishChecker {
   bool last_value_;
 
   void Callback(const std_msgs::msg::Bool::SharedPtr message) {
+    IncrementCount();
     last_value_ = message->data;
     is_update_ = true;
   }
@@ -133,6 +142,7 @@ class DiagnosticsChecker : public IPublishChecker {
   diagnostic_msgs::msg::DiagnosticStatus last_status_;
 
   void Callback(const diagnostic_msgs::msg::DiagnosticArray::SharedPtr message) {
+    IncrementCount();
     for (const auto& status : message->status) {
       if ((status.name.find(diagnostics_name_) != std::string::npos) && (status.message != "Node starting up")) {
         last_status_ = status;
@@ -151,10 +161,10 @@ class MainLoopTest : public ::testing::Test {
   void SetUp() override {
     test_node_ = rclcpp::Node::make_shared("test_node");
     loop_node_ = rclcpp::Node::make_shared("loop_node");
-    loop_node_->declare_parameter<double>("runstop_button/publish_rate", 1000.0);
-    loop_node_->declare_parameter<double>("battery_state/publish_rate", 1000.0);
+    loop_node_->declare_parameter<double>("runstop_button/publish_rate", 100.0);
+    loop_node_->declare_parameter<double>("battery_state/publish_rate", 100.0);
     for (const auto& name : kParamAndTopicNames) {
-      loop_node_->declare_parameter<double>(name.second + "/publish_rate", 1000.0);
+      loop_node_->declare_parameter<double>(name.second + "/publish_rate", 100.0);
     }
     PrepareMainLoop();
   }
@@ -173,15 +183,15 @@ class MainLoopTest : public ::testing::Test {
 
     if (!protocol_->Open()) {
       RCLCPP_FATAL(loop_node_->get_logger(), "protocol_ Open failed.");
-      FAIL();  // Currently unable to recover if network open fails
+      FAIL();  // Currently, if network open fails, recovery is impossible
     }
     if (!protocol_->Init()) {
       RCLCPP_FATAL(loop_node_->get_logger(), "protocol_ Init Failed");
-      FAIL();  // Currently unable to recover if network open fails
+      FAIL();  // Currently, if network open fails, recovery is impossible
     }
     if (protocol_->Start() != boost::system::errc::success) {
       RCLCPP_FATAL(loop_node_->get_logger(), "start failed");
-      FAIL();  // Currently unable to recover if network open fails
+      FAIL();  // Currently, if network open fails, recovery is impossible
     }
 
     led_command_subscriber_ = std::make_shared<hsrb_power_ecu::LedCommandSubscriber>(loop_node_, protocol_);
@@ -202,7 +212,7 @@ class MainLoopTest : public ::testing::Test {
 
     auto clock = loop_node_->get_clock();
     const auto start_time = clock->now();
-    rclcpp::WallRate loop_rate(10.0);  // Hz
+    rclcpp::WallRate loop_rate(100.0);  // Hz
     while (rclcpp::ok() && !done_func()) {
       protocol_->ReceiveAll();
       protocol_->SendAll();
@@ -219,14 +229,14 @@ class MainLoopTest : public ::testing::Test {
     }
   }
 
-  // Items used in the main_loop
+  // Used in main_loop
   rclcpp::Node::SharedPtr loop_node_;
   boost::shared_ptr<hsrb_power_ecu::NetworkMock> network_;
   boost::shared_ptr<hsrb_power_ecu::PowerEcuProtocol> protocol_;
   std::shared_ptr<hsrb_power_ecu::LedCommandSubscriber> led_command_subscriber_;
   std::vector<std::shared_ptr<hsrb_power_ecu::IStatePublisher>> publishers_;
 
-  // Items used in tests
+  // Used in tests
   rclcpp::Node::SharedPtr test_node_;
 };
 
@@ -255,7 +265,7 @@ TEST_F(MainLoopTest, LedCommandSubscribeTest) {
   EXPECT_NO_THROW(RunMainLoop(is_buffer_sent));
   ASSERT_TRUE((network_->GetSendBuffer().find("H,ledc_,023,255,000,255,") != -1));
 
-  // Commands are not sent even if the same message as the current state is subscribed to
+  // Commands are not sent even if subscribing to the same message as the current state
   network_->ResetSendBuffer();
   command_status_led_publisher_->publish(message);
 
@@ -263,7 +273,7 @@ TEST_F(MainLoopTest, LedCommandSubscribeTest) {
   ASSERT_TRUE((network_->GetSendBuffer().find("H,ledc_,023,255,000,255,") == -1));
 
   // Expected input values are 0~1, multiplied by 255 and converted to int as command values
-  // If the command value is outside the range 0~255, it is clipped to the maximum or minimum value within the range
+  // If command values are outside the range of 0~255, they are clipped to the maximum or minimum value within the range
   message.r = -10.0;
   message.g = 10.0;
   network_->ResetSendBuffer();
@@ -271,6 +281,30 @@ TEST_F(MainLoopTest, LedCommandSubscribeTest) {
 
   EXPECT_NO_THROW(RunMainLoop(is_buffer_sent));
   ASSERT_TRUE((network_->GetSendBuffer().find("H,ledc_,023,000,255,255,") != -1));
+}
+
+TEST_F(MainLoopTest, PublishRateTest) {
+  auto runstop_checker = std::make_shared<BoolPublishChecker>(test_node_, "runstop_button");
+
+  std::string header = "E,ecu1_,326,";
+  std::string body = ("0000000000,00000000000000,h00,h0000000000000000,"
+                      "h00000000000000000000000000000000"
+                      "00000000000000000000000000000000, 00000, 00000, 00000,"
+                      " 00000, 000,h0000,00000,h0000,051,h00,h0000000000000000, "
+                      "0000000000,-0000000000, 0000000000, 0000000000,-0000000000, "
+                      "0000000000, 0000000000,-0000000000, 0000000000,-0000000000,"
+                      "h00,");
+  network_->UpdateBuffer(header + body);
+  runstop_checker->Reset();
+
+  const auto start_time = loop_node_->get_clock()->now();
+  std::function<bool()> Timeout = [&] {
+    return (loop_node_->get_clock()->now() - start_time > rclcpp::Duration::from_seconds(0.5));
+  };
+  EXPECT_NO_THROW(RunMainLoop(Timeout));
+  // Ideally 50, but implementation-dependent, so some deviation is acceptable
+  EXPECT_GE(runstop_checker->GetCount(), 48);
+  EXPECT_LE(runstop_checker->GetCount(), 50);
 }
 
 TEST_F(MainLoopTest, PublishedDataTest) {
@@ -290,19 +324,24 @@ TEST_F(MainLoopTest, PublishedDataTest) {
       std::make_shared<BoolPublishChecker>(test_node_, "wireless_stop_enable");
   auto battery_charging_checker =
       std::make_shared<BoolPublishChecker>(test_node_, "battery_charging");
+  auto base_magnetic_sensor_1_checker =
+      std::make_shared<BoolPublishChecker>(test_node_, "base_magnetic_sensor_1");
+  auto base_magnetic_sensor_2_checker =
+      std::make_shared<BoolPublishChecker>(test_node_, "base_magnetic_sensor_2");
 
   auto diagnostic_checker =
       std::make_shared<DiagnosticsChecker>(test_node_, "Battery updater");
 
   std::vector<std::shared_ptr<IPublishChecker>> publish_checkers = {
     battery_state_checker, runstop_checker, base_f_bumper_checker, base_b_bumper_checker, emergency_stop_button_checker,
-    wireless_stop_button_checker, wireless_stop_enable_checker, battery_charging_checker, diagnostic_checker
+    wireless_stop_button_checker, wireless_stop_enable_checker, battery_charging_checker,
+    base_magnetic_sensor_1_checker, base_magnetic_sensor_2_checker, diagnostic_checker
   };
 
   std::string header = "E,ecu1_,326,";
   std::string body = ("0000000000,00000000000000,h00,h0000000000000000,"
                       "h00000000000000000000000000000000"
-                      "00000000000000000000000000000000, 00000, 00000, 00000,"
+                      "00000000000000000000000000000000, 00000, 00000,-01000,"
                       " 00000, 000,h0000,00000,h0000,051,h00,h0000000000000000, "
                       "0000000000,-0000000000, 0000000000, 0000000000,-0000000000, "
                       "0000000000, 0000000000,-0000000000, 0000000000,-0000000000,"
@@ -324,11 +363,13 @@ TEST_F(MainLoopTest, PublishedDataTest) {
   ASSERT_TRUE(wireless_stop_button_checker->CheckExpected(true));
   ASSERT_TRUE(wireless_stop_enable_checker->CheckExpected(false));
   ASSERT_TRUE(battery_charging_checker->CheckExpected(false));
+  ASSERT_TRUE(base_magnetic_sensor_1_checker->CheckExpected(false));
+  ASSERT_TRUE(base_magnetic_sensor_2_checker->CheckExpected(false));
 
   auto value = battery_state_checker->GetValue();
   ASSERT_DOUBLE_EQ(value.capacity, 0.0);
   ASSERT_DOUBLE_EQ(value.charge, 0.0);
-  ASSERT_DOUBLE_EQ(value.current, 0.0);
+  ASSERT_DOUBLE_EQ(value.current, 1.0);
   ASSERT_DOUBLE_EQ(value.voltage, 0.0);
   ASSERT_DOUBLE_EQ(value.temperature, 0.0);
 
@@ -337,7 +378,7 @@ TEST_F(MainLoopTest, PublishedDataTest) {
   ASSERT_EQ(diagnostic_checker->GetHardwareId(), "hsrb_power_battery");
   ASSERT_EQ(diagnostic_checker->GetValue("full_charge_capacity"), "0");
   ASSERT_EQ(diagnostic_checker->GetValue("remaining_charge"), "0");
-  ASSERT_EQ(diagnostic_checker->GetValue("electric_current"), "0");
+  ASSERT_EQ(diagnostic_checker->GetValue("electric_current"), "1");
   ASSERT_EQ(diagnostic_checker->GetValue("voltage"), "0");
   ASSERT_EQ(diagnostic_checker->GetValue("temperature"), "0");
   ASSERT_EQ(diagnostic_checker->GetValue("zero_percent_detected"), "False");
@@ -349,11 +390,11 @@ TEST_F(MainLoopTest, PublishedDataTest) {
   ASSERT_EQ(diagnostic_checker->GetValue("over_charge"), "False");
   ASSERT_EQ(diagnostic_checker->GetValue("relative_capacity"), "51");
 
-  // When changing supported sections, check if the published items are also changing correctly
+  // When changing the corresponding parts, check if the published items are correctly updated
   body = ("0000000000,00000000000000,h00,h0000000000000063,"
           "h00000000000000000000000000000000"
           "00000000000000000000000000000000, 01000, 02000, 03000,"
-          " 04000, 005,h00FF,00000,h0000,021,h60,h0000000000000000, "
+          " 04000, 005,h00FF,00000,h0000,021,h63,h0000000000000000, "
           "0000000000,-0000000000, 0000000000, 0000000000,-0000000000, "
           "0000000000, 0000000000,-0000000000, 0000000000,-0000000000,"
           "h00,");
@@ -368,11 +409,13 @@ TEST_F(MainLoopTest, PublishedDataTest) {
   ASSERT_TRUE(wireless_stop_button_checker->CheckExpected(false));
   ASSERT_TRUE(wireless_stop_enable_checker->CheckExpected(true));
   ASSERT_TRUE(battery_charging_checker->CheckExpected(true));
+  ASSERT_TRUE(base_magnetic_sensor_1_checker->CheckExpected(true));
+  ASSERT_TRUE(base_magnetic_sensor_2_checker->CheckExpected(true));
 
   value = battery_state_checker->GetValue();
   ASSERT_DOUBLE_EQ(value.capacity, 1.0);
   ASSERT_DOUBLE_EQ(value.charge, 2.0);
-  ASSERT_DOUBLE_EQ(value.current, 3.0);
+  ASSERT_DOUBLE_EQ(value.current, -3.0);
   ASSERT_DOUBLE_EQ(value.voltage, 4.0);
   ASSERT_DOUBLE_EQ(value.temperature, 5.0);
 
@@ -381,7 +424,7 @@ TEST_F(MainLoopTest, PublishedDataTest) {
   ASSERT_EQ(diagnostic_checker->GetHardwareId(), "hsrb_power_battery");
   ASSERT_EQ(diagnostic_checker->GetValue("full_charge_capacity"), "1");
   ASSERT_EQ(diagnostic_checker->GetValue("remaining_charge"), "2");
-  ASSERT_EQ(diagnostic_checker->GetValue("electric_current"), "3");
+  ASSERT_EQ(diagnostic_checker->GetValue("electric_current"), "-3");
   ASSERT_EQ(diagnostic_checker->GetValue("voltage"), "4");
   ASSERT_EQ(diagnostic_checker->GetValue("temperature"), "5");
   ASSERT_EQ(diagnostic_checker->GetValue("zero_percent_detected"), "True");
@@ -393,7 +436,7 @@ TEST_F(MainLoopTest, PublishedDataTest) {
   ASSERT_EQ(diagnostic_checker->GetValue("over_charge"), "True");
   ASSERT_EQ(diagnostic_checker->GetValue("relative_capacity"), "21");
 
-  // Check each condition as the battery diagnostic conditions are detailed
+  // Battery diagnostics have detailed conditions, so check each condition
   body = ("0000000000,00000000000000,h00,h0000000000000063,"
           "h00000000000000000000000000000000"
           "00000000000000000000000000000000, 01000, 02000, 03000,"

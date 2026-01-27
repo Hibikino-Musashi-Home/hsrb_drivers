@@ -25,7 +25,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief Used for testing communication with the MPU9150
+/// @brief For testing communication with MPU9150
 #ifndef SERIAL_COMMUNICATION_FOR_MPU9150_TEST_HPP_
 #define SERIAL_COMMUNICATION_FOR_MPU9150_TEST_HPP_
 
@@ -67,7 +67,7 @@ class SerialCommunication : boost::noncopyable {
   boost::asio::io_service io_service_;
   // Serial port
   boost::asio::serial_port serial_port_;
-  // Reading buffer
+  // Read buffer
   boost::array<uint8_t, 1024> receive_buffer_;
 };
 

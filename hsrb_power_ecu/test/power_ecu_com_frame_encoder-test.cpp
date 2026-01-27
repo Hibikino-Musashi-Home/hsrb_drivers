@@ -47,7 +47,7 @@ const size_t kBufferSize = 1000;
 class FrameEncoderTest : public ::testing::Test {
  public:
   FrameEncoderTest() : buffer_(kBufferSize) {
-    // To compare packets, use stop packets without parameters for testing
+    // For packet comparison, use a stop packet without parameters for testing
     stop_ = boost::make_shared<hsrb_power_ecu::PowerEcuComStopDataEncoder>();
     EXPECT_EQ(encoder_.RegisterDataEncoder(stop_), boost::system::errc::success);
     buffer_.clear();
@@ -55,7 +55,7 @@ class FrameEncoderTest : public ::testing::Test {
 
  protected:
   hsrb_power_ecu::PowerEcuComFrameEncoder encoder_;                     //!< Encoder
-  boost::shared_ptr<hsrb_power_ecu::PowerEcuComStopDataEncoder> stop_;  //!< Data Encoder
+  boost::shared_ptr<hsrb_power_ecu::PowerEcuComStopDataEncoder> stop_;  //!< Data encoder
   hsrb_power_ecu::PacketBuffer buffer_;                                 //!< Buffer
 };
 

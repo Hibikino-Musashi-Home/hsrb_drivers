@@ -41,7 +41,7 @@ DAMAGE.
 namespace hsrb_power_ecu {
 
 /**
- * @brief Decoder for Uint type
+ * @brief Uint type decoder
  */
 template <class Output>
 class ElementUintDecoder : public IElementDecoder {
@@ -52,7 +52,7 @@ class ElementUintDecoder : public IElementDecoder {
  public:
   /**
    * @brief Constructor
-   * @param value Reference where the decoded value is assigned
+   * @param value Reference to the destination for the decoded value
    * @param length Number of digits
    */
   ElementUintDecoder(Output& value, const size_t length) : value_(value), length_(length) {}
@@ -63,12 +63,12 @@ class ElementUintDecoder : public IElementDecoder {
   /**
    * @brief Decode
    * @param start_iterator Iterator of the first character to read
-   * @param end_iterator Iterator of the character after the last to read
+   * @param end_iterator Iterator of the next character after the last one to read
    * @return true on success
    */
   inline virtual bool Decode(const PacketBuffer::const_iterator start_iterator,
                              const PacketBuffer::const_iterator end_iterator) {
-    // Digit check
+    // Digit count check
     if (std::distance(start_iterator, end_iterator) != length_) {
       return false;
     }
@@ -87,12 +87,12 @@ class ElementUintDecoder : public IElementDecoder {
   }
 
  private:
-  Output& value_;        //!< Reference where the decoded value is assigned
+  Output& value_;        //!< Reference to the destination for the decoded value
   const size_t length_;  //!< Number of digits
 };
 
 /**
- * @brief Decoder for Uint type
+ * @brief Uint type decoder
  */
 template <class Output>
 class ElementHexUintDecoder : public IElementDecoder {
@@ -103,7 +103,7 @@ class ElementHexUintDecoder : public IElementDecoder {
  public:
   /**
    * @brief Constructor
-   * @param value Reference where the decoded value is assigned
+   * @param value Reference to the destination for the decoded value
    * @param length Number of digits
    */
   ElementHexUintDecoder(Output& value, const size_t length) : value_(value), length_(length) {}
@@ -114,20 +114,20 @@ class ElementHexUintDecoder : public IElementDecoder {
   /**
    * @brief Decode
    * @param start_iterator Iterator of the first character to read
-   * @param end_iterator Iterator of the character after the last to read
+   * @param end_iterator Iterator of the next character after the last one to read
    * @return true on success
    */
   inline virtual bool Decode(const PacketBuffer::const_iterator start_iterator,
                              const PacketBuffer::const_iterator end_iterator) {
-    // Digit check
+    // Digit count check
     // @uend
-    // Even if the order of operations considers operator precedence, please enclose with parentheses strictly (check other places as well)
+    // Even if the calculation order considers operator precedence, please strictly describe it with parentheses (check other places as well)
     if (((std::distance(start_iterator, end_iterator) - 1) != length_) || (*start_iterator != 'h')) {
       return false;
     }
     // Assignment process
     uint32_t tmp_value = 0;
-    for (PacketBuffer::const_iterator it = (start_iterator + 1);  // Skip reading 'h'
+    for (PacketBuffer::const_iterator it = (start_iterator + 1);  // Skip 'h'
          it != end_iterator; ++it) {
       PacketBuffer::value_type v = *it;
       if ((v >= '0') && (v <= '9')) {
@@ -144,12 +144,12 @@ class ElementHexUintDecoder : public IElementDecoder {
   }
 
  private:
-  Output& value_;        //!< Reference where the decoded value is assigned
+  Output& value_;        //!< Reference to the destination for the decoded value
   const size_t length_;  //!< Number of digits
 };
 
 /**
- * @brief Decoder for int type
+ * @brief int type decoder
  */
 template <class Output>
 class ElementIntDecoder : public IElementDecoder {
@@ -160,7 +160,7 @@ class ElementIntDecoder : public IElementDecoder {
  public:
   /**
    * @brief Constructor
-   * @param value Reference where the decoded value is assigned
+   * @param value Reference to the destination for the decoded value
    * @param length Number of digits
    */
   ElementIntDecoder(Output& value, const size_t length) : value_(value), length_(length) {}
@@ -171,12 +171,12 @@ class ElementIntDecoder : public IElementDecoder {
   /**
    * @brief Decode
    * @param start_iterator Iterator of the first character to read
-   * @param end_iterator Iterator of the character after the last to read
+   * @param end_iterator Iterator of the next character after the last one to read
    * @return true on success
    */
   inline virtual bool Decode(const PacketBuffer::const_iterator start_iterator,
                              const PacketBuffer::const_iterator end_iterator) {
-    // Digit check
+    // Digit count confirmation
     if ((std::distance(start_iterator, end_iterator) - 1) != length_) {
       return false;
     }
@@ -192,7 +192,7 @@ class ElementIntDecoder : public IElementDecoder {
     }
     // Value calculation
     int32_t tmp_value = 0;
-    for (PacketBuffer::const_iterator it = (start_iterator + 1);  // Skip reading sign
+    for (PacketBuffer::const_iterator it = (start_iterator + 1);  // Skip sign
          it != end_iterator; ++it) {
       v = *it;
       if ((v < '0') || (v > '9')) {
@@ -215,12 +215,12 @@ class ElementIntDecoder : public IElementDecoder {
   }
 
  private:
-  Output& value_;        //!< Reference where the decoded value is assigned
+  Output& value_;        //!< Reference to the destination for the decoded value
   const size_t length_;  //!< Number of digits
 };
 
 /**
- * @brief Decoder for Uint type
+ * @brief Uint type decoder
  */
 class ElementStringDecoder : public IElementDecoder {
  private:
@@ -230,7 +230,7 @@ class ElementStringDecoder : public IElementDecoder {
  public:
   /**
    * @brief Constructor
-   * @param value Reference where the decoded value is assigned
+   * @param value Reference to the destination for the decoded value
    * @param length Number of digits
    */
   ElementStringDecoder(std::string& value, const size_t length) : value_(value), length_(length) {
@@ -243,12 +243,12 @@ class ElementStringDecoder : public IElementDecoder {
   /**
    * @brief Decode
    * @param start_iterator Iterator of the first character to read
-   * @param end_iterator Iterator of the character after the last to read
+   * @param end_iterator Iterator of the next character after the last one to read
    * @return true on success
    */
   inline virtual bool Decode(const PacketBuffer::const_iterator start_iterator,
                              const PacketBuffer::const_iterator end_iterator) {
-    // Digit check
+    // Digit count check
     if ((std::distance(start_iterator, end_iterator) != static_cast<int32_t>(length_)) ||
         (value_.capacity() < length_)) {
       return false;
@@ -260,7 +260,7 @@ class ElementStringDecoder : public IElementDecoder {
   }
 
  private:
-  std::string& value_;   //!< Reference where the decoded value is assigned
+  std::string& value_;   //!< Reference to the destination for the decoded value
   const size_t length_;  //!< Number of digits
 };
 

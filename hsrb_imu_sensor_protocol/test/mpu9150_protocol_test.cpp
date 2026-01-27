@@ -25,7 +25,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief Test of easy-to-use API for Invensense's gyro sensor MPU9150
+/// @brief Test of user-friendly API for Invensense's gyro sensor MPU9150
 #include <chrono>
 #include <vector>
 
@@ -51,17 +51,17 @@ const double kGravityAccel = 9.80665;
 const double kEpsilon = 0.001;
 const uint32_t kBaudRate = 57600;
 
-/// state of protocol
+/// State of protocol
 enum ProtocolStatus {
   /// Command waiting state
   kStatusWaiting,
   /// Waiting for reset completion
   kStatusWaitForReset,
-  /// Receive a response of reset completion
+  /// Receive reply of reset completion
   kStatusReceiveResetReturn,
 };
 
-/// Advance the internal state of protocol, assuming the protocol state is command waiting state
+/// Advance the internal state of the protocol, assuming the protocol state is in command waiting state
 void SetProtocolStatus(ProtocolStatus status, MPU9150Protocol& protocol, SerialCommunication& sensor_port) {
   // Preparation
   boost::system::error_code error;
@@ -72,12 +72,12 @@ void SetProtocolStatus(ProtocolStatus status, MPU9150Protocol& protocol, SerialC
   send_packet[2] = 0x01;
   send_packet[3] = 0x77;
 
-  // Do nothing if the target is the command waiting state
+  // Do nothing if the target is command waiting state
   if (status == kStatusWaiting) {
     return;
   }
 
-  // Successfully send reset command, enter the state of waiting for reset completion
+  // Successfully send reset command and set to waiting for reset completion state
   MPU9150Protocol::ResetResult result;
   error = protocol.TryReset(result);
   ASSERT_FALSE(error);
@@ -89,8 +89,8 @@ void SetProtocolStatus(ProtocolStatus status, MPU9150Protocol& protocol, SerialC
     return;
   }
 
-  // Call the Reset function more than 3 seconds after waiting for reset completion
-  // Enter the state of receiving response of reset completion
+  // Call Reset function after more than 3 seconds have passed in waiting for reset completion
+  // Set to receive reply of reset completion state
   std::this_thread::sleep_for(std::chrono::seconds(3));
   error = protocol.TryReset(result);
   ASSERT_FALSE(error);
@@ -106,7 +106,7 @@ void SetProtocolStatus(ProtocolStatus status, MPU9150Protocol& protocol, SerialC
   return;
 }
 
-// Test of sensor value reading, normal case
+// Sensor value reading test, normal case
 TEST(MPU9150ProtocolTest, ReadStateNormal) {
   // Preparation
   SerialCommunication sensor_port("/tmp/mpu9150_protocol_sensor", kBaudRate);
@@ -243,13 +243,13 @@ TEST(MPU9150ProtocolTest, ReadStateNormal) {
   send_packet[94] = 0x09;
   // check sum
   send_packet[95] = 0x40;
-  // Send the packet
+  // Send packet
   sensor_port.Send(send_packet);
   // Execute reading
   ImuState state;
   error = protocol.ReadState(state);
   ASSERT_FALSE(error) << error.message();
-  // Verify the received sensor output value, the second measurement data should be taken
+  // Check received sensor output value, should have the second measurement data
   const double g = 9.80665;
   const double degree = boost::math::constants::degree<double>();
   EXPECT_NEAR(0.5, state.orientation[0], kEpsilon);
@@ -264,7 +264,7 @@ TEST(MPU9150ProtocolTest, ReadStateNormal) {
   EXPECT_NEAR(0.5 * g, state.linear_acceleration[2], kEpsilon);
 }
 
-// Test of sensor value reading, abnormal case
+// Sensor value reading test, abnormal case
 TEST(MPU9150ProtocolTest, ReadStateAbnormal) {
   // Preparation
   SerialCommunication sensor_port("/tmp/mpu9150_protocol_sensor", kBaudRate);
@@ -339,7 +339,7 @@ TEST(MPU9150ProtocolTest, ReadStateAbnormal) {
   ImuState state;
   std::vector<uint8_t> receive_packet;
 
-  // Invalid packet from the sensor
+  // Packet from sensor is invalid
   --send_packet[47];
   sensor_port.Send(send_packet);
 
@@ -347,24 +347,24 @@ TEST(MPU9150ProtocolTest, ReadStateAbnormal) {
   error = protocol.ReadState(state);
   ASSERT_TRUE(error);
 
-  // Enter the resetting state
+  // Set to resetting state
   MPU9150Protocol::ResetResult result;
   error = protocol.TryReset(result);
   ASSERT_EQ(MPU9150Protocol::kContinue, result);
   ASSERT_FALSE(error);
 
-  // Do not read during resetting, do not change the state
+  // Do not read during resetting, do not change state
   state.orientation[0] = 20.0;
   error = protocol.ReadState(state);
   ASSERT_FALSE(error);
   EXPECT_DOUBLE_EQ(20.0, state.orientation[0]);
 
-  // Read to prevent garbage remaining in the port
+  // Read to prevent garbage from remaining in the port
   sleep(1);
   sensor_port.Receive(receive_packet);
 }
 
-// Reset in the command waiting state, normal case
+// Reset in command waiting state, normal case
 TEST(MPU9150ProtocolTest, ResetStatusWaitingNormal) {
   // Preparation
   SerialCommunication sensor_port("/tmp/mpu9150_protocol_sensor", kBaudRate);
@@ -372,13 +372,13 @@ TEST(MPU9150ProtocolTest, ResetStatusWaitingNormal) {
   MPU9150Network network("/tmp/mpu9150_protocol_pc", error);
   MPU9150Protocol protocol(network);
 
-  // Successfully send the reset command, enter the state of waiting for reset
+  // Successfully send reset command and set to waiting for reset state
   MPU9150Protocol::ResetResult result;
   error = protocol.TryReset(result);
   ASSERT_FALSE(error);
   EXPECT_EQ(MPU9150Protocol::kContinue, result);
 
-  // Verify if reset command has been sent
+  // Confirm reset command was sent
   std::vector<uint8_t> receive_packet;
   sensor_port.Receive(receive_packet);
 
@@ -389,7 +389,7 @@ TEST(MPU9150ProtocolTest, ResetStatusWaitingNormal) {
   EXPECT_EQ(0x72, receive_packet[3]);
   EXPECT_EQ(0x04, receive_packet[4]);
 
-  // ReadState does nothing in the waiting for reset state
+  // ReadState does nothing in waiting for reset state
   ImuState state;
   state.orientation[0] = 10.0;
   error = protocol.ReadState(state);
@@ -397,7 +397,7 @@ TEST(MPU9150ProtocolTest, ResetStatusWaitingNormal) {
   EXPECT_NEAR(10.0, state.orientation[0], kEpsilon);
 }
 
-// Reset in the command waiting state, abnormal case
+// Reset in command waiting state, abnormal case
 TEST(MPU9150ProtocolTest, ResetStatusWaitingAbnormal) {
   // Preparation
   SerialCommunication sensor_port("/tmp/mpu9150_protocol_sensor", kBaudRate);
@@ -405,13 +405,13 @@ TEST(MPU9150ProtocolTest, ResetStatusWaitingAbnormal) {
   MPU9150Network network("/tmp/mpu9150_protocol_pc", error);
   MPU9150Protocol protocol(network);
 
-  // Fill the port with garbage data to fail sending the reset command
+  // Fill port with garbage data to fail sending reset command
   uint32_t counter = 0;
   while (!network.Send(0x70, NULL, 0)) {
     ++counter;
   }
 
-  // Send the reset command, should fail
+  // Send reset command, should fail
   MPU9150Protocol::ResetResult result;
   error = protocol.TryReset(result);
   ASSERT_TRUE(error);
@@ -428,7 +428,7 @@ TEST(MPU9150ProtocolTest, ResetStatusWaitingAbnormal) {
   }
 }
 
-// Reset in the state of waiting for reset completion
+// Reset in waiting for reset completion state
 TEST(MPU9150ProtocolTest, ResetStatusWaitForReset) {
   // Preparation
   SerialCommunication sensor_port("/tmp/mpu9150_protocol_sensor", kBaudRate);
@@ -436,23 +436,23 @@ TEST(MPU9150ProtocolTest, ResetStatusWaitForReset) {
   MPU9150Network network("/tmp/mpu9150_protocol_pc", error);
   MPU9150Protocol protocol(network);
 
-  // Enter the state of waiting for reset completion
+  // Set to waiting for reset completion state
   SetProtocolStatus(kStatusWaitForReset, protocol, sensor_port);
 
-  // Call the Reset function within 3 seconds of waiting for reset completion
+  // Call Reset function within 3 seconds in waiting for reset completion
   MPU9150Protocol::ResetResult result;
   error = protocol.TryReset(result);
   ASSERT_FALSE(error);
   EXPECT_EQ(MPU9150Protocol::kContinue, result);
 
-  // Call the Reset function more than 3 seconds after waiting for reset completion
+  // Call Reset function after more than 3 seconds have passed in waiting for reset completion
   std::this_thread::sleep_for(std::chrono::seconds(3));
   error = protocol.TryReset(result);
   ASSERT_FALSE(error);
   EXPECT_EQ(MPU9150Protocol::kContinue, result);
 }
 
-// Reset in the state of receiving response of reset completion, normal case
+// Reset in receive reply of reset completion state, normal case
 TEST(MPU9150ProtocolTest, ResetStatusReceiveResetReturnNormal) {
   // Preparation
   SerialCommunication sensor_port("/tmp/mpu9150_protocol_sensor", kBaudRate);
@@ -466,20 +466,20 @@ TEST(MPU9150ProtocolTest, ResetStatusReceiveResetReturnNormal) {
   send_packet[2] = 0x01;
   send_packet[3] = 0x77;
 
-  // Enter the state of receiving response of reset completion
+  // Set to receive reply of reset completion state
   SetProtocolStatus(kStatusReceiveResetReturn, protocol, sensor_port);
 
-  // Send completion response
+  // Send completion reply
   sensor_port.Send(send_packet);
 
-  // Successfully receive the response
+  // Successfully receive reply
   MPU9150Protocol::ResetResult result;
   error = protocol.TryReset(result);
   ASSERT_FALSE(error);
   EXPECT_EQ(MPU9150Protocol::kDone, result);
 }
 
-// Reset in the state of receiving response of reset completion, abnormal case
+// Reset in receive reply of reset completion state, abnormal case
 TEST(MPU9150ProtocolTest, ResetStatusReceiveResetReturnAbnormal) {
   // Preparation
   SerialCommunication sensor_port("/tmp/mpu9150_protocol_sensor", kBaudRate);
@@ -494,30 +494,30 @@ TEST(MPU9150ProtocolTest, ResetStatusReceiveResetReturnAbnormal) {
   send_packet[3] = 0x00;
   send_packet[4] = 0x76;
 
-  // Enter the state of receiving response of reset completion
+  // Set to receive reply of reset completion state
   SetProtocolStatus(kStatusReceiveResetReturn, protocol, sensor_port);
 
-  // Fail to receive within 5 seconds from reset start when receiving response of reset completion
+  // Fail to receive within 5 seconds from reset start in receive reply of reset completion
   MPU9150Protocol::ResetResult result;
   error = protocol.TryReset(result);
   ASSERT_FALSE(error);
   EXPECT_EQ(MPU9150Protocol::kContinue, result);
 
-  // Fail to receive after more than 5 seconds
+  // Fail to receive after more than 5 seconds have passed
   std::this_thread::sleep_for(std::chrono::seconds(2));
   error = protocol.TryReset(result);
   ASSERT_TRUE(error);
   EXPECT_EQ(MPU9150Protocol::kError, result);
 
-  // Should be back to Waiting, thus fail to read
+  // Should be back to Waiting, fail to read
   ImuState state;
   error = protocol.ReadState(state);
   ASSERT_TRUE(error);
 
-  // Enter the state of receiving response of reset completion
+  // Set to receive reply of reset completion state
   SetProtocolStatus(kStatusReceiveResetReturn, protocol, sensor_port);
 
-  // Invalid response of reset completion
+  // Reply of reset completion is invalid
   sensor_port.Send(send_packet);
   std::this_thread::sleep_for(std::chrono::seconds(2));
   error = protocol.TryReset(result);

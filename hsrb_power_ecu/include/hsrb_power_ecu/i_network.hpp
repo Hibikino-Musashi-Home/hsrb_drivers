@@ -79,14 +79,14 @@ class INetwork {
   virtual boost::system::error_code Configure(const std::string &param, const std::string &value) = 0;
   /**
    * @brief Send
-   * Within the timeout period, send all the contents of the transmission data buffer received as arguments
-   * @param[in] data Transmission data buffer
+   * Send all contents of the buffer received as an argument within the timeout period
+   * @param[in] data Buffer of transmission data
    * @return boost::system::errc::success on successful transmission
    */
   virtual boost::system::error_code Send(const PacketBuffer &data) = 0;
   /**
    * @brief Receive
-   * Store the transmission data at the end of the buffer.
+   * Store transmission data at the end of the buffer.
    * If there is no received data, wait for reception within the timeout period.
    * @param[out] data Receive buffer
    * @return boost::system::errc::success on successful transmission

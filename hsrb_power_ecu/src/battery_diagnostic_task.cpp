@@ -57,6 +57,8 @@ BatteryDiagnosticTask::BatteryDiagnosticTask(const rclcpp::Node::SharedPtr& node
 
 void BatteryDiagnosticTask::run(diagnostic_updater::DiagnosticStatusWrapper& stat) {
   std::string message = "Battery Level: " + std::to_string(*relative_capacity_) + " %";
+  // The power ECU indicates charging with a negative current value
+  // On the other hand, in general definitions (such as sensor_msgs::msg::BatteryState), charging is indicated by a positive current value, so the sign is inverted
   if (*electric_current_ < 0) {
     // Charging
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, message);
@@ -70,7 +72,7 @@ void BatteryDiagnosticTask::run(diagnostic_updater::DiagnosticStatusWrapper& sta
 
   stat.add("full_charge_capacity", *full_charge_capacity_);
   stat.add("remaining_charge", *remaining_charge_);
-  stat.add("electric_current", *electric_current_);
+  stat.add("electric_current", -*electric_current_);
   stat.add("voltage", *voltage_);
   stat.add("temperature", *temperature_);
   stat.add("zero_percent_detected", *zero_percent_detected_);

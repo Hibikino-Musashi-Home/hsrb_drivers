@@ -112,13 +112,16 @@ hardware_interface::CallbackReturn HsrbCgosHw::on_init(
 hardware_interface::CallbackReturn HsrbCgosHw::on_configure(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   if (!cgos_->Initialize()) {
-    RCLCPP_FATAL(logger_, "CgosLib::Initialize failed.");
-    return CallbackReturn::ERROR;
+    // Do not cause an error even if there is no driver
+    RCLCPP_WARN(logger_, "CgosLib::Initialize failed.");
+    cgos_handle_ = 0;
+    return CallbackReturn::SUCCESS;
   }
 
   if (!cgos_->BoardOpen(kCgosBoardClassDefault, 0, kCgosBoardOpenFlagsDefault, &cgos_handle_)) {
-    RCLCPP_FATAL(logger_, "CgosLib::CgosBordOpen failed.");
-    return CallbackReturn::ERROR;
+    RCLCPP_WARN(logger_, "CgosLib::CgosBordOpen failed.");
+    cgos_handle_ = 0;
+    return CallbackReturn::SUCCESS;
   }
 
   uint32_t count = 0;
@@ -138,6 +141,10 @@ hardware_interface::CallbackReturn HsrbCgosHw::on_configure(
 
 hardware_interface::return_type HsrbCgosHw::read(
     const rclcpp::Time& /*time*/, const rclcpp::Duration& /*period*/) {
+  if (cgos_handle_ == 0) {
+    // Do nothing if there is no CGOS
+    return hardware_interface::return_type::OK;
+  }
   uint32_t read_value = 0;
   if (cgos_->IORead(cgos_handle_, cgos_unit_, &read_value)) {
     for (const auto& gpio : gpios_) {
@@ -150,6 +157,10 @@ hardware_interface::return_type HsrbCgosHw::read(
 
 hardware_interface::return_type HsrbCgosHw::write(
     const rclcpp::Time& /*time*/, const rclcpp::Duration& /*period*/) {
+  if (cgos_handle_ == 0) {
+    // Do nothing if there is no CGOS
+    return hardware_interface::return_type::OK;
+  }
   uint32_t write_value = 0;
   for (const auto& gpio : gpios_) {
     gpio->Write(write_value);

@@ -25,7 +25,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief Provides a class for communicating with Invensense's gyroscope sensor MPU9150
+/// @brief Provides a class for communicating with Invensense's gyro sensor MPU9150
 #ifndef HSRB_IMU_SENSOR_PROTOCOL_MPU9150_NETWORK_HPP_
 #define HSRB_IMU_SENSOR_PROTOCOL_MPU9150_NETWORK_HPP_
 
@@ -47,9 +47,9 @@ enum MPU9150Instruction {
   kMPU9150InstructionReset = 0x72,
 };
 
-/// Gyroscope sensor values
+/// Gyro sensor values
 struct MPU9150State {
-  /// Orientation in quaternion order xyzw
+  /// Orientation, in the order of xyzw for quaternion
   boost::array<double, 4> orientation;
   /// Angular velocity [rad/sec]
   boost::array<double, 3> angular_velocity;
@@ -57,10 +57,10 @@ struct MPU9150State {
   boost::array<double, 3> linear_acceleration;
 };
 
-/// Class for communicating with Invensense's gyroscope sensor MPU9150
+/// Class for communicating with Invensense's gyro sensor MPU9150
 class MPU9150Network : private boost::noncopyable {
  public:
-  /// @brief Constructor, establishes communication
+  /// @brief Constructor, secures communication
   /// @param [in] device_name Device name
   /// @param [out] error_code Error code
   MPU9150Network(std::string device_name, boost::system::error_code& error_out);
@@ -72,7 +72,7 @@ class MPU9150Network : private boost::noncopyable {
 
   /// @brief Send
   /// @param instruction Command to send to MPU9150
-  /// @param data Parameter of the command
+  /// @param data Parameters of the command
   /// @param size Size of data
   /// @return boost::system::error_code Error code
   boost::system::error_code Send(uint8_t instruction, const uint8_t* data, uint16_t size);
@@ -81,21 +81,21 @@ class MPU9150Network : private boost::noncopyable {
   /// @return boost::system::error_code Error code
   boost::system::error_code Receive();
 
-  /// @brief Setting timeout duration
+  /// @brief Set timeout duration
   /// @param [in] timeout Timeout duration [nanoseconds]
   void set_timeout(int32_t timeout) { timeout_ = timeout; }
   /// @brief Get timeout duration
   /// @return int32_t Timeout duration [nanoseconds]
   int32_t timeout() const { return timeout_; }
 
-  /// @brief Setting sleep tick for waiting for send/receive
+  /// @brief Set sleep tick for send/receive waiting
   /// @param [in] sleep_tick Sleep tick [nanoseconds]
   void set_sleep_tick(int32_t sleep_tick) { sleep_tick_ = sleep_tick; }
-  /// @brief Get sleep tick for waiting for send/receive
+  /// @brief Get sleep tick for send/receive waiting
   /// @return int32_t Sleep tick [nanoseconds]
   int32_t sleep_tick() const { return sleep_tick_; }
 
-  /// @brief Returns the packet received by the last Receive function
+  /// @brief Return the packet received by the last Receive function
   /// @return const std::vector<uint8_t>& Packet
   const std::vector<uint8_t>& all_packets() const { return parser_.packets(); }
 
@@ -119,7 +119,7 @@ class MPU9150Network : private boost::noncopyable {
 /// Converter class
 class MPU9150PacketConverter {
  public:
-  /// Constructor, initialize variables
+  /// Constructor, initializes variables
   MPU9150PacketConverter();
 
   /// Destructor, does nothing
@@ -127,7 +127,7 @@ class MPU9150PacketConverter {
 
   /// @brief Convert packet from sensor to SensorState and output
   /// @param [in] packet Packet from sensor
-  /// @param [out] orientation Orientation in quaternion order xyzw
+  /// @param [out] orientation Orientation, in the order of xyzw for quaternion
   /// @param [out] angular_velocity Angular velocity [rad/sec]
   /// @param [out] linear_acceleration Acceleration [m/sec^2]
   void ToSensorState(const std::vector<uint8_t>& packet, boost::array<double, 4>& orientation,

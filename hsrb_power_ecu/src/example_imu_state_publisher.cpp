@@ -35,10 +35,10 @@ DAMAGE.
 #include "power_ecu_protocol.hpp"
 
 /**
- * @brief Sample code for the operation of imu_state_publisher, which publishes IMU information as a topic
+ * @brief Sample code for the operation of imu_state_publisher that publishes IMU information as a topic
  */
 int32_t main(int32_t argc, char** argv) {
-  // Command-line parsing
+  // Command line parsing
   std::string port_name;  //!< Port name
 
   {
@@ -48,14 +48,14 @@ int32_t main(int32_t argc, char** argv) {
     if (argc == 2) {
       // When there is one option
       if (std::string(argv[1]) == "--help") {
-        // No errors returned when --help is specified
+        // No error is returned when --help is specified
         can_run = false;
         is_display_help = true;
       } else {
         port_name = argv[1];
       }
     } else {
-      // Error when there are no command-line arguments or more than two
+      // Error when there are no command line arguments or more than two
       can_run = false;
     }
 

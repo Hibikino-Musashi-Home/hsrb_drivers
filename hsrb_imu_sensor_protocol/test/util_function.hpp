@@ -27,7 +27,7 @@ DAMAGE.
 */
 /**
  * @file util_function.hpp
- * @brief Provides functions for common processes performed in tests
+ * @brief Provides functions that perform processes commonly done in tests
  * @auther Fukukazu Kawata
  *
  *
@@ -44,13 +44,13 @@ namespace test_utils {
 using WaitFunctionType = std::function<bool()>;
 
 /**
- * @brief Waits until some condition is met
+ * @brief Wait until some condition is met
  *
  * @param condition_function Condition function
  * @param timeout_sec Maximum wait time (sec)
- * @param rate_hz Verification cycle (hz) Default 100.0 (hz)
+ * @param rate_hz Check cycle (hz) Default 100.0 (hz)
  *
- * @return Condition met or not met
+ * @return Condition met or unmet
  */
 bool WaitUntil(rclcpp::Node::SharedPtr node, WaitFunctionType condition_function, double timeout_sec,
                double rate_hz = 100.0) {
@@ -92,7 +92,7 @@ bool WaitForTopicExistence(rclcpp::Node::SharedPtr node, const std::string& topi
       }
     }
 
-    // Check timeout
+    // Check for timeout
     if (std::chrono::steady_clock::now() - start_time > timeout) {
       return false;
     }

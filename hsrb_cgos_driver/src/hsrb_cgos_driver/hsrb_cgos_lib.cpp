@@ -92,7 +92,7 @@ bool HsrbCgosLib::Initialize() {
   if (fd >= 0) {
     fd_ = fd;
 
-    // version check
+    // Version check
     if (CgosDriver(kCgosDrvGetVerion, 0, 0, 0, 0, 0, 0, &version, NULL)) {
       if ((version >> 24) == kCgosDrvVerMajor) {
         return true;

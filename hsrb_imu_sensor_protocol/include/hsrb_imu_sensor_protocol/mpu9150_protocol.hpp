@@ -25,7 +25,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
-/// @brief Easy-to-use API for Invensense's gyro sensor MPU9150
+/// @brief User-friendly API for Invensense's gyro sensor MPU9150
 #ifndef HSRB_IMU_SENSOR_PROTOCOL_MPU9150_PROTOCOL_HPP_
 #define HSRB_IMU_SENSOR_PROTOCOL_MPU9150_PROTOCOL_HPP_
 
@@ -46,44 +46,44 @@ class MPU9150Protocol : public IImuProtocol, private boost::noncopyable {
   /// @brief Read current sensor values
   /// @param [out] state Current sensor values
   /// @return ErrorCode Error code
-  /// @note During reset, returns the state unchanged
+  /// @note During reset, do not overwrite state, return as is
   virtual ErrorCode ReadState(ImuState& state);
 
   /// @brief Perform sensor reset
-  /// @param [out] result Result of the reset process
+  /// @param [out] result Result of reset process
   /// @return ErrorCode Error code
-  /// @note This function does not wait for the reset to complete.
-  ///       Keep calling until result is kDone or kError
-  /// @note Works correctly only when gyro's z-axis is vertically upward
+  /// @note This function does not wait for reset to complete.
+  ///       Continue calling until result becomes kDone or kError
+  /// @note Works correctly only when the gyro's z-axis is vertical upward
   virtual ErrorCode TryReset(ResetResult& result);
 
   /// @brief Perform sensor reset
   /// @return ErrorCode Error code
-  /// @note This function waits until reset is complete
-  /// @note Works correctly only when gyro's z-axis is vertically upward
+  /// @note This function waits for reset to complete
+  /// @note Works correctly only when the gyro's z-axis is vertical upward
   virtual ErrorCode Reset(double timeout);
 
  private:
-  /// Communicates with MPU9150
+  /// Communicate with MPU9150
   MPU9150Network& network_;
   /// Packet converter from MPU9150
   MPU9150PacketConverter packet_converter_;
 
   /// State of protocol
   enum ProtocolStatus {
-    /// Waiting for command
+    /// Command waiting state
     kStatusWaiting,
     /// Waiting for reset completion
     kStatusWaitForReset,
-    /// Receive acknowledgment of reset completion
+    /// Receive reply of reset completion
     kStatusReceiveResetReturn,
   };
   /// Current state of MPU9150
   ProtocolStatus status_;
 
-  /// Completion time of command to MPU9150
+  /// Time when command to MPU9150 ends
   rclcpp::Time instruction_end_time_;
-  /// Timeout waiting for command completion to MPU9150
+  /// Timeout for waiting command completion to MPU9150
   rclcpp::Time instruction_timeout_;
 };
 

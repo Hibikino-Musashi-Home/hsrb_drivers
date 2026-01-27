@@ -46,7 +46,7 @@ sensor_msgs::msg::BatteryState BatteryStatePublisher::CreateMessage() {
   message.percentage = *battery_relative_capacity_ / 100.0;
   message.temperature = *battery_temperature_;
   message.voltage = *battery_voltage_;
-  message.current = *electric_current_;
+  message.current = -*electric_current_;
   message.charge = *battery_remaining_capacity_;
   message.capacity = *battery_total_capacity_;
   message.header.stamp = clock_->now();

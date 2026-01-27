@@ -42,7 +42,7 @@ namespace com_common {
 
 /**
  * @brief crc32 checksum calculation
- * @param[in] start_it Iterator to the beginning of the checksum string
+ * @param[in] start_it Iterator to the start of the checksum string
  * @param[in] end_it Iterator to the end of the checksum string
  * @return Checksum result
  */
@@ -54,7 +54,7 @@ uint32_t CalculateCrc32(std::string::const_iterator start_it, std::string::const
 
 /**
  * @brief crc32 checksum calculation
- * @param[in] start_it Iterator to the beginning of the checksum string
+ * @param[in] start_it Iterator to the start of the checksum string
  * @param[in] end_it Iterator to the end of the checksum string
  * @return Checksum result
  */

@@ -40,7 +40,7 @@ DAMAGE.
 
 namespace hsrb_power_ecu {
 /**
- * @brief Mock class for the serial port
+ * @brief Mock class for serial port
  */
 class NetworkMock : public INetwork {
  public:
@@ -79,22 +79,22 @@ class NetworkMock : public INetwork {
    */
   virtual boost::system::error_code Configure(const std::string &param, const std::string &value);
   /**
-   * @brief Transmit
-   * Transmit all contents of the transmission data buffer received as an argument within the timeout period
+   * @brief Send
+   * Send all contents of the transmission data buffer received as an argument within the timeout period
    * @param[in] data Transmission data buffer
    * @return boost::system::errc::success on successful transmission
    */
   virtual boost::system::error_code Send(const PacketBuffer &data);
   /**
    * @brief Receive
-   * Store the transmission data at the end of the buffer.
-   * If there is no received data, wait to receive within the timeout period.
-   * @param[out] data Received buffer
+   * Store transmission data at the end of the buffer.
+   * If there is no received data, wait for reception within the timeout period.
+   * @param[out] data Receive buffer
    * @return boost::system::errc::success on successful transmission
    */
   virtual boost::system::error_code Receive(PacketBuffer &data);
 
-  std::string GetSendBuffer() const;  //!< Retrieve the value of the send buffer
+  std::string GetSendBuffer() const;  //!< Get the value of the send buffer
   void ResetSendBuffer();  //!< Clear the send buffer
   void UpdateBuffer(const std::string& buffer_data);  //!< Change the contents of the receive buffer
 
@@ -106,8 +106,8 @@ class NetworkMock : public INetwork {
   uint32_t timeout_ns_;      //!< Timeout period
   std::string port_name_;    //!< Port name
 
-  bool is_need_ack_;                           //!< Whether an ACK reply is necessary
-  bool is_need_ver_;                           //!< Whether a Ver reply is necessary
+  bool is_need_ack_;                           //!< Whether Ack response is needed
+  bool is_need_ver_;                           //!< Whether Ver response is needed
 };
 
 }  // namespace hsrb_power_ecu

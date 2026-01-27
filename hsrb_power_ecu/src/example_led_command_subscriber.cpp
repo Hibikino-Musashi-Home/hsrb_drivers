@@ -48,14 +48,14 @@ int32_t main(int32_t argc, char** argv) {
     if (argc == 2) {
       // When there is one option
       if (std::string(argv[1]) == "--help") {
-        // No error returned when --help is specified
+        // No error is returned when --help is specified
         can_run = false;
         is_display_help = true;
       } else {
         port_name = argv[1];
       }
     } else {
-      // Error when no command line arguments or more than two
+      // Error when there are no command line arguments or more than two
       can_run = false;
     }
 

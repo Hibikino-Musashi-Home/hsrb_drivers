@@ -45,7 +45,7 @@ PowerEcuComFrameEncoder::~PowerEcuComFrameEncoder() {}
 
 /**
  * @brief Encode
- * @param[out] buffer     Buffer for output destination
+ * @param[out] buffer     Buffer for output
  * @param[in] packet_name Name of the packet to encode for data decoder search
  * @return boost::system::error::success on success
  */
@@ -57,7 +57,7 @@ boost::system::error_code PowerEcuComFrameEncoder::Encode(PacketBuffer &buffer, 
   }
 
   // Create frame
-  //// Starting string
+  //// Leading string
   buffer.push_back('H');
   buffer.push_back(',');
 
@@ -89,12 +89,12 @@ boost::system::error_code PowerEcuComFrameEncoder::Encode(PacketBuffer &buffer, 
  * @return boost::system::errc::success on success
  */
 boost::system::error_code PowerEcuComFrameEncoder::RegisterDataEncoder(DataEncoderType encoder) {
-  // Error for invalid pointer or when data encoder is duplicated
+  // Error when pointer is invalid or data encoder is duplicated
   if (encoder == NULL || data_encoder_map_.find(encoder->GetPacketName()) != data_encoder_map_.end()) {
     return boost::system::errc::make_error_code(boost::system::errc::invalid_argument);
   }
 
-  // Registration
+  // Register
   data_encoder_map_[encoder->GetPacketName()] = encoder;
 
   return boost::system::errc::make_error_code(boost::system::errc::success);

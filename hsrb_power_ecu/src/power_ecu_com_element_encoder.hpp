@@ -42,8 +42,8 @@ namespace hsrb_power_ecu {
 
 /**
  * @brief Encoder for hexadecimal packets
- * Internally, conversion using uint32_t is performed, therefore,
- * The upper limit of the number of digits is 8
+ * Since conversion is performed internally using uint32_t,
+ * The maximum number of digits is 8
  */
 template <class Input>
 class ElementHexUintEncoder : public IElementEncoder {
@@ -54,7 +54,7 @@ class ElementHexUintEncoder : public IElementEncoder {
  public:
   /**
    * @brief Constructor
-   * @param value The original value for conversion
+   * @param value The value to be converted
    * @param length The number of digits in the converted string
    */
   ElementHexUintEncoder(const Input& value, const size_t length) : value_(value), length_(length) {
@@ -67,14 +67,14 @@ class ElementHexUintEncoder : public IElementEncoder {
 
   /**
    * @brief Encode
-   * @param[out] buffer Buffer for output
-   * @return true upon successful encoding
+   * @param[out] buffer The buffer for output
+   * @return true on successful encoding
    */
   inline virtual bool Encode(PacketBuffer& buffer) {
     uint32_t current_value = static_cast<uint32_t>(value_);
     convert_buffer_.clear();
 
-    // Create hexadecimal characters from the lower digit
+    // Create hexadecimal characters from the lower digits
     for (size_t i = 0; i < length_; ++i) {
       uint32_t v = current_value % 0x10;
       char h;
@@ -93,21 +93,21 @@ class ElementHexUintEncoder : public IElementEncoder {
       return false;
     }
 
-    // Assign in reverse
+    // Assign in reverse order
     std::copy(convert_buffer_.rbegin(), convert_buffer_.rend(), std::back_inserter(buffer));
     return true;
   }
 
  private:
-  const Input& value_;          //!< Value to encode
+  const Input& value_;          //!< The value to be encoded
   const size_t length_;         //!< Number of digits
   std::string convert_buffer_;  //!< Buffer for conversion
 };
 
 /**
- * @brief A class to create hexadecimal messages with specified bits
- * Internally, conversion using uint32_t is performed, therefore,
- * The upper limit of the number of digits is 8
+ * @brief Class for creating hexadecimal messages with bit specification
+ * Since conversion is performed internally using uint32_t,
+ * The maximum number of digits is 8
  */
 class ElementHexUintBitsEncoder : public ElementHexUintEncoder<uint32_t> {
  private:
@@ -130,8 +130,8 @@ class ElementHexUintBitsEncoder : public ElementHexUintEncoder<uint32_t> {
 
   /**
    * @brief Encode
-   * @param[out] buffer Buffer for output
-   * @return true upon successful encoding
+   * @param[out] buffer The buffer for output
+   * @return true on successful encoding
    */
   inline virtual bool Encode(PacketBuffer& buffer) {
     value_ = 0;
@@ -144,10 +144,10 @@ class ElementHexUintBitsEncoder : public ElementHexUintEncoder<uint32_t> {
   }
 
   /**
-   * @brief Register the bit address and boolean value to be evaluated
+   * @brief Register bit address and the bool value to be evaluated
    *
-   * @param bit Address when the least significant bit during transmission (considered the most significant bit in the communication specification) is 0
-   * @param flag Boolean value to be evaluated
+   * @param bit Address when the least significant bit during transmission (most significant bit in communication specification) is 0
+   * @param flag The bool value to be evaluated
    *
    * @return
    */
@@ -170,8 +170,8 @@ class ElementHexUintBitsEncoder : public ElementHexUintEncoder<uint32_t> {
 
 /**
  * @brief Encoder for decimal packets
- * Internally, conversion using uint32_t is performed, therefore,
- * The upper limit of the number of digits is 9
+ * Since conversion is performed internally using uint32_t,
+ * The maximum number of digits is 9
  */
 template <class Input>
 class ElementUintEncoder : public IElementEncoder {
@@ -182,7 +182,7 @@ class ElementUintEncoder : public IElementEncoder {
  public:
   /**
    * @brief Constructor
-   * @param value The original value for conversion
+   * @param value The value to be converted
    * @param length The number of digits in the converted string
    */
   ElementUintEncoder(const Input& value, const size_t length) : value_(value), length_(length) {
@@ -195,14 +195,14 @@ class ElementUintEncoder : public IElementEncoder {
 
   /**
    * @brief Encode
-   * @param[out] buffer Buffer for output
-   * @return true upon successful encoding
+   * @param[out] buffer The buffer for output
+   * @return true on successful encoding
    */
   inline virtual bool Encode(PacketBuffer& buffer) {
     uint32_t current_value = static_cast<uint32_t>(value_);
     convert_buffer_.clear();
 
-    // Create from the lower digit
+    // Create from the lower digits
     for (size_t i = 0; i < length_; ++i) {
       uint32_t v = current_value % 10;
       char d;
@@ -218,13 +218,13 @@ class ElementUintEncoder : public IElementEncoder {
       return false;
     }
 
-    // Assign in reverse
+    // Assign in reverse order
     std::copy(convert_buffer_.rbegin(), convert_buffer_.rend(), std::back_inserter(buffer));
     return true;
   }
 
  private:
-  const Input& value_;          //!< Value to encode
+  const Input& value_;          //!< The value to be encoded
   const size_t length_;         //!< Number of digits
   std::string convert_buffer_;  //!< Buffer for conversion
 };
@@ -237,7 +237,7 @@ class ElementStringEncoder : public IElementEncoder {
  public:
   /**
    * @brief Constructor
-   * @param value The original value for conversion
+   * @param value The value to be converted
    * @param length The number of digits in the converted string
    */
   ElementStringEncoder(const std::string& value, const size_t length) : value_(value), length_(length) {}
@@ -248,8 +248,8 @@ class ElementStringEncoder : public IElementEncoder {
 
   /**
    * @brief Encode
-   * @param[out] buffer Buffer for output
-   * @return true upon successful encoding
+   * @param[out] buffer The buffer for output
+   * @return true on successful encoding
    */
   inline virtual bool Encode(PacketBuffer& buffer) {
     if (value_.size() != length_) return false;
@@ -258,7 +258,7 @@ class ElementStringEncoder : public IElementEncoder {
   }
 
  private:
-  const std::string& value_;  //!< Value to encode
+  const std::string& value_;  //!< The value to be encoded
   const size_t length_;       //!< Number of digits
 };
 }  // namespace hsrb_power_ecu

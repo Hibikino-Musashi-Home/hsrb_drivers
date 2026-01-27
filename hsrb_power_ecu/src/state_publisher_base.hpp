@@ -66,7 +66,7 @@ class StatePublisherBase : public IStatePublisher {
     MSG message = CreateMessage();
     publisher_->publish(message);
 
-    next_publish_time_ = clock_->now() + publish_period_;
+    next_publish_time_ += publish_period_;
   }
 
  protected:
